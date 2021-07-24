@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(ServiceFabricOnDotnetSdk.props))" />
+  <Import Project="$(PkgMicrosoft_VisualStudio_Azure_Fabric_MSBuild)\build\Microsoft.VisualStudio.Azure.Fabric.Application.props" Condition="Exists('$(PkgMicrosoft_VisualStudio_Azure_Fabric_MSBuild)')" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>7b745062-f768-4d81-9a2a-b778d5b05098</ProjectGuid>
+    <ProjectVersion>2.5</ProjectVersion>
+    <MinToolsVersion>1.5</MinToolsVersion>
+    <SupportedMSBuildNuGetPackageVersion>1.7.3</SupportedMSBuildNuGetPackageVersion>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <!--
+      Note: on some installations of VS 2017, VS will not allow this project to be
+      a 'startup project' unless these projectconfiguration fields are present.
+      Other installations of VS (even the same version) will allow the project
+      even without these fields. We haven't been able to discover the root cause
+      of the issue, but these fields are harmless (ignored by the build), so we
+      keep them here to make VS happy.
+    -->
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ApplicationPackageRoot\ApplicationManifest.xml" />
+    <None Include="ApplicationParameters\Cloud.xml" />
+    <None Include="ApplicationParameters\Local.1Node.xml" />
+    <None Include="ApplicationParameters\Local.5Node.xml" />
+    <None Include="PublishProfiles\Cloud.xml" />
+    <None Include="PublishProfiles\Local.1Node.xml" />
+    <None Include="PublishProfiles\Local.5Node.xml" />
+    <None Include="Scripts\Deploy-FabricApplication.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--
+      Note: the use of `GeneratePathProperty` permits us to refer to the nuget using the `$(Pkg...)` variable instead
+      of hard coding the package install path
+    -->
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Fabric.MSBuild" GeneratePathProperty="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EchoService\EchoService.csproj" />
+    <ProjectReference Include="..\FabricDiscovery.Service\FabricDiscovery.Service.csproj" />
+    <ProjectReference Include="..\YarpProxy.Service\YarpProxy.Service.csproj" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+  <PropertyGroup>
+    <ApplicationProjectTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Service Fabric Tools\Microsoft.VisualStudio.Azure.Fabric.ApplicationProject.targets</ApplicationProjectTargetsPath>
+  </PropertyGroup>
+  <Import Project="$(ApplicationProjectTargetsPath)" Condition="Exists('$(ApplicationProjectTargetsPath)')" />
+  <Import Project="$(PkgMicrosoft_VisualStudio_Azure_Fabric_MSBuild)\build\Microsoft.VisualStudio.Azure.Fabric.Application.targets" Condition="Exists('$(PkgMicrosoft_VisualStudio_Azure_Fabric_MSBuild)')" />
+  <PropertyGroup>
+    <PackageLocation Condition="'$(OutDir)' != ''">$(OutDir)</PackageLocation>
+  </PropertyGroup>
+  <!--
+    Disable the SF sdk "fixup" target. It tries to "fix" broken service manifest references by deleting them
+    and all their variables. Unfortunately this breaks this application manifest as we have service manifest
+    references that the SF sdk targets aren't aware of, so it deletes services we're still using. See target
+    CustomPackageAdditionalServiceManifests that injects these services.
+  -->
+  <Target Name="FixUpServiceFabricApplicationManifest" />
+</Project>

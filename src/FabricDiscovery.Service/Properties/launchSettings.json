@@ -1,0 +1,12 @@
+﻿{
+  "profiles": {
+    "FabricDiscovery.Service": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:11000;http://localhost:11001"
+    }
+  }
+}

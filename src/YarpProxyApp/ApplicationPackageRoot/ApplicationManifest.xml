@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="YarpProxyAppType" ApplicationTypeVersion="1.0.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Parameters>
+    <Parameter Name="YarpProxy_PlacementConstraints" DefaultValue="" />
+    <Parameter Name="YarpProxy_InstanceCount" DefaultValue="" />
+    <Parameter Name="YarpProxy_HttpPort" DefaultValue="80" />
+    <Parameter Name="YarpProxy_HttpsPort" DefaultValue="443" />
+    <Parameter Name="FabricDiscovery_TargetReplicaSetSize" DefaultValue="3" />
+    <Parameter Name="FabricDiscovery_MinReplicaSetSize" DefaultValue="3" />
+    <Parameter Name="FabricDiscovery_AbortAfterTimeoutInSeconds" DefaultValue="600" />
+    <Parameter Name="FabricDiscovery_AbortAfterConsecutiveFailures" DefaultValue="3" />
+    <Parameter Name="FabricDiscovery_FullRefreshPollPeriodInSeconds" DefaultValue="300" />
+    <Parameter Name="EchoService_PlacementConstraints" DefaultValue="" />
+    <Parameter Name="EchoService_InstanceCount" DefaultValue="" />
+  </Parameters>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="YarpProxyPkg" ServiceManifestVersion="1.0.0" />
+    <ResourceOverrides>
+      <Endpoints>
+        <Endpoint Name="HttpServiceEndpoint" Port="[YarpProxy_HttpPort]" />
+        <Endpoint Name="HttpsServiceEndpoint" Port="[YarpProxy_HttpsPort]" />
+      </Endpoints>
+    </ResourceOverrides>
+  </ServiceManifestImport>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="1.0.0" />
+    <ConfigOverrides>
+      <ConfigOverride Name="Config">
+        <Settings>
+          <Section Name="FabricDiscovery">
+            <Parameter Name="AbortAfterTimeoutInSeconds" Value="[FabricDiscovery_AbortAfterTimeoutInSeconds]" />
+            <Parameter Name="AbortAfterConsecutiveFailures" Value="[FabricDiscovery_AbortAfterConsecutiveFailures]" />
+            <Parameter Name="FullRefreshPollPeriodInSeconds" Value="[FabricDiscovery_FullRefreshPollPeriodInSeconds]" />
+          </Section>
+        </Settings>
+      </ConfigOverride>
+    </ConfigOverrides>
+  </ServiceManifestImport>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="EchoServicePkg" ServiceManifestVersion="1.0.0" />
+  </ServiceManifestImport>
+  <DefaultServices>
+    <Service Name="YarpProxy" ServicePackageActivationMode="ExclusiveProcess">
+      <StatelessService ServiceTypeName="YarpProxyType" DefaultMoveCost="High" InstanceCount="[YarpProxy_InstanceCount]">
+        <SingletonPartition />
+        <PlacementConstraints>[YarpProxy_PlacementConstraints]</PlacementConstraints>
+      </StatelessService>
+    </Service>
+    <Service Name="FabricDiscovery" ServicePackageActivationMode="ExclusiveProcess">
+      <StatefulService ServiceTypeName="FabricDiscoveryServiceType" DefaultMoveCost="High" TargetReplicaSetSize="[FabricDiscovery_TargetReplicaSetSize]" MinReplicaSetSize="[FabricDiscovery_MinReplicaSetSize]">
+        <SingletonPartition />
+        <PlacementConstraints>[YarpProxy_PlacementConstraints]</PlacementConstraints>
+      </StatefulService>
+    </Service>
+    <Service Name="EchoService" ServicePackageActivationMode="ExclusiveProcess">
+      <StatelessService ServiceTypeName="EchoServiceType" InstanceCount="[EchoService_InstanceCount]">
+        <SingletonPartition />
+        <PlacementConstraints>[EchoService_PlacementConstraints]</PlacementConstraints>
+      </StatelessService>
+    </Service>
+  </DefaultServices>
+</ApplicationManifest>

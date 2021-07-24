@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+    
+    <OutputPath>$(MSBuildThisFileDirectory)..\out\testbin\$(Configuration)-$(Platform)\$(MSBuildProjectName)\</OutputPath>
+
+    <!-- StyleCop -->
+    <CodeAnalysisRuleSet Condition=" '$(CodeAnalysisRuleSet)' == '' ">$(MSBuildThisFileDirectory)stylecop.ruleset</CodeAnalysisRuleSet>
+    <NoWarn>1591;$(NoWarn)</NoWarn> <!-- Missing XML comment for publicly visible type or member '...' -->
+  </PropertyGroup>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+</Project>

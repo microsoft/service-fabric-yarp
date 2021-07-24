@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RuleSet Name="TestProjStyleCop" ToolsVersion="15.0">
+  <Include Path="..\stylecop.ruleset" Action="Default" />
+  <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
+    <Rule Id="SA1402" Action="None" /> <!-- File may only contain a single type -->
+    <Rule Id="SA1600" Action="None" /> <!-- Elements should be documented -->
+  </Rules>
+</RuleSet>

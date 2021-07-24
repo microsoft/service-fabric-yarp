@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <OutputType>Exe</OutputType>
+
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+    <Platforms>x64</Platforms>
+
+    <IsServiceFabricServiceProject>True</IsServiceFabricServiceProject>
+
+    <!--
+      The following helps support self-contained .NET Core runtime publishing.
+      See: https://docs.microsoft.com/en-us/dotnet/core/deploying/runtime-patch-selection
+    -->
+    <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+
+    <!--
+      .NET Core SDK 3.1 SDK sets ServerGarbageCollection=true by default for Microsoft.NET.Sdk.Web projects,
+      which is a bad default for shared hosting platforms.
+      Re. ServerGarbageCollection, from https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/workstation-server-gc:
+        "Server garbage collection can be resource-intensive. For example, imagine that there are 12 processes
+        that use server GC running on a computer that has four processors. If all the processes happen to collect garbage
+        at the same time, they would interfere with each other, as there would be 12 threads scheduled on the same processor.
+        If the processes are active, it's not a good idea to have them all use server GC."
+      Re. ConcurrentGarbageCollection, from https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/background-gc:
+        "Concurrent garbage collection enables interactive applications to be more responsive by minimizing pauses
+        for a collection. Managed threads can continue to run most of the time while the concurrent garbage collection thread
+        is running. This results in shorter pauses while a garbage collection is occurring."
+    -->
+    <ServerGarbageCollection>False</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>True</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" />
+    <PackageReference Include="System.Net.Http" />
+    <PackageReference Include="Yarp.ReverseProxy" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IslandGateway.CoreServicesBorrowed\IslandGateway.CoreServicesBorrowed.csproj" />
+    <ProjectReference Include="..\RemoteConfig.Client\RemoteConfig.Client.csproj" />
+  </ItemGroup>
+</Project>

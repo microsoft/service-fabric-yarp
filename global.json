@@ -1,0 +1,12 @@
+{
+  "sdk": {
+    "version": "5.0.203",
+    "rollForward": "latestFeature"
+  },
+  "msbuild-sdks": {
+    "DotNet.ReproducibleBuilds.Isolated": "0.1.64",
+    "Microsoft.Build.CentralPackageVersions": "2.0.79",
+    "Microsoft.Build.NoTargets": "3.0.4",
+    "Microsoft.Build.Traversal": "3.0.23"
+  }
+}

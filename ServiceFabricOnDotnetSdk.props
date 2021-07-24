@@ -1,0 +1,100 @@
+<Project>
+  <!--
+    This adaptor helps .sfproj build using the PackageReference mechanism when
+    building on retail toolsets
+
+    Notes:
+    -   The GetPackageRootFiles target in Microsoft.VisualStudio.Azure.Fabric.Application.targets will dynamically
+        generate a project file, and then import the user's project into it. As such, we need to be careful not to
+        use the MSBuildProject reserved property, as it will be inaccurate during certain build steps.
+  
+    -   The Service Fabric visual studio extension will error out if the first entry in the
+        project is not the Microsoft.VisualStudio.Azure.Fabric.Application.props file it
+        expects, with the following message:
+
+        > The operation failed as details for project 
+        > {PROJECTNAME} could not be loaded.
+
+        This is a major problem though. If our props file is not loaded first, then 
+        we can't import the .nuget.g.props file that provides the package
+        restore location for the Microsoft.VisualStudio.Azure.Fabric.MSBuild package.
+
+        However, it turns out if we import our props file using
+
+            ```
+            Condition="'$(BuildingInsideVisualStudio)' == ''"
+            ```
+        
+        Then the Service Fabric visual studio extension will ignore it entirely, and our sfproj can still load.
+  -->
+
+  <PropertyGroup>
+    <!--
+      Placeholder framework version to make package resolution happy. 
+
+      Since .sfproj inherits from the C# project base targets, nuget restore using
+      the PackageReference mechanism expects the project to have a target framework
+      for resolving package versions.
+    -->
+    <TargetFramework>net462</TargetFramework>
+
+    <!--
+      Instruct Service Fabric vs extension to _not_ edit our sfproj without our permission.
+      Normally, the sf vs extension will mangle the package imports, but it doesn't understand
+      that we're using the new PackageReference mechanism.
+
+      See issue https://github.com/microsoft/service-fabric-issues/issues/1388 for details.
+    -->
+    <DoNotUpdateNuGetImport>true</DoNotUpdateNuGetImport>
+
+    <!--
+      Disable the ResolveNuGetPackageAssets target. 
+
+      This target is only loaded under msbuild
+      with visual studio installed, when the sfproj ends up importing $(ApplicationProjectTargetsPath).
+      It's also broken when using PackageReference. And it's also not needed for sfprojs at all.
+
+      Note that this does not appear to interfere with restore of nuget packages.
+
+      Also note that nuget package restore is VS is busted still, even with this change. However,
+      package restore from console (either `msbuild /t:Restore` or `dotnet restore`) works fine.
+      Just make sure to restore before opening the solution.
+    -->
+    <ResolveNuGetPackages>false</ResolveNuGetPackages>
+  </PropertyGroup>
+
+  <!--
+    Bring in Microsoft.Common.props early so our project can rely on 
+    generated path properties to nugets, even before the sfproj props are imported.
+    See issue https://github.com/microsoft/service-fabric/issues/885 for details.
+  -->
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props') and '$(MicrosoftCommonPropsHasBeenImported)' != 'true'" />
+
+  <!--
+    ReferenceOutputAssembly=false, SkipGetTargetFrameworkProperties=false
+
+    Note: sfproj should be frameworkless, but nuget.targets doesn't support that. However, since we declared 
+    our framework as net462, nuget restore may complain that the referenced service uses an incompatible framework.
+    Use 'ReferenceOutputAssembly=false' to shut that down.
+
+    This ItemDefinitionGroup section was sourced from Microsoft.Build.Traversal nuget, with the 
+    following copyright present:
+    >
+    > Copyright (c) Microsoft Corporation. All rights reserved.
+    >
+    > Licensed under the MIT license.
+    >
+  -->
+  <ItemDefinitionGroup>
+    <ProjectReference>
+      <!--
+        Setting ReferenceOutputAssembly skips adding the outputs of the referenced project to an item
+      -->
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <!--
+        Setting SkipGetTargetFrameworkProperties skips target framework cross-project validation in NuGet
+      -->
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+</Project>
