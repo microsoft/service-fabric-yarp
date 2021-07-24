@@ -1,0 +1,7 @@
+<Project>
+  <Import Condition="'$(MSBuildProjectExtension)' == '.csproj'" Project="eng\ComponentGovernanceFixes.targets" />
+
+
+  <!-- Use centrally managed package versions. See Packages.props. -->
+  <Sdk Name="Microsoft.Build.CentralPackageVersions" />
+</Project>

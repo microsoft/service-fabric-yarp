@@ -1,14 +1,53 @@
-# Project
+# YARP Reverse Proxy for Service Fabric integration
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+## Pre-reqs
 
-As the maintainer of this project, please make a few updates:
+* Windows 10 Version 1909 or later, x64
+* .NET SDK (version indicated in global.json)
+* .NET Core 3.1 runtime (to run netcoreapp3.1 tests)
+* To setup certs, use `eng/Create-DevCerts.ps1`.
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+Dotnet sdks and runtimes can be downloaded from https://dotnet.microsoft.com/download .
+
+## Building and unit testing
+
+1. dotnet build dirs.proj
+2. dotnet test dirs.proj
+3. dotnet pack dirs.proj
+
+For unit tests, you may want to filter out some tests. Refer to [the docs](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-vstest?tabs=netcore21) for information on how to use them. Example:
+
+```cmd
+dotnet test dirs.proj --filter HttpProxyTest
+```
+
+Alternatively, you can also open `YarpSF.sln` at the root of the repo with Visual Studio 2019.
+Running builds and unit tests from VS2019 is supported (verified with Visual Studio 2019 16.10.2+ .NET 5 SDK version 5.0.201).
+
+## Project structure
+
+This repo includes:
+
+* `YarpProxyApp`: an example Service Fabric application, consisting of:
+  * `YarpProxy.Service`: The runtime component that implements a Reverse Proxy using YARP. It reads configurations from remote service `FabricDiscovery.Service`
+  * `FabricDiscovery.Service`: Responsible for discovering Service Fabric services that are configured to use YARP via Service Manifest Extensions, and exposes the summarized configurations for `YarpProxy.Service` to consume in real-time
+  * `EchoService`: An example service that is configured to use YARP and can be called in End-to-End tests to verify functionality.
+
+## Running locally
+
+* Deploy `YarpProxyApp` to the local cluster
+* Observe in Service Fabric Explorer that the application starts and all 3 services are running without errors:
+
+  ![Service Fabric Explorer](./docs/sfx.png)
+
+* Using a browser, access `https://localhost/api/echo`. If all works, you should get a `200 OK` response with contents resembling the following:
+
+   ```json
+   {
+     "message": "Hello from EchoService",
+     "serverTime": "2021-07-23T23:05:17.37+00:00"
+   }
+   ```
 
 ## Contributing
 

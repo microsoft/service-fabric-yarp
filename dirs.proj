@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.Build.Traversal">
+  <!--
+    To build just production code, use `dotnet build -p:WhichProjects=src`.
+    To build only tests, use `dotnet build -p:WhichProjects=test`
+    To build all, use `dotnet build`
+  -->
+  <ItemGroup Condition="'$(WhichProjects)' == '' or '$(WhichProjects)' == 'src'" >
+    <ProjectReference Include="src\**\*.csproj" />
+    <ProjectReference Include="src\**\*.sfproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(WhichProjects)' == '' or '$(WhichProjects)' == 'test'">
+    <ProjectReference Include="test\**\*.csproj" />
+  </ItemGroup>
+
+  <!-- Note: prefer `dotnet test` instead. -->
+  <Target Name="UnitTest" DependsOnTargets="Build">
+    <PropertyGroup>
+      <VSTestExtraArgs Condition="'$(Tests)' != ''">/Tests:$(Tests)</VSTestExtraArgs>
+      <VSTestExtraArgs Condition="'$(TestCaseFilter)' != ''">/TestCaseFilter:$(TestCaseFilter)</VSTestExtraArgs>
+    </PropertyGroup>
+    <ItemGroup>
+      <TestAssemblies Include="out\testbin\$(Configuration)-$(Platform)\**\*.Tests.dll" />
+      <TestAssemblies Include="out\testbin\$(Configuration)-$(Platform)\**\*.IntegrationTests.dll" />
+    </ItemGroup>
+    <Exec Command="dotnet vstest /Logger:trx /ResultsDirectory:&quot;$(MSBuildThisFileDirectory)out\testresults&quot; @(TestAssemblies->'&quot;%(FullPath)&quot;', ' ') $(VSTestExtraArgs)" />
+  </Target>
+</Project>

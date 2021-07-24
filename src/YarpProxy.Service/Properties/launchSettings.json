@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "YarpProxy.Service": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:2443;http://localhost:280"
+    }
+  }
+}

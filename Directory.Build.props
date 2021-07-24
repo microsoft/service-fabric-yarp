@@ -1,0 +1,56 @@
+<Project>
+  <!-- This file applies to the entire repo -->
+  <Sdk Name="DotNet.ReproducibleBuilds.Isolated" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+
+    <OutputPath Condition=" '$(OutputPath)' == '' ">$(MSBuildThisFileDirectory)out\bin\$(Configuration)-$(Platform)\$(MSBuildProjectName)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath Condition=" '$(AppendTargetFrameworkToOutputPath)' == '' ">false</AppendTargetFrameworkToOutputPath>
+
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
+
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <!-- Nuget Packaging -->
+  <PropertyGroup>
+    <!--
+      Disabled nuget packaging by default. This allows us to use 'pack' on the traversal targets, but only
+      run the actual nuget packaging steps on those projects that opt in.
+    -->
+    <IsPackable>false</IsPackable>
+    <!--
+      Turn off warning. This lets us invoke pack on dirs.proj to recursively pack all packable projects in the repo,
+      just like we do with 'restore', 'build', and 'test'.
+    -->
+    <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
+  </PropertyGroup>
+
+  <!-- StyleCop -->
+  <PropertyGroup>
+    <!--
+      StyleCop enabled by default only for *.csproj projects. Attempting to enable this for *.sfproj
+      leads to restore errors since the sfproj old-style project cannot cope with <PackageReference> entries.
+    -->
+    <_EnableStyleCop Condition=" '$(_EnableStyleCop)' == '' And '$(MSBuildProjectExtension)' == '.csproj' ">true</_EnableStyleCop>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(_EnableStyleCop)' == 'true' ">
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CodeAnalysisRuleSet Condition=" '$(CodeAnalysisRuleSet)' == '' ">$(MSBuildThisFileDirectory)stylecop.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup Condition=" '$(_EnableStyleCop)' == 'true' ">
+    <AdditionalFiles Condition=" '$(AdditionalFiles)' == '' " Include="$(MSBuildThisFileDirectory)stylecop.json" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- 
+    Define a dummy Pack target to unblock recursive packing.
+
+    This will get overriden by Nuget.Build.Tasks.Pack.targets in new-style projects. But in old style projects,
+    it allows the Pack target to succeed, allowing us to recursively pack the repo with dirs.proj.
+  -->
+  <Target Name="Pack" DependsOnTargets="$(PackDependsOn)" />
+</Project>

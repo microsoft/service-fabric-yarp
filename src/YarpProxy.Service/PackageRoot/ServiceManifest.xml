@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest Name="YarpProxyPkg"
+                 Version="1.0.0"
+                 xmlns="http://schemas.microsoft.com/2011/01/fabric"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ServiceTypes>
+    <StatelessServiceType ServiceTypeName="YarpProxyType" />
+  </ServiceTypes>
+  <CodePackage Name="Code" Version="1.0.0">
+    <EntryPoint>
+      <ExeHost>
+        <Program>YarpProxy.Service.exe</Program>
+        <WorkingFolder>CodePackage</WorkingFolder>
+      </ExeHost>
+    </EntryPoint>
+  </CodePackage>
+  <ConfigPackage Name="Config" Version="1.0.0" />
+  <Resources>
+    <Endpoints>
+      <!--
+        NOTE 1: Don't tell Service Fabric we're using Protocol="https" because we don't need http.sys setup.
+        Specifying https would require us to also specify a certificate binding for Service Fabric to be satisfied,
+        whereas Island Gateway takes care of TLS certificate binding on its own.
+
+        NOTE 2: We *do* specify Protocol="http" for the http endpoint so that the address that appears in SF Explorer for Island Gateway
+        "looks" nicer. Service Fabric's KestrelCommunicationListener does not support exposing 2 endpoints for the same listener,
+        and it mistakenly uses the endpoint's Protocol instead of UriScheme to produce the final endpoint listener address.
+        Ultimately none of this really matters since nobody needs to query Service Fabric to find Island Gateway's public endpoint,
+        so whether we set Protocol="http" or "tcp" for these  endpoints is purely cosmetic.
+
+        NOTE 3: While we don't care about the http.sys arrangements that Service Fabric does
+        in reaction to these endpoint definiions, we *do* care about the Windows Firewall configs this takes care of.
+        Without this, we might need to configure Windows Firewall ourselves to accept inbound traffic to these ports.
+      -->
+      <Endpoint Protocol="http" Name="HttpServiceEndpoint" UriScheme="http" Type="Input" />
+      <Endpoint Protocol="tcp" Name="HttpsServiceEndpoint" UriScheme="https" Type="Input" />
+    </Endpoints>
+  </Resources>
+</ServiceManifest>
