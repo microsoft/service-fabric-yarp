@@ -14,13 +14,12 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.PowerPlatform.CoreServices.IslandGateway.Service;
 using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
 using YarpProxy.Service.Lifecycle;
 
-namespace Microsoft.PowerPlatform.CoreServices.IslandGateway
+namespace IslandGateway.Service
 {
     /// <summary>
     /// An instance of this class is created for each service instance by the Service Fabric runtime.

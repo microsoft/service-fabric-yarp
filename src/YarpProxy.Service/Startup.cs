@@ -17,7 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using YarpProxy.Service.Lifecycle;
 
-namespace Microsoft.PowerPlatform.CoreServices.IslandGateway
+namespace IslandGateway.Service
 {
     /// <summary>
     /// The service startup configuration class.

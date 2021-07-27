@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using YarpProxy.Service.Lifecycle;
 
-namespace Microsoft.PowerPlatform.CoreServices.IslandGateway.Service
+namespace IslandGateway.Service
 {
     /// <summary>
     /// Delays shutdown of the ASP .NET Core Kestrel listener by a few seconds

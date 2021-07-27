@@ -3,10 +3,9 @@
 
 using IslandGateway.CoreServicesBorrowed;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Logging;
 using YarpProxy.Service.Lifecycle;
 
-namespace Microsoft.PowerPlatform.CoreServices.IslandGateway
+namespace IslandGateway.Service
 {
     internal static class IslandGatewayStandalone
     {

@@ -7,7 +7,7 @@ using IslandGateway.CoreServicesBorrowed.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.ServiceFabric.Services.Runtime;
 
-namespace Microsoft.PowerPlatform.CoreServices.IslandGateway
+namespace IslandGateway.Service
 {
     /// <summary>
     /// Entry point.
