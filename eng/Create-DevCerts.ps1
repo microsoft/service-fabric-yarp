@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 <#
 .SYNOPSIS
 Ensures that local certificates are created for local development.
@@ -14,9 +17,9 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $localhostIpAddress = "127.0.0.1"
-$intracommcertname = 'forintracommuseonly.localhost'
+$intracommcertname = 'intracomm.localhost'
 
-$friendlyName = "Island Gateway development cert"
+$friendlyName = "SF-YARP development cert"
 $validityInterval = [TimeSpan]::FromDays(365*100)
 $renewInterval = [TimeSpan]::FromDays(14)
 
@@ -117,12 +120,7 @@ function Ensure-CertAndHostsFileMapping($subjectName) {
 try {
     # Localhost cert
     Ensure-Cert -subjectName "localhost"
-    
-    # Intracomm cert
     Ensure-CertAndHostsFileMapping -subjectName $intracommcertname
-
-    # Gateway cert
-    Write-Info "`n`n"
     Ensure-CertAndHostsFileMapping -subjectName "echo.localhost"
 }
 catch {
