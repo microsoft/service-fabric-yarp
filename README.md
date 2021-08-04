@@ -38,7 +38,7 @@ This repo includes:
 * Deploy `YarpProxyApp` to the local cluster
 * Observe in Service Fabric Explorer that the application starts and all 3 services are running without errors:
 
-  ![Service Fabric Explorer](./docs/sfx.png)
+  ![Service Fabric Explorer](docs/sfx.png)
 
 * Using a browser, access `https://localhost/api/echo`. If all works, you should get a `200 OK` response with contents resembling the following:
 
