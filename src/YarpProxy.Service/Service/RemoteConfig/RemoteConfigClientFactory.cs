@@ -25,11 +25,6 @@ namespace IslandGateway.Hosting.Common
                 AutomaticDecompression = DecompressionMethods.All,
                 UseCookies = false,
                 MaxConnectionsPerServer = 1,
-                SslOptions = new SslClientAuthenticationOptions
-                {
-                    // TODO: davidni SF-YARP: Remove insecure defaults
-                    RemoteCertificateValidationCallback = (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true,
-                },
             };
 
             return new HttpMessageInvoker(handler);

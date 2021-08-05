@@ -91,20 +91,19 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
                 var cluster = clusters[0];
                 string defaultListenerName = service.FinalEffectiveLabels.GetValueOrDefault("IslandGateway.Backend.ServiceFabric.ListenerName", string.Empty);
                 var destinations = this.BuildDestinations(service.FabricService, service.FinalEffectiveLabels, defaultListenerName, errors);
-                int i = 0;
                 foreach (var destination in destinations)
                 {
-                    // TODO: davidni SF-YARP: Fix this mess
-                    ((Dictionary<string, DestinationConfig>)cluster.Destinations).Add((i++).ToString(), destination);
+                    // TODO: Clusters and destinations should be built together to avoid this explicit cast...
+                    ((Dictionary<string, DestinationConfig>)cluster.Destinations).Add(destination.DestinationId, destination.Destination);
                 }
             }
 
             return clusters;
         }
 
-        private List<DestinationConfig> BuildDestinations(DiscoveredServiceEx service, IReadOnlyDictionary<string, string> effectiveLabels, string listenerName, List<string> errors)
+        private List<(string DestinationId, DestinationConfig Destination)> BuildDestinations(DiscoveredServiceEx service, IReadOnlyDictionary<string, string> effectiveLabels, string listenerName, List<string> errors)
         {
-            var destinations = new List<DestinationConfig>();
+            var destinations = new List<(string DestinationId, DestinationConfig Destination)>();
 
             string healthListenerName = effectiveLabels.GetValueOrDefault("IslandGateway.Backend.Healthcheck.ServiceFabric.ListenerName", string.Empty);
             var statefulReplicaSelectionMode = this.ParseStatefulReplicaSelectionMode(effectiveLabels);
@@ -162,7 +161,7 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
                         var destinationResult = this.BuildDestination(replica.Replica, listenerName, healthListenerName, this.options);
                         if (destinationResult.IsSuccess)
                         {
-                            destinations.Add(destinationResult.Value);
+                            destinations.Add(($"{partition.Partition.PartitionId}/{replica.Replica.Id}", destinationResult.Value));
                         }
                         else
                         {
