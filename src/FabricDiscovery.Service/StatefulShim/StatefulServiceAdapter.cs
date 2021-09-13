@@ -36,11 +36,52 @@ namespace IslandGateway.FabricDiscovery
             this.operationLogger = operationLogger ?? throw new ArgumentNullException(nameof(operationLogger));
         }
 
+        /// <inheritdoc />
+        protected override Task OnOpenAsync(ReplicaOpenMode openMode, CancellationToken cancellation)
+        {
+            return this.operationLogger.ExecuteRootAsync(
+                "FabricDiscovery.StatefulServiceAdapter.OnOpenAsync",
+                () => base.OnOpenAsync(openMode, cancellation),
+                new[]
+                {
+                    KeyValuePair.Create(nameof(openMode), openMode.ToString()),
+                });
+        }
+
+        /// <inheritdoc />
         protected override Task RunAsync(CancellationToken cancellation)
         {
             return this.operationLogger.ExecuteRootAsync(
-                $"{this.wrapped.GetType().FullName}.{nameof(this.wrapped.RunAsync)}",
+                "FabricDiscovery.StatefulServiceAdapter.RunAsync",
                 () => this.wrapped.RunAsync(cancellation));
+        }
+
+        /// <inheritdoc />
+        protected override Task OnChangeRoleAsync(ReplicaRole newRole, CancellationToken cancellation)
+        {
+            return this.operationLogger.ExecuteRootAsync(
+                "FabricDiscovery.StatefulServiceAdapter.OnChangeRoleAsync",
+                () => base.OnChangeRoleAsync(newRole, cancellation),
+                new[]
+                {
+                    KeyValuePair.Create(nameof(newRole), newRole.ToString()),
+                });
+        }
+
+        /// <inheritdoc />
+        protected override Task OnCloseAsync(CancellationToken cancellation)
+        {
+            return this.operationLogger.ExecuteRootAsync(
+                "FabricDiscovery.StatefulServiceAdapter.OnCloseAsync",
+                () => base.OnCloseAsync(cancellation));
+        }
+
+        /// <inheritdoc />
+        protected override void OnAbort()
+        {
+            this.operationLogger.ExecuteRoot(
+                "FabricDiscovery.StatefulServiceAdapter.OnAbort",
+                () => base.OnAbort());
         }
 
         /// <summary>
@@ -51,20 +92,23 @@ namespace IslandGateway.FabricDiscovery
         {
             const string EndpointName = "ServiceEndpoint";
 
-            return new ServiceReplicaListener[]
-            {
-                new ServiceReplicaListener(
-                    createCommunicationListener: serviceContext =>
-                        new KestrelCommunicationListener(serviceContext, EndpointName, (url, listener) =>
-                        {
-                            this.logger.LogInformation($"Opening listener on {url}");
+            return this.operationLogger.Execute(
+                "FabricDiscovery.StatefulServiceAdapter.CreateServiceReplicaListeners",
+                () =>
+                    new ServiceReplicaListener[]
+                    {
+                        new ServiceReplicaListener(
+                            createCommunicationListener: serviceContext =>
+                                new KestrelCommunicationListener(serviceContext, EndpointName, (url, listener) =>
+                                {
+                                    this.logger.LogInformation($"Opening listener on {url}");
 
-                            return this.wrapped.CreateWebHostBuilder()
-                                .UseUrls(url) // TODO: Use SF integration middlewares to include partition id/replica id in url.
-                                .Build();
-                        }),
-                    name: EndpointName),
-            };
+                                    return this.wrapped.CreateWebHostBuilder()
+                                        .UseUrls(url) // TODO: Use SF integration middlewares to include partition id/replica id in url.
+                                        .Build();
+                                }),
+                            name: EndpointName),
+                    });
         }
     }
 }

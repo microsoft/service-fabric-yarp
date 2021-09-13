@@ -2,26 +2,19 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using IslandGateway.Common;
 using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.Common.Abstractions.Time;
 using IslandGateway.Common.Telemetry;
-using IslandGateway.FabricDiscovery.FabricWrapper;
 using IslandGateway.FabricDiscovery.IslandGatewayConfig;
 using IslandGateway.FabricDiscovery.Topology;
-using IslandGateway.FabricDiscovery.Util;
-using IslandGateway.ServiceFabricIntegration;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Yarp.ReverseProxy.Configuration;
 
 namespace IslandGateway.FabricDiscovery
 {
@@ -62,16 +55,13 @@ namespace IslandGateway.FabricDiscovery
     /// </remarks>
     internal class FabricDiscoveryService : IStatefulServiceWrapper
     {
-        private readonly DIAdapter diAdapter = new DIAdapter();
-        private readonly ILogger entrypointLogger;
         private readonly Action<ILoggingBuilder> configureLogging;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FabricDiscoveryService"/> class.
         /// </summary>
-        public FabricDiscoveryService(ILogger entrypointLogger, Action<ILoggingBuilder> configureLogging = null)
+        public FabricDiscoveryService(Action<ILoggingBuilder> configureLogging = null)
         {
-            this.entrypointLogger = entrypointLogger ?? throw new ArgumentNullException(nameof(entrypointLogger));
             this.configureLogging = configureLogging ?? (_ => { });
         }
 
@@ -85,55 +75,14 @@ namespace IslandGateway.FabricDiscovery
                 .ConfigureLogging(this.configureLogging)
                 .ConfigureServices((context, services) =>
                 {
-                    ConfigureCommonServices(context.Configuration, services);
-                    services.AddSingleton(this.diAdapter);
+                    services.AddSingleton<IOperationLogger, TextOperationLogger>();
+                    services.Configure<FabricDiscoveryOptions>(context.Configuration.GetSection("FabricDiscovery"));
+                    services.AddFabricDiscovery();
                 })
                 .UseStartup<Startup>();
         }
 
         /// <inheritdoc/>
-        public async Task RunAsync(CancellationToken cancellation)
-        {
-            this.entrypointLogger.LogInformation($"{nameof(FabricDiscoveryService)}.{nameof(this.RunAsync)} is starting...");
-
-            var host = this.CreateHostBuilder().Build();
-
-            // Allow the WebHost to use classes that are registered and managed by `host`.
-            this.diAdapter.SetServiceProvider(host.Services);
-
-            await host.RunAsync(cancellation);
-        }
-
-        /// <summary>
-        /// We maintain two separate Hosts.
-        /// One is a WebHost, created and managed by our listener lifecycle.
-        /// The other is a .NET Extensions vanilla Host, used to help with Dependency Injection and managing <see cref="IHostedService"/>'s
-        /// for doing our primary work within <see cref="Microsoft.ServiceFabric.Services.Runtime.StatefulServiceBase.RunAsync"/>.
-        /// This method configures services that are common to both.
-        /// </summary>
-        private static void ConfigureCommonServices(IConfiguration config, IServiceCollection services)
-        {
-            services.Configure<FabricDiscoveryOptions>(config.GetSection("FabricDiscovery"));
-        }
-
-        /// <summary>
-        /// Creates a .NET Generic Host (see <see href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/generic-host?view=aspnetcore-3.1"/>
-        /// that manages the lifecycle of this replica while it is in a Primary role.
-        /// Note that this is NOT an ASP .NET Core hot, and it does not expose any API endpoints.
-        /// Rather, this simply manages a Dependency Injection container and lifecycle of supporting services,
-        /// in particular through <see cref="IHostedService"/>'s that we register here.
-        /// </summary>
-        private IHostBuilder CreateHostBuilder()
-        {
-            return Host.CreateDefaultBuilder()
-                .ConfigureLogging(this.configureLogging)
-                .ConfigureServices((context, services) =>
-                {
-                    services.AddSingleton<IOperationLogger, TextOperationLogger>();
-                    services.AddFabricDiscovery();
-
-                    ConfigureCommonServices(context.Configuration, services);
-                });
-        }
+        public Task RunAsync(CancellationToken cancellation) => Task.CompletedTask;
     }
 }
