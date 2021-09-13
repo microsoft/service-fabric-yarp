@@ -51,8 +51,7 @@ namespace IslandGateway.FabricDiscovery
                         context,
                         loggerFactory.CreateLogger<StatefulServiceAdapter>(),
                         new TextOperationLogger(loggerFactory.CreateLogger<TextOperationLogger>()),
-                        new FabricDiscoveryService(
-                            entrypointLogger: entrypointLogger)))
+                        new FabricDiscoveryService()))
                     .GetAwaiter().GetResult();
 
                 // Prevents this host process from terminating so services keeps running.
@@ -74,7 +73,6 @@ namespace IslandGateway.FabricDiscovery
 
             var entrypointLogger = loggerFactory.CreateLogger("Entrypoint");
             var serviceWrapper = new FabricDiscoveryService(
-                entrypointLogger: entrypointLogger,
                 configureLogging: loggingBuilder =>
                 {
                     loggingBuilder.ClearProviders();
@@ -82,43 +80,14 @@ namespace IslandGateway.FabricDiscovery
                 });
             var webHost = serviceWrapper.CreateWebHostBuilder().Build();
 
-            using var cts = new CancellationTokenSource();
-            var runAsyncTask = ExecuteRunAsync();
-            var webhostTask = ExecuteWebHost();
             try
             {
-                await Task.WhenAll(runAsyncTask, webhostTask);
+                await webHost.RunAsync();
             }
             catch (Exception ex)
             {
                 entrypointLogger.LogError(ex, "Standalone execution failed.");
                 throw;
-            }
-
-            async Task ExecuteRunAsync()
-            {
-                try
-                {
-                    await serviceWrapper.RunAsync(cts.Token);
-                }
-                catch
-                {
-                    cts.Cancel();
-                    throw;
-                }
-            }
-
-            async Task ExecuteWebHost()
-            {
-                try
-                {
-                    await webHost.RunAsync(cts.Token);
-                }
-                finally
-                {
-                    // When the webhost terminates, we terminate.
-                    cts.Cancel();
-                }
             }
         }
     }

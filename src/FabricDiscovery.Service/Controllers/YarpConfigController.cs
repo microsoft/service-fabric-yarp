@@ -25,14 +25,14 @@ namespace IslandGateway.FabricDiscovery.Controllers
         private const int MaxPollTimeoutSeconds = 30;
         private const int DefaultPollTimeoutSeconds = 10;
 
-        private readonly DIAdapter diAdapter;
+        private readonly ISnapshotProvider<IslandGatewaySerializedConfig> snapshotProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="YarpConfigController"/> class.
         /// </summary>
-        public YarpConfigController(DIAdapter diAdapter)
+        public YarpConfigController(ISnapshotProvider<IslandGatewaySerializedConfig> snapshotProvider)
         {
-            this.diAdapter = diAdapter ?? throw new ArgumentNullException(nameof(diAdapter));
+            this.snapshotProvider = snapshotProvider ?? throw new ArgumentNullException(nameof(snapshotProvider));
         }
 
         /// <summary>
@@ -42,8 +42,7 @@ namespace IslandGateway.FabricDiscovery.Controllers
         [HttpGet]
         public async Task<IActionResult> GetYarpConfig()
         {
-            var igwConfigProvider = this.diAdapter.GetService<ISnapshotProvider<IslandGatewaySerializedConfig>>();
-            var snapshot = igwConfigProvider?.GetSnapshot();
+            var snapshot = this.snapshotProvider.GetSnapshot();
             if (snapshot == null)
             {
                 return this.StatusCode(StatusCodes.Status503ServiceUnavailable);
@@ -59,7 +58,7 @@ namespace IslandGateway.FabricDiscovery.Controllers
                 try
                 {
                     await snapshot.ChangeToken.WaitForChanges(cts.Token);
-                    snapshot = igwConfigProvider.GetSnapshot();
+                    snapshot = this.snapshotProvider.GetSnapshot();
                 }
                 catch (OperationCanceledException) when (cts.Token.IsCancellationRequested && !this.HttpContext.RequestAborted.IsCancellationRequested)
                 {
