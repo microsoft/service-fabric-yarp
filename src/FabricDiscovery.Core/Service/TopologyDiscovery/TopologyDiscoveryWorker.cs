@@ -57,10 +57,12 @@ namespace IslandGateway.FabricDiscovery.Topology
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.operationLogger = operationLogger ?? throw new ArgumentNullException(nameof(operationLogger));
 
+            var iterationDelay = new JitteredTimeSpan(TimeSpan.FromSeconds(1), TimeSpan.Zero);
             this.recurringTask = new RecurringTask(this.RunIterationAsync)
                 .WithLogging(logger, operationLogger, "TopologyDiscoveryWorker.Iteration")
                 .WithAbortOnConsecutiveFailures(options.Value.AbortAfterConsecutiveFailures)
-                .WithIterationDelay(new JitteredTimeSpan(TimeSpan.FromSeconds(1), TimeSpan.Zero)) // Future: react when dirty services are added
+                .WithIterationDelay(iterationDelay) // Future: react when dirty services are added
+                .WithRetryDelay(iterationDelay)
                 .WithIterationTimeout(options.Value.AbortAfterTimeoutInSeconds > 0 ? TimeSpan.FromSeconds(options.Value.AbortAfterTimeoutInSeconds) : null);
         }
 

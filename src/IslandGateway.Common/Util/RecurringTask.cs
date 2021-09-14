@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using IslandGateway.Common.Abstractions.Telemetry;
+using IslandGateway.Common.Util;
 using Microsoft.Extensions.Logging;
 
 namespace IslandGateway.Common
@@ -20,6 +21,7 @@ namespace IslandGateway.Common
         private string activityName;
         private IEnumerable<KeyValuePair<string, string>> customProperties;
         private JitteredTimeSpan? iterationDelay;
+        private JitteredTimeSpan? retryDelay;
         private TimeSpan? iterationTimeout;
         private Func<Exception, int, bool> abortCondition;
         private int maxConcurrency = 1;
@@ -67,11 +69,20 @@ namespace IslandGateway.Common
         }
 
         /// <summary>
-        /// Configures the delay between iteration executions.
+        /// Configures the delay after a successful iteration execution.
         /// </summary>
         public RecurringTask WithIterationDelay(JitteredTimeSpan? delay)
         {
             this.iterationDelay = delay;
+            return this;
+        }
+
+        /// <summary>
+        /// Configures the delay after a failed iteration execution.
+        /// </summary>
+        public RecurringTask WithRetryDelay(JitteredTimeSpan? delay)
+        {
+            this.retryDelay = delay;
             return this;
         }
 
@@ -121,12 +132,16 @@ namespace IslandGateway.Common
         }
 
         /// <summary>
+        /// Runs a single iteration of the recurring task.
+        /// </summary>
+        public Task RunIterationAsync(CancellationToken cancellation) => this.RunIterationAsync(cancellation, timeout: null);
+
+        /// <summary>
         /// Runs the recurring task until cancelled or aborted.
         /// </summary>
         public async Task RunAsync(CancellationToken cancellation)
         {
             this.logger?.LogInformation($"Recurring task {this.activityName} started");
-            int consecutiveFailures = 0;
 
             while (true)
             {
@@ -137,14 +152,39 @@ namespace IslandGateway.Common
                         await Task.Delay(this.iterationDelay.Value.Sample(), cancellation);
                     }
 
-                    await this.RunIterationAsync(cancellation);
-
-                    consecutiveFailures = 0;
+                    await this.RunUntilOneSuccessOrAbortAsync(cancellation);
                 }
                 catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
                 {
                     this.logger?.LogInformation($"Recurring task {this.activityName} ended gracefully");
                     return;
+                }
+            }
+        }
+
+        private async Task RunUntilOneSuccessOrAbortAsync(CancellationToken cancellation)
+        {
+            var stopwatch = ValueStopwatch.StartNew();
+            int consecutiveFailures = 0;
+            while (true)
+            {
+                try
+                {
+                    TimeSpan? timeBudget = this.iterationTimeout.HasValue ? this.iterationTimeout.Value - stopwatch.Elapsed : null;
+                    if (timeBudget <= TimeSpan.Zero)
+                    {
+                        throw new TimeoutException($"Insufficient time to start next attempt of {this.activityName}");
+                    }
+
+                    await this.RunIterationAsync(cancellation, timeBudget);
+
+                    // If we get here, then we completed an iteration successfully.
+                    return;
+                }
+                catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+                {
+                    // Deliberate cancellation, bubble out for caller to catch...
+                    throw;
                 }
                 catch (Exception exception) when (this.LogAndFilterAbortFailures(exception, ++consecutiveFailures))
                 {
@@ -152,14 +192,24 @@ namespace IslandGateway.Common
                     // because we have decided to swallow the exception this time. We may decide to abort for a future
                     // execution, in which time we would allow the exception to bubble out, and a respecting caller such
                     // as CriticalBackgroundService would then proceed to terminate the current process, as is desired.
+
+                    // Add a delay before the next retry, if configured...
+                    if (this.retryDelay.HasValue)
+                    {
+                        TimeSpan? timeBudget = this.iterationTimeout.HasValue ? this.iterationTimeout.Value - stopwatch.Elapsed : null;
+                        var delay = this.retryDelay.Value.Sample();
+                        if (delay >= timeBudget)
+                        {
+                            throw new TimeoutException($"Insufficient time to wait for next retry of {this.activityName}");
+                        }
+
+                        await Task.Delay(delay, cancellation);
+                    }
                 }
             }
         }
 
-        /// <summary>
-        /// Runs a single iteration of the recurring task.
-        /// </summary>
-        public Task RunIterationAsync(CancellationToken cancellation)
+        private Task RunIterationAsync(CancellationToken cancellation, TimeSpan? timeout)
         {
             try
             {
@@ -180,13 +230,21 @@ namespace IslandGateway.Common
                                     this.operationLogger.Context.SetProperty(prop.Key, prop.Value);
                                 }
                             }
-                            return AsyncUtil.ExecuteWithTimeout(this.action, this.iterationTimeout, cancellation);
+                            return this.RunIterationWithTimeoutAsync(timeout, cancellation);
                         })
-                    : AsyncUtil.ExecuteWithTimeout(this.action, this.iterationTimeout, cancellation);
+                    : this.RunIterationWithTimeoutAsync(timeout, cancellation);
             }
             finally
             {
                 Interlocked.Decrement(ref this.currentConcurrency);
+            }
+        }
+
+        private async Task RunIterationWithTimeoutAsync(TimeSpan? timeout, CancellationToken cancellation)
+        {
+            if (!await AsyncUtil.ExecuteWithTimeout(this.action, timeout, cancellation))
+            {
+                throw new TimeoutException($"Iteration of {this.activityName} timed-out.");
             }
         }
 

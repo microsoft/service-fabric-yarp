@@ -41,23 +41,24 @@ namespace IslandGateway.FabricDiscovery.FabricWrapper
             int pageIndex = 0;
             do
             {
-                // TODO: Retry
-                var page = await this.operationLogger.ExecuteAsync(
-                    "FabricApi.GetApplicationTypePagedListAsync",
-                    () => ExceptionsHelper.TranslateCancellations(
-                        func: static state => state.queryClient.GetApplicationTypePagedListAsync(
-                            queryDescription: state.query,
-                            timeout: state.eachApiCallTimeout,
-                            cancellationToken: state.cancellationToken),
-                        state: (this.queryClient, query, eachApiCallTimeout, cancellationToken),
-                        cancellation: cancellationToken),
-                    new[]
-                    {
-                        KeyValuePair.Create(nameof(query.ApplicationTypeNameFilter), query.ApplicationTypeNameFilter ?? string.Empty),
-                        KeyValuePair.Create(nameof(query.ApplicationTypeVersionFilter), query.ApplicationTypeVersionFilter ?? string.Empty),
-                        KeyValuePair.Create("page", (pageIndex++).ToString()),
-                    });
+                var page = await FabricCallHelper.RunWithExponentialRetries(
+                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
+                        "FabricApi.GetApplicationTypePagedListAsync",
+                        () => this.queryClient.GetApplicationTypePagedListAsync(
+                            queryDescription: query,
+                            timeout: eachApiCallTimeout,
+                            cancellationToken: cancellationToken),
+                        new[]
+                        {
+                            KeyValuePair.Create(nameof(query.ApplicationTypeNameFilter), query.ApplicationTypeNameFilter ?? string.Empty),
+                            KeyValuePair.Create(nameof(query.ApplicationTypeVersionFilter), query.ApplicationTypeVersionFilter ?? string.Empty),
+                            KeyValuePair.Create("page", pageIndex.ToString()),
+                            KeyValuePair.Create("attempt", attempt.ToString()),
+                        }),
+                    FabricExponentialRetryPolicy.Default,
+                    cancellationToken);
 
+                pageIndex++;
                 foreach (var item in page)
                 {
                     yield return new ApplicationTypeWrapper
@@ -82,23 +83,24 @@ namespace IslandGateway.FabricDiscovery.FabricWrapper
             int pageIndex = 0;
             do
             {
-                // TODO: Retry
-                var page = await this.operationLogger.ExecuteAsync(
-                    "FabricApi.GetApplicationPagedListAsync",
-                    () => ExceptionsHelper.TranslateCancellations(
-                        func: static state => state.queryClient.GetApplicationPagedListAsync(
-                            applicationQueryDescription: state.query,
-                            timeout: state.eachApiCallTimeout,
-                            cancellationToken: state.cancellationToken),
-                        state: (this.queryClient, query, eachApiCallTimeout, cancellationToken),
-                        cancellation: cancellationToken),
-                    new[]
-                    {
-                        KeyValuePair.Create(nameof(query.ApplicationTypeNameFilter), query.ApplicationTypeNameFilter ?? string.Empty),
-                        KeyValuePair.Create(nameof(query.ApplicationNameFilter), query.ApplicationNameFilter != null ? query.ApplicationNameFilter.ToString() : string.Empty),
-                        KeyValuePair.Create("page", (pageIndex++).ToString()),
-                    });
+                var page = await FabricCallHelper.RunWithExponentialRetries(
+                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
+                        "FabricApi.GetApplicationPagedListAsync",
+                        () => this.queryClient.GetApplicationPagedListAsync(
+                            applicationQueryDescription: query,
+                            timeout: eachApiCallTimeout,
+                            cancellationToken: cancellationToken),
+                        new[]
+                        {
+                            KeyValuePair.Create(nameof(query.ApplicationTypeNameFilter), query.ApplicationTypeNameFilter ?? string.Empty),
+                            KeyValuePair.Create(nameof(query.ApplicationNameFilter), query.ApplicationNameFilter != null ? query.ApplicationNameFilter.ToString() : string.Empty),
+                            KeyValuePair.Create("page", pageIndex.ToString()),
+                            KeyValuePair.Create("attempt", attempt.ToString()),
+                        }),
+                    FabricExponentialRetryPolicy.Default,
+                    cancellationToken);
 
+                pageIndex++;
                 foreach (var item in page)
                 {
                     yield return new ApplicationWrapper
@@ -118,19 +120,21 @@ namespace IslandGateway.FabricDiscovery.FabricWrapper
         /// <inheritdoc/>
         public virtual async Task<ApplicationNameKey> GetApplicationNameAsync(ServiceNameKey serviceName, TimeSpan timeout, CancellationToken cancellationToken)
         {
-            var result = await this.operationLogger.ExecuteAsync(
-                "FabricApi.GetApplicationNameAsync",
-                () => ExceptionsHelper.TranslateCancellations(
-                    func: static state => state.queryClient.GetApplicationNameAsync(
-                        serviceName: state.serviceName,
-                        timeout: state.timeout,
-                        cancellationToken: state.cancellationToken),
-                    state: (this.queryClient, serviceName, timeout, cancellationToken),
-                    cancellation: cancellationToken),
-                new[]
-                {
-                    KeyValuePair.Create(nameof(serviceName), serviceName.ToString() ?? string.Empty),
-                });
+            var result = await FabricCallHelper.RunWithExponentialRetries(
+                (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
+                    "FabricApi.GetApplicationNameAsync",
+                    () => this.queryClient.GetApplicationNameAsync(
+                            serviceName: serviceName,
+                            timeout: timeout,
+                            cancellationToken: cancellationToken),
+                    new[]
+                    {
+                        KeyValuePair.Create(nameof(serviceName), serviceName.ToString() ?? string.Empty),
+                        KeyValuePair.Create("attempt", attempt.ToString()),
+                    }),
+                FabricExponentialRetryPolicy.Default,
+                cancellationToken);
+
             return new ApplicationNameKey(result.ApplicationName);
         }
 
@@ -146,23 +150,23 @@ namespace IslandGateway.FabricDiscovery.FabricWrapper
                 throw new ArgumentException(nameof(applicationTypeVersion));
             }
 
-            // TODO: Retry
-            var results = await this.operationLogger.ExecuteAsync(
-                "FabricApi.GetServiceTypeListAsync",
-                () => ExceptionsHelper.TranslateCancellations(
-                    func: static state => state.queryClient.GetServiceTypeListAsync(
-                        applicationTypeName: state.applicationTypeName,
-                        applicationTypeVersion: state.applicationTypeVersion,
+            var results = await FabricCallHelper.RunWithExponentialRetries(
+                (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
+                    "FabricApi.GetServiceTypeListAsync",
+                    () => this.queryClient.GetServiceTypeListAsync(
+                        applicationTypeName: applicationTypeName,
+                        applicationTypeVersion: applicationTypeVersion,
                         serviceTypeNameFilter: null,
-                        timeout: state.eachApiCallTimeout,
-                        cancellationToken: state.cancellationToken),
-                    state: (this.queryClient, applicationTypeName, applicationTypeVersion, eachApiCallTimeout, cancellationToken),
-                    cancellation: cancellationToken),
-                new[]
-                {
-                    KeyValuePair.Create(nameof(applicationTypeName), applicationTypeName.ToString() ?? string.Empty),
-                    KeyValuePair.Create(nameof(applicationTypeVersion), applicationTypeVersion.ToString() ?? string.Empty),
-                });
+                        timeout: eachApiCallTimeout,
+                        cancellationToken: cancellationToken),
+                    new[]
+                    {
+                        KeyValuePair.Create(nameof(applicationTypeName), applicationTypeName.ToString() ?? string.Empty),
+                        KeyValuePair.Create(nameof(applicationTypeVersion), applicationTypeVersion.ToString() ?? string.Empty),
+                        KeyValuePair.Create("attempt", attempt.ToString()),
+                    }),
+                FabricExponentialRetryPolicy.Default,
+                cancellationToken);
 
             foreach (var item in results)
             {
@@ -185,23 +189,24 @@ namespace IslandGateway.FabricDiscovery.FabricWrapper
             int pageIndex = 0;
             do
             {
-                // TODO: Retry
-                var page = await this.operationLogger.ExecuteAsync(
-                    "FabricApi.GetServicePagedListAsync",
-                    () => ExceptionsHelper.TranslateCancellations(
-                        func: static state => state.queryClient.GetServicePagedListAsync(
-                            serviceQueryDescription: state.query,
-                            timeout: state.eachApiCallTimeout,
-                            cancellationToken: state.cancellationToken),
-                        state: (this.queryClient, query, eachApiCallTimeout, cancellationToken),
-                        cancellation: cancellationToken),
-                    new[]
-                    {
-                        KeyValuePair.Create(nameof(query.ServiceTypeNameFilter), query.ServiceTypeNameFilter ?? string.Empty),
-                        KeyValuePair.Create(nameof(query.ServiceNameFilter), query.ServiceNameFilter != null ? query.ServiceNameFilter.ToString() : string.Empty),
-                        KeyValuePair.Create("page", (pageIndex++).ToString()),
-                    });
+                var page = await FabricCallHelper.RunWithExponentialRetries(
+                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
+                        "FabricApi.GetServicePagedListAsync",
+                        () => this.queryClient.GetServicePagedListAsync(
+                                serviceQueryDescription: query,
+                                timeout: eachApiCallTimeout,
+                                cancellationToken: cancellationToken),
+                        new[]
+                        {
+                            KeyValuePair.Create(nameof(query.ServiceTypeNameFilter), query.ServiceTypeNameFilter ?? string.Empty),
+                            KeyValuePair.Create(nameof(query.ServiceNameFilter), query.ServiceNameFilter != null ? query.ServiceNameFilter.ToString() : string.Empty),
+                            KeyValuePair.Create("page", pageIndex.ToString()),
+                            KeyValuePair.Create("attempt", attempt.ToString()),
+                        }),
+                    FabricExponentialRetryPolicy.Default,
+                    cancellationToken);
 
+                pageIndex++;
                 foreach (var item in page)
                 {
                     yield return new ServiceWrapper
@@ -228,23 +233,25 @@ namespace IslandGateway.FabricDiscovery.FabricWrapper
             string continuationToken = null;
             do
             {
-                var page = await this.operationLogger.ExecuteAsync(
-                    "FabricApi.GetPartitionListAsync",
-                    () => ExceptionsHelper.TranslateCancellations(
-                        func: static state => state.queryClient.GetPartitionListAsync(
-                            serviceName: state.serviceName,
+                var page = await FabricCallHelper.RunWithExponentialRetries(
+                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
+                        "FabricApi.GetPartitionListAsync",
+                        () => this.queryClient.GetPartitionListAsync(
+                            serviceName: serviceName,
                             partitionIdFilter: null,
-                            continuationToken: state.continuationToken,
-                            timeout: state.eachApiCallTimeout,
-                            cancellationToken: state.cancellationToken),
-                        state: (this.queryClient, serviceName, continuationToken, eachApiCallTimeout, cancellationToken),
-                        cancellation: cancellationToken),
-                    new[]
-                    {
-                        KeyValuePair.Create(nameof(serviceName), serviceName.ToString() ?? string.Empty),
-                        KeyValuePair.Create("page", (pageIndex++).ToString()),
-                    });
+                            continuationToken: continuationToken,
+                            timeout: eachApiCallTimeout,
+                            cancellationToken: cancellationToken),
+                        new[]
+                        {
+                            KeyValuePair.Create(nameof(serviceName), serviceName.ToString() ?? string.Empty),
+                            KeyValuePair.Create("page", pageIndex.ToString()),
+                            KeyValuePair.Create("attempt", attempt.ToString()),
+                        }),
+                    FabricExponentialRetryPolicy.Default,
+                    cancellationToken);
 
+                pageIndex++;
                 foreach (var item in page)
                 {
                     yield return new PartitionWrapper
@@ -265,22 +272,24 @@ namespace IslandGateway.FabricDiscovery.FabricWrapper
             string continuationToken = null;
             do
             {
-                var page = await this.operationLogger.ExecuteAsync(
-                    "FabricApi.GetReplicaListAsync",
-                    () => ExceptionsHelper.TranslateCancellations(
-                        func: static state => state.queryClient.GetReplicaListAsync(
-                            partitionId: state.partitionId,
-                            continuationToken: state.continuationToken,
-                            timeout: state.eachApiCallTimeout,
-                            cancellationToken: state.cancellationToken),
-                        state: (this.queryClient, partitionId, eachApiCallTimeout, continuationToken, cancellationToken),
-                        cancellationToken),
-                    new[]
-                    {
-                        KeyValuePair.Create(nameof(partitionId), partitionId.ToString()),
-                        KeyValuePair.Create("page", (pageIndex++).ToString()),
-                    });
+                var page = await FabricCallHelper.RunWithExponentialRetries(
+                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
+                        "FabricApi.GetReplicaListAsync",
+                        () => this.queryClient.GetReplicaListAsync(
+                            partitionId: partitionId,
+                            continuationToken: continuationToken,
+                            timeout: eachApiCallTimeout,
+                            cancellationToken: cancellationToken),
+                        new[]
+                        {
+                            KeyValuePair.Create(nameof(partitionId), partitionId.ToString()),
+                            KeyValuePair.Create("page", pageIndex.ToString()),
+                            KeyValuePair.Create("attempt", attempt.ToString()),
+                        }),
+                    FabricExponentialRetryPolicy.Default,
+                    cancellationToken);
 
+                pageIndex++;
                 foreach (var item in page)
                 {
                     yield return new ReplicaWrapper

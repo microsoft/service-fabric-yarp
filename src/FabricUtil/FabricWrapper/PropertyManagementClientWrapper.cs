@@ -46,26 +46,29 @@ namespace IslandGateway.FabricDiscovery.FabricWrapper
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                previousResult = await this.operationLogger.ExecuteAsync(
-                    "FabricApi.EnumeratePropertiesAsync",
-                    () => ExceptionsHelper.TranslateCancellations(
-                        func: static state => state.propertyManagementClient.EnumeratePropertiesAsync(
-                            name: state.name,
+                previousResult = await FabricCallHelper.RunWithExponentialRetries(
+                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
+                        "FabricApi.EnumeratePropertiesAsync",
+                        () => this.propertyManagementClient.EnumeratePropertiesAsync(
+                            name: name,
                             includeValues: true,
-                            previousResult: state.previousResult,
-                            timeout: state.eachApiTimeout,
-                            cancellationToken: state.cancellationToken),
-                        state: (this.propertyManagementClient, name, previousResult, eachApiTimeout, cancellationToken),
-                        cancellation: cancellationToken),
-                    new[]
-                    {
-                        KeyValuePair.Create(nameof(name), name.ToString()),
-                        KeyValuePair.Create("page", (pageIndex++).ToString()),
-                    });
+                            previousResult: previousResult,
+                            timeout: eachApiTimeout,
+                            cancellationToken: cancellationToken),
+                        new[]
+                        {
+                            KeyValuePair.Create(nameof(name), name.ToString()),
+                            KeyValuePair.Create("page", pageIndex.ToString()),
+                            KeyValuePair.Create("attempt", attempt.ToString()),
+                        }),
+                    FabricExponentialRetryPolicy.Default,
+                    cancellationToken);
                 foreach (NamedProperty p in previousResult)
                 {
                     namedProperties[p.Metadata.PropertyName] = p.GetValue<string>();
                 }
+
+                pageIndex++;
             }
             while (previousResult.HasMoreData);
             return namedProperties;

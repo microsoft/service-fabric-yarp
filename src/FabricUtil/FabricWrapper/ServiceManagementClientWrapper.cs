@@ -53,25 +53,29 @@ namespace IslandGateway.ServiceFabricIntegration
 
             try
             {
-                var filterId = await ExceptionsHelper.TranslateCancellations(
-                    func: static state => state.ServiceManagementClient.RegisterServiceNotificationFilterAsync(
+                var filterId = await FabricCallHelper.RunWithExponentialRetries(
+                    (attempt, cancellation) => this.ServiceManagementClient.RegisterServiceNotificationFilterAsync(
                         new ServiceNotificationFilterDescription(
                             name: new Uri("fabric:"),
                             matchNamePrefix: true,
                             matchPrimaryChangeOnly: false),
-                        state.apiTimeout,
-                        state.cancellation),
-                    state: (this.ServiceManagementClient, apiTimeout, cancellation),
-                    cancellation: cancellation);
+                        apiTimeout,
+                        cancellation),
+                    FabricExponentialRetryPolicy.Default,
+                    cancellation);
 
                 return async unsubscribeCancellation =>
                 {
                     try
                     {
-                        await ExceptionsHelper.TranslateCancellations(
-                            func: static state => state.ServiceManagementClient.UnregisterServiceNotificationFilterAsync(state.filterId, state.apiTimeout, state.unsubscribeCancellation),
-                            state: (this.ServiceManagementClient, filterId, apiTimeout, unsubscribeCancellation),
-                            cancellation: unsubscribeCancellation);
+                        await FabricCallHelper.RunWithExponentialRetries(
+                            async (attempt, unsubscribeCancellation) =>
+                            {
+                                await this.ServiceManagementClient.UnregisterServiceNotificationFilterAsync(filterId, apiTimeout, unsubscribeCancellation);
+                                return 0;
+                            },
+                            FabricExponentialRetryPolicy.Default,
+                            unsubscribeCancellation);
                     }
                     finally
                     {

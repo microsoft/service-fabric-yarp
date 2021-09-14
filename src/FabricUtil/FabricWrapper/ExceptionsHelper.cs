@@ -38,49 +38,5 @@ namespace IslandGateway.ServiceFabricIntegration
                 throw;
             }
         }
-
-        /// <summary>
-        /// Translates Service Fabric's <see cref="FabricTransientException"/>
-        /// into the appropriate <see cref="OperationCanceledException"/> when it represents a deliberate cancellation.
-        /// </summary>
-        public static async Task<TResult> TranslateCancellations<TResult, TState>(Func<TState, Task<TResult>> func, TState state, CancellationToken cancellation)
-        {
-            try
-            {
-                return await func(state);
-            }
-            catch (FabricTransientException ex)
-            {
-                if (ex.ErrorCode == FabricErrorCode.OperationCanceled && cancellation.IsCancellationRequested)
-                {
-                    cancellation.ThrowIfCancellationRequested();
-                    throw new InvalidOperationException("Execution should never get here...");
-                }
-
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Translates Service Fabric's <see cref="FabricTransientException"/>
-        /// into the appropriate <see cref="OperationCanceledException"/> when it represents a deliberate cancellation.
-        /// </summary>
-        public static async Task TranslateCancellations<TState>(Func<TState, Task> func, TState state, CancellationToken cancellation)
-        {
-            try
-            {
-                await func(state);
-            }
-            catch (FabricTransientException ex)
-            {
-                if (ex.ErrorCode == FabricErrorCode.OperationCanceled && cancellation.IsCancellationRequested)
-                {
-                    cancellation.ThrowIfCancellationRequested();
-                    throw new InvalidOperationException("Execution should never get here...");
-                }
-
-                throw;
-            }
-        }
     }
 }
