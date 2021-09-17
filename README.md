@@ -4,7 +4,7 @@
 
 * Windows 10 Version 1909 or later, x64
 * .NET SDK (version indicated in global.json)
-* .NET Core 3.1 runtime (to run netcoreapp3.1 tests)
+* .NET Core 5.x runtime (to run net5.0 tests)
 * To setup certs, use `eng/Create-DevCerts.ps1`.
 
 Dotnet sdks and runtimes can be downloaded from https://dotnet.microsoft.com/download .
