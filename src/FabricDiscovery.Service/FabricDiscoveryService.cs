@@ -53,7 +53,7 @@ namespace IslandGateway.FabricDiscovery
     /// connectivity issues that prevent successful Service Discovery. Killing the current process gives a chance for Service Fabric
     /// to start us on a different machine which will hopefully work correctly.
     /// </remarks>
-    internal class FabricDiscoveryService : IStatefulServiceWrapper
+    internal class FabricDiscoveryService : IStatelessServiceWrapper
     {
         private readonly Action<ILoggingBuilder> configureLogging;
 

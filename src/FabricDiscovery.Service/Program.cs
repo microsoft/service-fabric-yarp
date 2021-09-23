@@ -47,9 +47,9 @@ namespace IslandGateway.FabricDiscovery
 
                 ServiceRuntime.RegisterServiceAsync(
                     "FabricDiscoveryServiceType",
-                    context => new StatefulServiceAdapter(
+                    context => new StatelessServiceAdapter(
                         context,
-                        loggerFactory.CreateLogger<StatefulServiceAdapter>(),
+                        loggerFactory.CreateLogger<StatelessServiceAdapter>(),
                         new TextOperationLogger(loggerFactory.CreateLogger<TextOperationLogger>()),
                         new FabricDiscoveryService()))
                     .GetAwaiter().GetResult();

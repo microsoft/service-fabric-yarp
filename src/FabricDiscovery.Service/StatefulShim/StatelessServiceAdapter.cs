@@ -18,17 +18,17 @@ namespace IslandGateway.FabricDiscovery
     /// <summary>
     /// The FabricRuntime creates an instance of this class for each service type instance.
     /// </summary>
-    internal sealed class StatefulServiceAdapter : StatefulService
+    internal sealed class StatelessServiceAdapter : StatelessService
     {
-        private readonly IStatefulServiceWrapper wrapped;
-        private readonly ILogger<StatefulServiceAdapter> logger;
+        private readonly IStatelessServiceWrapper wrapped;
+        private readonly ILogger<StatelessServiceAdapter> logger;
         private readonly IOperationLogger operationLogger;
 
-        public StatefulServiceAdapter(
-            StatefulServiceContext context,
-            ILogger<StatefulServiceAdapter> logger,
+        public StatelessServiceAdapter(
+            StatelessServiceContext context,
+            ILogger<StatelessServiceAdapter> logger,
             IOperationLogger operationLogger,
-            IStatefulServiceWrapper wrappedService)
+            IStatelessServiceWrapper wrappedService)
             : base(context)
         {
             this.wrapped = wrappedService ?? throw new ArgumentNullException(nameof(wrappedService));
@@ -37,14 +37,14 @@ namespace IslandGateway.FabricDiscovery
         }
 
         /// <inheritdoc />
-        protected override Task OnOpenAsync(ReplicaOpenMode openMode, CancellationToken cancellation)
+        protected override Task OnOpenAsync(CancellationToken cancellation)
         {
             return this.operationLogger.ExecuteRootAsync(
                 "FabricDiscovery.StatefulServiceAdapter.OnOpenAsync",
-                () => base.OnOpenAsync(openMode, cancellation),
+                () => base.OnOpenAsync(cancellation),
                 new[]
                 {
-                    KeyValuePair.Create(nameof(openMode), openMode.ToString()),
+                    KeyValuePair.Create("open", "open"),
                 });
         }
 
@@ -54,18 +54,6 @@ namespace IslandGateway.FabricDiscovery
             return this.operationLogger.ExecuteRootAsync(
                 "FabricDiscovery.StatefulServiceAdapter.RunAsync",
                 () => this.wrapped.RunAsync(cancellation));
-        }
-
-        /// <inheritdoc />
-        protected override Task OnChangeRoleAsync(ReplicaRole newRole, CancellationToken cancellation)
-        {
-            return this.operationLogger.ExecuteRootAsync(
-                "FabricDiscovery.StatefulServiceAdapter.OnChangeRoleAsync",
-                () => base.OnChangeRoleAsync(newRole, cancellation),
-                new[]
-                {
-                    KeyValuePair.Create(nameof(newRole), newRole.ToString()),
-                });
         }
 
         /// <inheritdoc />
@@ -88,16 +76,16 @@ namespace IslandGateway.FabricDiscovery
         /// Optional override to create listeners (like tcp, http) for this service instance.
         /// </summary>
         /// <returns>The collection of listeners.</returns>
-        protected override IEnumerable<ServiceReplicaListener> CreateServiceReplicaListeners()
+        protected override IEnumerable<ServiceInstanceListener> CreateServiceInstanceListeners()
         {
             const string EndpointName = "ServiceEndpoint";
 
             return this.operationLogger.Execute(
-                "FabricDiscovery.StatefulServiceAdapter.CreateServiceReplicaListeners",
+                "FabricDiscovery.StatefulServiceAdapter.CreateServiceInstanceListeners",
                 () =>
-                    new ServiceReplicaListener[]
+                    new ServiceInstanceListener[]
                     {
-                        new ServiceReplicaListener(
+                        new ServiceInstanceListener(
                             createCommunicationListener: serviceContext =>
                                 new KestrelCommunicationListener(serviceContext, EndpointName, (url, listener) =>
                                 {

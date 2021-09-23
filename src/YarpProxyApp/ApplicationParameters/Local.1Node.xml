@@ -3,7 +3,6 @@
   <Parameters>
     <Parameter Name="YarpProxy_InstanceCount" Value="1" />
     <Parameter Name="EchoService_InstanceCount" Value="1" />
-    <Parameter Name="FabricDiscovery_MinReplicaSetSize" Value="1" />
-    <Parameter Name="FabricDiscovery_TargetReplicaSetSize" Value="1" />
+    <Parameter Name="FabricDiscovery_InstanceCount" Value="1" />
   </Parameters>
 </Application>

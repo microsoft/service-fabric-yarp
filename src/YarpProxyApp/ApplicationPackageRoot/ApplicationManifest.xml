@@ -5,8 +5,7 @@
     <Parameter Name="YarpProxy_InstanceCount" DefaultValue="" />
     <Parameter Name="YarpProxy_HttpPort" DefaultValue="80" />
     <Parameter Name="YarpProxy_HttpsPort" DefaultValue="443" />
-    <Parameter Name="FabricDiscovery_TargetReplicaSetSize" DefaultValue="3" />
-    <Parameter Name="FabricDiscovery_MinReplicaSetSize" DefaultValue="3" />
+    <Parameter Name="FabricDiscovery_InstanceCount" DefaultValue="1" />
     <Parameter Name="FabricDiscovery_AbortAfterTimeoutInSeconds" DefaultValue="600" />
     <Parameter Name="FabricDiscovery_AbortAfterConsecutiveFailures" DefaultValue="3" />
     <Parameter Name="FabricDiscovery_FullRefreshPollPeriodInSeconds" DefaultValue="300" />
@@ -47,10 +46,10 @@
       </StatelessService>
     </Service>
     <Service Name="FabricDiscovery" ServicePackageActivationMode="ExclusiveProcess">
-      <StatefulService ServiceTypeName="FabricDiscoveryServiceType" DefaultMoveCost="High" TargetReplicaSetSize="[FabricDiscovery_TargetReplicaSetSize]" MinReplicaSetSize="[FabricDiscovery_MinReplicaSetSize]">
+      <StatelessService ServiceTypeName="FabricDiscoveryServiceType" InstanceCount="[FabricDiscovery_InstanceCount]">
         <SingletonPartition />
         <PlacementConstraints>[YarpProxy_PlacementConstraints]</PlacementConstraints>
-      </StatefulService>
+      </StatelessService>
     </Service>
     <Service Name="EchoService" ServicePackageActivationMode="ExclusiveProcess">
       <StatelessService ServiceTypeName="EchoServiceType" InstanceCount="[EchoService_InstanceCount]">

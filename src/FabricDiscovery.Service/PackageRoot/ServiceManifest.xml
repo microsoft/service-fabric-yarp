@@ -5,7 +5,7 @@
                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ServiceTypes>
-    <StatefulServiceType ServiceTypeName="FabricDiscoveryServiceType" HasPersistedState="false" />
+    <StatelessServiceType ServiceTypeName="FabricDiscoveryServiceType" />
   </ServiceTypes>
   <CodePackage Name="Code" Version="1.0.0">
     <EntryPoint>
@@ -19,7 +19,6 @@
   <Resources>
     <Endpoints>
       <Endpoint Protocol="http" Name="ServiceEndpoint" />
-      <Endpoint Name="ReplicatorEndpoint" />
     </Endpoints>
   </Resources>
 </ServiceManifest>

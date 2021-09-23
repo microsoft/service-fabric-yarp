@@ -10,7 +10,7 @@ namespace IslandGateway.FabricDiscovery
     /// <summary>
     /// Wrapper for a stateful Service Fabric service.
     /// </summary>
-    internal interface IStatefulServiceWrapper
+    internal interface IStatelessServiceWrapper
     {
         /// <summary>
         /// Creates a new <see cref="IWebHostBuilder"/> used to create the listener for this service.
