@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using IslandGateway.Common.Util;
+using IslandGateway.FabricDiscovery.IslandGatewayConfig;
 using IslandGateway.ServiceFabricIntegration;
 using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Forwarder;
@@ -30,11 +31,14 @@ namespace IslandGateway.FabricDiscovery.Util
             return string.Equals(labels.GetValueOrDefault("IslandGateway.EnableDynamicOverrides", null), "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        internal static List<RouteConfig> BuildRoutes(Uri serviceName, IReadOnlyDictionary<string, string> labels, List<string> errors)
+        internal static List<RouteConfig> BuildRoutes(IslandGatewayBackendService backendService, List<string> errors)
         {
             // Look for route IDs
             const string RoutesLabelsPrefix = "IslandGateway.Routes.";
             var routesNames = new HashSet<string>();
+            IReadOnlyDictionary<string, string> labels = backendService.FinalEffectiveLabels;
+            Uri serviceName = backendService.FabricService.Service.ServiceName;
+
             foreach (var kvp in labels)
             {
                 if (kvp.Key.Length > RoutesLabelsPrefix.Length && kvp.Key.StartsWith(RoutesLabelsPrefix, StringComparison.Ordinal))
@@ -65,28 +69,19 @@ namespace IslandGateway.FabricDiscovery.Util
             {
                 string thisRoutePrefix = $"{RoutesLabelsPrefix}{routeName}";
 
+                /*
                 if (!labels.TryGetValue($"{thisRoutePrefix}.Path", out string path))
                 {
                     errors.Add($"Missing {thisRoutePrefix}.Path.");
                     return null;
                 }
+                */
+                labels.TryGetValue($"{thisRoutePrefix}.Path", out string path);
+
+                // Combine default path generation (/appName/serviceName) and user defined path from service manifest.
+                var finalPath = serviceName.AbsolutePath + path;
 
                 labels.TryGetValue($"{thisRoutePrefix}.CorsPolicy", out string corsPolicy);
-                var route = new RouteConfig
-                {
-                    RouteId = $"{Uri.EscapeDataString(backendId)}:{Uri.EscapeDataString(routeName)}",
-
-                    Match = new RouteMatch
-                    {
-                        // TODO: Add support for other matchers like Host, Headers, ...
-                        Path = path,
-                    },
-
-                    Order = GetLabel(labels, $"{thisRoutePrefix}.Order", (int?)null, errors),
-                    ClusterId = backendId,
-                    Metadata = ExtractMetadata($"{thisRoutePrefix}.Metadata.", labels),
-                    CorsPolicy = corsPolicy,
-                };
 
                 if (errors.Count > 0)
                 {
@@ -95,7 +90,63 @@ namespace IslandGateway.FabricDiscovery.Util
                     return null;
                 }
 
-                routes.Add(route);
+                // Stateful/stateless service with multiple partitions
+                if (backendService.FabricService.Partitions.Count > 1)
+                {
+                    foreach (var partition in backendService.FabricService.Partitions)
+                    {
+                        RouteQueryParameter routeQueryParameter = new RouteQueryParameter
+                        {
+                            Name = "PartitionID",
+                            Values = new List<string> { $"{partition.Partition.PartitionId}" },
+                        };
+
+                        var route = new RouteConfig
+                        {
+                            RouteId = $"{Uri.EscapeDataString(backendId)}:{Uri.EscapeDataString(partition.Partition.PartitionId.ToString())}:{Uri.EscapeDataString(routeName)}",
+
+                            Match = new RouteMatch
+                            {
+                                // TODO: Add support for other matchers like Host, Headers, ...
+                                Path = finalPath,
+                                QueryParameters = new List<RouteQueryParameter> { routeQueryParameter },
+                            },
+
+                            Order = GetLabel(labels, $"{thisRoutePrefix}.Order", (int?)null, errors),
+                            ClusterId = backendId + "/" + partition.Partition.PartitionId,
+                            Metadata = ExtractMetadata($"{thisRoutePrefix}.Metadata.", labels),
+                            CorsPolicy = corsPolicy,
+                            Transforms = new[]
+                            {
+                                new Dictionary<string, string> { { "PathRemovePrefix", serviceName.AbsolutePath } }, new Dictionary<string, string> { { "QueryRemoveParameter", "PartitionID" } },
+                            },
+                        };
+                        routes.Add(route);
+                    }
+                }
+                else
+                { // Stateless/stateful service with singleton partition
+                    var route = new RouteConfig
+                    {
+                        RouteId = $"{Uri.EscapeDataString(backendId)}:{Uri.EscapeDataString(routeName)}",
+
+                        Match = new RouteMatch
+                        {
+                            // TODO: Add support for other matchers like Host, Headers, ...
+                            Path = finalPath,
+                        },
+
+                        Order = GetLabel(labels, $"{thisRoutePrefix}.Order", (int?)null, errors),
+                        ClusterId = backendId,
+                        Metadata = ExtractMetadata($"{thisRoutePrefix}.Metadata.", labels),
+                        CorsPolicy = corsPolicy,
+                        Transforms = new[]
+                        {
+                            new Dictionary<string, string> { { "PathRemovePrefix", serviceName.AbsolutePath } },
+                        },
+                    };
+                    routes.Add(route);
+                }
             }
 
             // Sort discovered routes so that final output is deterministic.
@@ -104,48 +155,55 @@ namespace IslandGateway.FabricDiscovery.Util
             return routes;
         }
 
-        internal static List<ClusterConfig> BuildClustersWithoutDestinations(ApplicationWrapper application, ServiceWrapper service, IReadOnlyDictionary<string, string> labels, List<string> errors)
+        internal static List<ClusterConfig> BuildClustersWithDestinations(IslandGatewayBackendService service, Dictionary<string, Dictionary<string, DestinationConfig>> partitionDestinations, List<string> errors)
         {
-            string clusterId = GetClusterId(service.ServiceName, labels);
+            List<ClusterConfig> clusters = new List<ClusterConfig>();
 
-            var metadata = ExtractMetadata("IslandGateway.Backend.Metadata.", labels);
+            var metadata = ExtractMetadata("IslandGateway.Backend.Metadata.", service.FinalEffectiveLabels);
 
             // Populate service fabric info into metric dimensions.
-            metadata["__SF.ApplicationTypeName"] = application.ApplicationTypeName;
-            metadata["__SF.ApplicationName"] = application.ApplicationName.ToString();
-            metadata["__SF.ServiceTypeName"] = service.ServiceTypeName;
-            metadata["__SF.ServiceName"] = service.ServiceName.ToString();
+            metadata["__SF.ApplicationTypeName"] = service.FabricApplication.Application.ApplicationTypeName;
+            metadata["__SF.ApplicationName"] = service.FabricApplication.Application.ApplicationName.ToString();
+            metadata["__SF.ServiceTypeName"] = service.FabricService.Service.ServiceTypeName;
+            metadata["__SF.ServiceName"] = service.FabricService.Service.ServiceName.ToString();
 
-            var cluster = new ClusterConfig
+            foreach (var entry in partitionDestinations)
             {
-                ClusterId = clusterId,
-                LoadBalancingPolicy = LoadBalancingPolicies.Random,
-                HealthCheck = new HealthCheckConfig
+                string partitionID = entry.Key;
+                var destinations = entry.Value;
+                string clusterId = GetClusterId(service.FabricService.Service.ServiceName, service.FinalEffectiveLabels);
+
+                var cluster = new ClusterConfig
                 {
-                    Active = new ActiveHealthCheckConfig
+                    ClusterId = service.FabricService.Partitions.Count > 1 ? clusterId + "/" + partitionID : clusterId,
+                    LoadBalancingPolicy = LoadBalancingPolicies.Random,
+                    HealthCheck = new HealthCheckConfig
                     {
-                        Enabled = GetLabel(labels, "IslandGateway.Backend.Healthcheck.Enabled", false, errors),
-                        Interval = GetLabel<TimeSpanIso8601>(labels, "IslandGateway.Backend.Healthcheck.Interval", TimeSpan.Zero, errors),
-                        Timeout = GetLabel<TimeSpanIso8601>(labels, "IslandGateway.Backend.Healthcheck.Timeout", TimeSpan.Zero, errors),
-                        Path = GetLabel<string>(labels, "IslandGateway.Backend.Healthcheck.Path", null, errors),
+                        Active = new ActiveHealthCheckConfig
+                        {
+                            Enabled = GetLabel(service.FinalEffectiveLabels, "IslandGateway.Backend.Healthcheck.Enabled", false, errors),
+                            Interval = GetLabel<TimeSpanIso8601>(service.FinalEffectiveLabels, "IslandGateway.Backend.Healthcheck.Interval", TimeSpan.Zero, errors),
+                            Timeout = GetLabel<TimeSpanIso8601>(service.FinalEffectiveLabels, "IslandGateway.Backend.Healthcheck.Timeout", TimeSpan.Zero, errors),
+                            Path = GetLabel<string>(service.FinalEffectiveLabels, "IslandGateway.Backend.Healthcheck.Path", null, errors),
+                        },
                     },
-                },
-                Metadata = metadata,
-                HttpRequest = new ForwarderRequestConfig
+                    Metadata = metadata,
+                    HttpRequest = new ForwarderRequestConfig
+                    {
+                        ActivityTimeout = GetLabel<TimeSpanIso8601>(service.FinalEffectiveLabels, "IslandGateway.Backend.ProxyTimeout", TimeSpan.FromSeconds(30), errors),
+                    },
+                    Destinations = destinations,
+                };
+
+                if (errors.Count > 0)
                 {
-                    Timeout = GetLabel<TimeSpanIso8601>(labels, "IslandGateway.Backend.ProxyTimeout", TimeSpan.FromSeconds(30), errors),
-                },
-                Destinations = new Dictionary<string, DestinationConfig>(),
-            };
-
-            if (errors.Count > 0)
-            {
-                // Reading a label above may have failed due to bad user inputs.
-                // If so, abort and report the error.
-                return null;
+                    // Reading a label above may have failed due to bad user inputs.
+                    // If so, abort and report the error.
+                    return null;
+                }
+                clusters.Add(cluster);
             }
-
-            return new List<ClusterConfig> { cluster };
+            return clusters;
         }
 
         private static string GetClusterId(Uri serviceName, IReadOnlyDictionary<string, string> labels)

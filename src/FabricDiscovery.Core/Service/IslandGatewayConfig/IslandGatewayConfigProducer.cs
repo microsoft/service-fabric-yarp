@@ -66,9 +66,8 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
             {
                 return null;
             }
-
             var clusters = this.BuildClusters(service, errors);
-            var routes = LabelsParserV2.BuildRoutes(service.FabricService.Service.ServiceName, service.FinalEffectiveLabels, errors);
+            var routes = LabelsParserV2.BuildRoutes(service, errors);
 
             if (clusters == null || routes == null)
             {
@@ -80,35 +79,21 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
 
         private List<ClusterConfig> BuildClusters(IslandGatewayBackendService service, List<string> errors)
         {
-            var clusters = LabelsParserV2.BuildClustersWithoutDestinations(service.FabricApplication.Application, service.FabricService.Service, service.FinalEffectiveLabels, errors);
-            if (clusters != null)
-            {
-                if (clusters.Count != 1)
-                {
-                    throw new NotSupportedException("We only support one YARP cluster per SF service at the moment.");
-                }
-
-                var cluster = clusters[0];
-                string defaultListenerName = service.FinalEffectiveLabels.GetValueOrDefault("IslandGateway.Backend.ServiceFabric.ListenerName", string.Empty);
-                var destinations = this.BuildDestinations(service.FabricService, service.FinalEffectiveLabels, defaultListenerName, errors);
-                foreach (var destination in destinations)
-                {
-                    // TODO: Clusters and destinations should be built together to avoid this explicit cast...
-                    ((Dictionary<string, DestinationConfig>)cluster.Destinations).Add(destination.DestinationId, destination.Destination);
-                }
-            }
-
+            string defaultListenerName = service.FinalEffectiveLabels.GetValueOrDefault("IslandGateway.Backend.ServiceFabric.ListenerName", string.Empty);
+            var partitionDestinations = this.BuildDestinations(service.FabricService, service.FinalEffectiveLabels, defaultListenerName, errors);
+            var clusters = LabelsParserV2.BuildClustersWithDestinations(service, partitionDestinations, errors);
             return clusters;
         }
 
-        private List<(string DestinationId, DestinationConfig Destination)> BuildDestinations(DiscoveredServiceEx service, IReadOnlyDictionary<string, string> effectiveLabels, string listenerName, List<string> errors)
+        private Dictionary<string, Dictionary<string, DestinationConfig>> BuildDestinations(DiscoveredServiceEx service, IReadOnlyDictionary<string, string> effectiveLabels, string listenerName, List<string> errors)
         {
-            var destinations = new List<(string DestinationId, DestinationConfig Destination)>();
+            var partitionDestinations = new Dictionary<string, Dictionary<string, DestinationConfig>>();
 
             string healthListenerName = effectiveLabels.GetValueOrDefault("IslandGateway.Backend.Healthcheck.ServiceFabric.ListenerName", string.Empty);
             var statefulReplicaSelectionMode = this.ParseStatefulReplicaSelectionMode(effectiveLabels);
             foreach (var partition in service.Partitions)
             {
+                var destinations = new Dictionary<string, DestinationConfig>();
                 foreach (var replica in partition.Replicas)
                 {
                     if (!IsHealthyReplica(replica.Replica))
@@ -143,7 +128,7 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
                             // Stateless service replicas are always eligible
                             return true;
                         }
-
+                        /*
                         switch (statefulReplicaSelectionMode)
                         {
                             case StatefulReplicaSelectionMode.Primary:
@@ -154,6 +139,10 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
                             default:
                                 return true;
                         }
+                        */
+
+                        // Currently only support replicas with primary role to be eligible
+                        return replica.Role == ReplicaRole.Primary;
                     }
 
                     try
@@ -161,7 +150,7 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
                         var destinationResult = this.BuildDestination(replica.Replica, listenerName, healthListenerName, this.options);
                         if (destinationResult.IsSuccess)
                         {
-                            destinations.Add(($"{partition.Partition.PartitionId}/{replica.Replica.Id}", destinationResult.Value));
+                            destinations.Add($"{partition.Partition.PartitionId}/{replica.Replica.Id}", destinationResult.Value);
                         }
                         else
                         {
@@ -176,9 +165,10 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
                         this.logger.LogError(ex, error);
                     }
                 }
+                partitionDestinations.Add(partition.Partition.PartitionId.ToString(), destinations);
             }
 
-            return destinations;
+            return partitionDestinations;
         }
 
         private Result<DestinationConfig, string> BuildDestination(ReplicaWrapper replica, string listenerName, string healthListenerName, FabricDiscoveryOptions options)
