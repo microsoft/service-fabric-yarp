@@ -24,6 +24,6 @@
     <PackageReference Update="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Update="xunit" Version="2.4.0" />
     <PackageReference Update="xunit.runner.visualstudio" Version="2.4.0" />
-    <PackageReference Update="Yarp.ReverseProxy" Version="1.0.0-preview.12.21328.2" />
+    <PackageReference Update="Yarp.ReverseProxy" Version="1.0.0-rc.1.21520.4" />
   </ItemGroup>
 </Project>
