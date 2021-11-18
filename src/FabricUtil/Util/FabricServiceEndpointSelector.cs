@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using Microsoft.ServiceFabric.Services.Communication;
 
-namespace IslandGateway.ServiceFabricIntegration
+namespace Yarp.ServiceFabric.ServiceFabricIntegration
 {
     /// <summary>
     /// Provides a method <see cref="TryGetEndpoint"/> to select an appropriate endpoint from a Service Fabric service replica endpoints collection.

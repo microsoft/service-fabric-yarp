@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace IslandGateway.FabricDiscovery.Util
+namespace Yarp.ServiceFabric.FabricDiscovery.Util
 {
     internal class IslandGatewayFreshnessTracker
     {

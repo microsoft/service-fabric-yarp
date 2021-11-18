@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Xunit;
 
-namespace IslandGateway.FabricDiscovery.Util.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.Util.Tests
 {
     public class WriteLengthStreamTests
     {

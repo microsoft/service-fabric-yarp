@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using Yarp.ReverseProxy.Configuration;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig
 {
     /// <summary>
     /// Provides a method to produce Island Gateway configurations from <see cref="IslandGatewayBackendService"/>'s.

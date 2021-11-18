@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Fabric;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.ServiceFabricIntegration;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.FabricWrapper
+namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
 {
     /// <summary>
     /// A wrapper class for the service fabric client SDK.

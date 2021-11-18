@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IslandGateway.FabricDiscovery.FabricWrapper
+namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
 {
     /// <summary>
     /// Wraps Service Fabric client SDK PropertyManagement api's.

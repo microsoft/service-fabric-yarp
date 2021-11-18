@@ -6,13 +6,13 @@ using System.Fabric;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.RemoteConfig.Infra;
-using IslandGateway.ServiceFabricIntegration;
 using Microsoft.Extensions.Logging;
 using Microsoft.ServiceFabric.Services.Client;
 using Microsoft.ServiceFabric.Services.Communication;
+using Yarp.ServiceFabric.RemoteConfig.Infra;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.RemoteConfig.Fabric
+namespace Yarp.ServiceFabric.RemoteConfig.Fabric
 {
     /// <summary>
     /// Abstracts away logic to produce a concrete Uri that can be called to reach a Service Fabric service.

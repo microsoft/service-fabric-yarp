@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml;
 
-namespace IslandGateway.FabricDiscovery.Util
+namespace Yarp.ServiceFabric.FabricDiscovery.Util
 {
     /// <summary>
     /// Serializes and deserializes TimeSpan's in a sane manner, contrary to the default with System.Text.Json.

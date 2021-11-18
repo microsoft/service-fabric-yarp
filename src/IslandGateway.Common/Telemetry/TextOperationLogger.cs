@@ -4,11 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.Common.Util;
 using Microsoft.Extensions.Logging;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Util;
 
-namespace IslandGateway.Common.Telemetry
+namespace Yarp.ServiceFabric.Common.Telemetry
 {
     /// <summary>
     /// Default implementation of <see cref="IOperationLogger"/>

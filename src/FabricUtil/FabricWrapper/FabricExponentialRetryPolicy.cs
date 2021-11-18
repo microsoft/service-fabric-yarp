@@ -3,7 +3,7 @@
 
 using System;
 
-namespace IslandGateway.ServiceFabricIntegration
+namespace Yarp.ServiceFabric.ServiceFabricIntegration
 {
     /// <summary>
     /// Structure providing the defaults for SF retry policy.

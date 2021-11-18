@@ -4,7 +4,7 @@
 using System;
 using System.Text;
 
-namespace IslandGateway.FabricDiscovery.Util
+namespace Yarp.ServiceFabric.FabricDiscovery.Util
 {
     /// <summary>
     /// Represents a result as either

@@ -6,7 +6,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Xml;
 
-namespace IslandGateway.Common.Util
+namespace Yarp.ServiceFabric.Common.Util
 {
     /// <summary>
     /// Handles ISO 8601 timespans in an IConfigurationBuilder configuration.

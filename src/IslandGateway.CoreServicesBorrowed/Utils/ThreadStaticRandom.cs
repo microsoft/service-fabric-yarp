@@ -3,7 +3,7 @@
 
 using System;
 
-namespace IslandGateway.CoreServicesBorrowed
+namespace Yarp.ServiceFabric.CoreServicesBorrowed
 {
     /// <summary>
     /// Provides a thread static implementation of random numbers that optimizes not to lock on every invocation of random number generation.

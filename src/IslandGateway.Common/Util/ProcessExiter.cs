@@ -5,7 +5,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace IslandGateway.Common
+namespace Yarp.ServiceFabric.Common
 {
     /// <summary>
     /// Implementation of <see cref="IProcessExiter"/> that uses <see cref="Environment.Exit(int)"/> to cause the current process to exit.

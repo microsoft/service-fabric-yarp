@@ -3,9 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using IslandGateway.FabricDiscovery.Topology;
+using Yarp.ServiceFabric.FabricDiscovery.Topology;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig
 {
     internal class IslandGatewayParsedServiceType
     {

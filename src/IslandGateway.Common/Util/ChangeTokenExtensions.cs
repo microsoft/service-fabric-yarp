@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Primitives;
 
-namespace IslandGateway.Common
+namespace Yarp.ServiceFabric.Common
 {
     /// <summary>
     /// Contains extensions related to <see cref="IChangeToken"/>.

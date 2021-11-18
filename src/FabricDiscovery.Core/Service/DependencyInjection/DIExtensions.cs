@@ -2,19 +2,19 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
-using IslandGateway.Common;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.Common.Abstractions.Time;
-using IslandGateway.Common.Telemetry;
-using IslandGateway.FabricDiscovery.FabricWrapper;
-using IslandGateway.FabricDiscovery.IslandGatewayConfig;
-using IslandGateway.FabricDiscovery.Topology;
-using IslandGateway.FabricDiscovery.Util;
-using IslandGateway.ServiceFabricIntegration;
 using Microsoft.Extensions.DependencyInjection;
 using Yarp.ReverseProxy.Configuration;
+using Yarp.ServiceFabric.Common;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Abstractions.Time;
+using Yarp.ServiceFabric.Common.Telemetry;
+using Yarp.ServiceFabric.FabricDiscovery.FabricWrapper;
+using Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig;
+using Yarp.ServiceFabric.FabricDiscovery.Topology;
+using Yarp.ServiceFabric.FabricDiscovery.Util;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery
+namespace Yarp.ServiceFabric.FabricDiscovery
 {
     /// <summary>
     /// Extension methods to help with dependency injection.

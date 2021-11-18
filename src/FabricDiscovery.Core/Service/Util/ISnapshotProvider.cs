@@ -4,7 +4,7 @@
 using System;
 using Microsoft.Extensions.Primitives;
 
-namespace IslandGateway.FabricDiscovery.Util
+namespace Yarp.ServiceFabric.FabricDiscovery.Util
 {
     /// <summary>
     /// Provides a method to get the current snapshot of some configuration object.

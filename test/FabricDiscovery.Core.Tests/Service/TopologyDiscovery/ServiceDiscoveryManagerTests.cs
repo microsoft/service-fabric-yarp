@@ -9,15 +9,15 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.Common.Telemetry;
-using IslandGateway.FabricDiscovery.FabricWrapper;
-using IslandGateway.ServiceFabricIntegration;
 using Moq;
 using Tests.Common;
 using Xunit;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Telemetry;
+using Yarp.ServiceFabric.FabricDiscovery.FabricWrapper;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Topology.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.Topology.Tests
 {
     public class ServiceDiscoveryManagerTests : TestAutoMockBase
     {

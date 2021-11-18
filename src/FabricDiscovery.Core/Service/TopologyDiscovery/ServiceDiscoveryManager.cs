@@ -9,13 +9,13 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.FabricDiscovery.FabricWrapper;
-using IslandGateway.FabricDiscovery.Util;
-using IslandGateway.ServiceFabricIntegration;
 using Microsoft.Extensions.Logging;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.FabricDiscovery.FabricWrapper;
+using Yarp.ServiceFabric.FabricDiscovery.Util;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Topology
+namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 {
     /// <summary>
     /// Manages discovery of services that use Service Manifest extensions as their discovery model.

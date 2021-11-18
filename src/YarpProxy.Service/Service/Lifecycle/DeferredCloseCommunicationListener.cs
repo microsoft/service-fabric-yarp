@@ -4,13 +4,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common.Util;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
+using Yarp.ServiceFabric.Common.Util;
 using YarpProxy.Service.Lifecycle;
 
-namespace IslandGateway.Service
+namespace Yarp.ServiceFabric.Service
 {
     /// <summary>
     /// Delays shutdown of the ASP .NET Core Kestrel listener by a few seconds

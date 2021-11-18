@@ -4,9 +4,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common.Util;
+using Yarp.ServiceFabric.Common.Util;
 
-namespace IslandGateway.CoreServicesBorrowed
+namespace Yarp.ServiceFabric.CoreServicesBorrowed
 {
     /// <summary>
     /// Provides a way to measure time that tracks the wall clock time. Unlike <see cref="MonotonicTimer"/>, this class allows the possibility

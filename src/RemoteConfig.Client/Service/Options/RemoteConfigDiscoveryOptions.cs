@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace IslandGateway.RemoteConfig
+namespace Yarp.ServiceFabric.RemoteConfig
 {
     /// <summary>
     /// Options affecting Island Gateway service discovery.

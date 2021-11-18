@@ -4,8 +4,8 @@
 using System;
 using Autofac.Core;
 using Autofac.Extras.Moq;
-using IslandGateway.CoreServicesBorrowed.CoreFramework;
 using Moq;
+using Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework;
 
 namespace Tests.Common
 {

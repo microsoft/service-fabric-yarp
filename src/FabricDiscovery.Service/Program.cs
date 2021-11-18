@@ -4,12 +4,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common.Telemetry;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.ServiceFabric.Services.Runtime;
+using Yarp.ServiceFabric.Common.Telemetry;
 
-namespace IslandGateway.FabricDiscovery
+namespace Yarp.ServiceFabric.FabricDiscovery
 {
     internal static class Program
     {

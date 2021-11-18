@@ -3,7 +3,7 @@
 
 using System;
 
-namespace IslandGateway.Common.Util
+namespace Yarp.ServiceFabric.Common.Util
 {
     /// <summary>
     /// Time and utilities.

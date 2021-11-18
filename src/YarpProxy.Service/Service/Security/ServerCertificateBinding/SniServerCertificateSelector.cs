@@ -7,13 +7,13 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using IslandGateway.Common.Util;
-using IslandGateway.Core.Abstractions;
-using IslandGateway.CoreServicesBorrowed.CoreFramework;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.Extensions.Logging;
+using Yarp.ServiceFabric.Common.Util;
+using Yarp.ServiceFabric.Core.Abstractions;
+using Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework;
 
-namespace IslandGateway.Core.Service.Security.ServerCertificateBinding
+namespace Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding
 {
     /// <summary>
     /// Default implementation of <see cref="ISniServerCertificateSelector"/>.

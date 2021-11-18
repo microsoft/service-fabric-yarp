@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Fabric.Description;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.ServiceFabricIntegration;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.FabricWrapper
+namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
 {
     /// <summary>
     /// Wraps Service Fabric client SDK QueryClient api's.

@@ -5,10 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using IslandGateway.CoreServicesBorrowed.CoreFramework;
 using Microsoft.Extensions.Logging;
+using Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework;
 
-namespace IslandGateway.Core.Service.Security.ServerCertificateBinding
+namespace Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding
 {
     /// <summary>
     /// Helper class to enumerate and load certificates.

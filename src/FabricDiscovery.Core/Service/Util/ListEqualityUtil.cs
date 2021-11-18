@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace IslandGateway.FabricDiscovery.Util
+namespace Yarp.ServiceFabric.FabricDiscovery.Util
 {
     internal static class ListEqualityUtil
     {

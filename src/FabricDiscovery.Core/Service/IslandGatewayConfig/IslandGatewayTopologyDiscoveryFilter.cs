@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
-using IslandGateway.FabricDiscovery.Topology;
+using Yarp.ServiceFabric.FabricDiscovery.Topology;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig
 {
     /// <summary>
     /// Filters what elements of the Service Fabric cluster are discovered

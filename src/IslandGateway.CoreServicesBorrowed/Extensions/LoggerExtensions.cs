@@ -3,10 +3,10 @@
 
 using System;
 using System.Threading.Tasks;
-using IslandGateway.CoreServicesBorrowed.CoreFramework;
 using Microsoft.Extensions.Logging;
+using Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework;
 
-namespace IslandGateway.CoreServicesBorrowed.Extensions
+namespace Yarp.ServiceFabric.CoreServicesBorrowed.Extensions
 {
     /// <summary>
     /// Extension methods for <see cref="ILogger"/>

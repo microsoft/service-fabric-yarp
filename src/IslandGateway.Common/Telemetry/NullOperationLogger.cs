@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using IslandGateway.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
 
-namespace IslandGateway.Common.Telemetry
+namespace Yarp.ServiceFabric.Common.Telemetry
 {
     /// <summary>
     /// Implementation of <see cref="IOperationLogger"/>

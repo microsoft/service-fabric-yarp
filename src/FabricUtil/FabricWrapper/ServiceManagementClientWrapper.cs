@@ -7,7 +7,7 @@ using System.Fabric.Description;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IslandGateway.ServiceFabricIntegration
+namespace Yarp.ServiceFabric.ServiceFabricIntegration
 {
     /// <summary>
     /// A wrapper class for the service fabric client SDK.

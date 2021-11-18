@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using Yarp.ReverseProxy.Configuration;
 
-namespace IslandGateway.RemoteConfig.Contract
+namespace Yarp.ServiceFabric.RemoteConfig.Contract
 {
     /// <summary>
     /// Models the response for the config endpoint.

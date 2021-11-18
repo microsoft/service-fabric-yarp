@@ -4,16 +4,16 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.Common.Abstractions.Time;
-using IslandGateway.Common.Util;
-using IslandGateway.Core.Abstractions;
-using IslandGateway.CoreServicesBorrowed;
-using IslandGateway.CoreServicesBorrowed.CoreFramework;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Abstractions.Time;
+using Yarp.ServiceFabric.Common.Util;
+using Yarp.ServiceFabric.Core.Abstractions;
+using Yarp.ServiceFabric.CoreServicesBorrowed;
+using Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework;
 
-namespace IslandGateway.Core.Service.Security.ServerCertificateBinding
+namespace Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding
 {
     /// <summary>
     /// Default implementation of <see cref="ISniServerCertificateSelector"/>.

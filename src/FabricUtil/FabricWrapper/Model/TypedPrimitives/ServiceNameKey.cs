@@ -4,7 +4,7 @@
 using System;
 using System.Diagnostics;
 
-namespace IslandGateway.ServiceFabricIntegration
+namespace Yarp.ServiceFabric.ServiceFabricIntegration
 {
     /// <summary>
     /// Wraps a Service Name uri with added type safety to prevent the value from being misused.

@@ -6,7 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Connections;
 
-namespace IslandGateway.Core.Abstractions
+namespace Yarp.ServiceFabric.Core.Abstractions
 {
     /// <summary>
     /// Provides a method <see cref="SelectCertificate(ConnectionContext, string)"/> to enable SNI-based TLS server certificate selection.

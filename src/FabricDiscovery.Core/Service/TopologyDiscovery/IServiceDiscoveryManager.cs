@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.ServiceFabricIntegration;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Topology
+namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 {
     /// <summary>
     /// Manages discovery of Service Fabric Services and Applications,

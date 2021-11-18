@@ -3,9 +3,9 @@
 
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.ServiceFabricIntegration;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Topology
+namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 {
     /// <summary>
     /// Provides methods to produce high level abstractions from Service Fabric topology,

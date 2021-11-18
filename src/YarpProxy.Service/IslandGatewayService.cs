@@ -6,8 +6,6 @@ using System.Collections.Generic;
 using System.Fabric;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using IslandGateway.Core.Abstractions;
-using IslandGateway.CoreServicesBorrowed.CoreFramework;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Hosting;
@@ -17,9 +15,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
+using Yarp.ServiceFabric.Core.Abstractions;
+using Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework;
 using YarpProxy.Service.Lifecycle;
 
-namespace IslandGateway.Service
+namespace Yarp.ServiceFabric.Service
 {
     /// <summary>
     /// An instance of this class is created for each service instance by the Service Fabric runtime.

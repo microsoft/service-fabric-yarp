@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Fabric.Query;
 
-namespace IslandGateway.ServiceFabricIntegration
+namespace Yarp.ServiceFabric.ServiceFabricIntegration
 {
     /// <summary>
     /// Unit testable wrapper of a Service Fabric Application Type.

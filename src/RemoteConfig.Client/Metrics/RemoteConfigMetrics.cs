@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
-using IslandGateway.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
 
-namespace IslandGateway.RemoteConfig.Metrics
+namespace Yarp.ServiceFabric.RemoteConfig.Metrics
 {
     /// <summary>
     /// Metric to measure Service Fabric discovery health.

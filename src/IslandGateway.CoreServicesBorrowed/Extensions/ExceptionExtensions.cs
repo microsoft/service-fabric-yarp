@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace IslandGateway.CoreServicesBorrowed.CoreFramework
+namespace Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework
 {
     /// <summary>
     /// Extensions for the <see cref="Exception"/> class.

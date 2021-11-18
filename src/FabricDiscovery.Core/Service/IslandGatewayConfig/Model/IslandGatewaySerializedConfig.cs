@@ -3,7 +3,7 @@
 
 using System;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig
 {
     /// <summary>
     /// Provides methods to get the discovered Service Fabric topology mapped to Island Gateway abstractions.

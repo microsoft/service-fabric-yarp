@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 
-namespace IslandGateway.FabricDiscovery
+namespace Yarp.ServiceFabric.FabricDiscovery
 {
     /// <summary>
     /// Wrapper for a stateful Service Fabric service.

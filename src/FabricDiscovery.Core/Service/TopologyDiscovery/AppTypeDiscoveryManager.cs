@@ -8,13 +8,13 @@ using System.Fabric.Description;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.FabricDiscovery.FabricWrapper;
-using IslandGateway.FabricDiscovery.Util;
-using IslandGateway.ServiceFabricIntegration;
 using Microsoft.Extensions.Logging;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.FabricDiscovery.FabricWrapper;
+using Yarp.ServiceFabric.FabricDiscovery.Util;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Topology
+namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 {
     internal class AppTypeDiscoveryManager : IAppTypeDiscoveryManager
     {

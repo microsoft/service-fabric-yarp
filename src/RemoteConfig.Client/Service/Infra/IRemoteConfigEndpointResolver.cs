@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IslandGateway.RemoteConfig.Infra
+namespace Yarp.ServiceFabric.RemoteConfig.Infra
 {
     /// <summary>
     /// Interface for a class that resolves concrete uri's that can be used to reach the external configuration provider.

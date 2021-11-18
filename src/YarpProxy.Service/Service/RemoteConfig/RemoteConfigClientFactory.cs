@@ -5,10 +5,10 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using IslandGateway.RemoteConfig.Infra;
 using Microsoft.Extensions.Logging;
+using Yarp.ServiceFabric.RemoteConfig.Infra;
 
-namespace IslandGateway.Hosting.Common
+namespace Yarp.ServiceFabric.Hosting.Common
 {
     internal class RemoteConfigClientFactory : IRemoteConfigClientFactory
     {

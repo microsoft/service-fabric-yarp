@@ -4,15 +4,15 @@
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
-using IslandGateway.FabricDiscovery.IslandGatewayConfig;
-using IslandGateway.FabricDiscovery.Util;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
 using Tests.Common;
 using Xunit;
+using Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig;
+using Yarp.ServiceFabric.FabricDiscovery.Util;
 
-namespace IslandGateway.FabricDiscovery.Controllers.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.Controllers.Tests
 {
     public class IgwConfigControllerTests : TestAutoMockBase
     {

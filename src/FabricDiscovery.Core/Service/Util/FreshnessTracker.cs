@@ -4,7 +4,7 @@
 using System;
 using System.Diagnostics;
 
-namespace IslandGateway.FabricDiscovery.Util
+namespace Yarp.ServiceFabric.FabricDiscovery.Util
 {
     internal class FreshnessTracker
     {

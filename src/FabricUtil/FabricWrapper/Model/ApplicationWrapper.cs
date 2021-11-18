@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace IslandGateway.ServiceFabricIntegration
+namespace Yarp.ServiceFabric.ServiceFabricIntegration
 {
     /// <summary>
     /// Unit testable wrapper of a Service Fabric Application.

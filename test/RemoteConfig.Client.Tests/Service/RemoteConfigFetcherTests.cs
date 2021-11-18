@@ -10,14 +10,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using IslandGateway.Common.Telemetry;
-using IslandGateway.RemoteConfig.Contract;
-using IslandGateway.RemoteConfig.Infra;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Yarp.ServiceFabric.Common.Telemetry;
+using Yarp.ServiceFabric.RemoteConfig.Contract;
+using Yarp.ServiceFabric.RemoteConfig.Infra;
 
-namespace IslandGateway.RemoteConfig.Tests
+namespace Yarp.ServiceFabric.RemoteConfig.Tests
 {
     public class RemoteConfigFetcherTests
     {

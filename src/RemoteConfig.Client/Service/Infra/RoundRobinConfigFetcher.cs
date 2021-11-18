@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using IslandGateway.RemoteConfig.Contract;
+using Yarp.ServiceFabric.RemoteConfig.Contract;
 
-namespace IslandGateway.RemoteConfig.Infra
+namespace Yarp.ServiceFabric.RemoteConfig.Infra
 {
     /// <summary>
     /// Invokes a set of <see cref="RemoteConfigFetcher"/>'s in a round-robin fashion.

@@ -3,7 +3,7 @@
 
 using System.Net.Http;
 
-namespace IslandGateway.RemoteConfig.Infra
+namespace Yarp.ServiceFabric.RemoteConfig.Infra
 {
     /// <summary>
     /// Provides a method to create an <see cref="HttpMessageInvoker"/> to call the remote configuration server.

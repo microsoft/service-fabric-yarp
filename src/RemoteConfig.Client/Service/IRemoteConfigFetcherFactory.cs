@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using IslandGateway.RemoteConfig.Infra;
+using Yarp.ServiceFabric.RemoteConfig.Infra;
 
-namespace IslandGateway.RemoteConfig
+namespace Yarp.ServiceFabric.RemoteConfig
 {
     /// <summary>
     /// Provides a method to create a <see cref="IRemoteConfigFetcher"/> used to fetch remote configuration.

@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using IslandGateway.Common.Abstractions.Time;
+using Yarp.ServiceFabric.Common.Abstractions.Time;
 
-namespace IslandGateway.Common.Util
+namespace Yarp.ServiceFabric.Common.Util
 {
     /// <summary>
     /// TODO.

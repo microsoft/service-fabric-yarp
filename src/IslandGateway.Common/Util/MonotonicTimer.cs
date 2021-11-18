@@ -5,9 +5,9 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common.Abstractions.Time;
+using Yarp.ServiceFabric.Common.Abstractions.Time;
 
-namespace IslandGateway.Common.Util
+namespace Yarp.ServiceFabric.Common.Util
 {
     /// <summary>
     /// Provides a way to measure time in a monotonic fashion, immune to any system clock changes.

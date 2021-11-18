@@ -6,14 +6,14 @@ using System.Collections.Generic;
 using System.Fabric;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common.Abstractions.Telemetry;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
 
-namespace IslandGateway.FabricDiscovery
+namespace Yarp.ServiceFabric.FabricDiscovery
 {
     /// <summary>
     /// The FabricRuntime creates an instance of this class for each service type instance.

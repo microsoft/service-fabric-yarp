@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace IslandGateway.Common.Abstractions.Telemetry
+namespace Yarp.ServiceFabric.Common.Abstractions.Telemetry
 {
     /// <summary>
     /// Provides methods to log telemetry for the execution of chunks of

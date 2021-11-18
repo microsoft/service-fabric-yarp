@@ -3,7 +3,7 @@
 
 using System.Threading.Tasks;
 
-namespace IslandGateway.Common
+namespace Yarp.ServiceFabric.Common
 {
     /// <summary>
     /// Provides a method meant to exit the process when a non-recoverable failure happens.

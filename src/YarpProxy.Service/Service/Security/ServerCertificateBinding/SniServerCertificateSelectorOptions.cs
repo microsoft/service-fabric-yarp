@@ -3,7 +3,7 @@
 
 using System.Security.Cryptography.X509Certificates;
 
-namespace IslandGateway.Core.Abstractions
+namespace Yarp.ServiceFabric.Core.Abstractions
 {
     /// <summary>
     /// Options consumed by implementations of <see cref="ISniServerCertificateSelector"/>.

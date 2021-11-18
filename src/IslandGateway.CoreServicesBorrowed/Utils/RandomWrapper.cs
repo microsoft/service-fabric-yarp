@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
-using IslandGateway.CoreServicesBorrowed.CoreFramework;
+using Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework;
 
-namespace IslandGateway.CoreServicesBorrowed
+namespace Yarp.ServiceFabric.CoreServicesBorrowed
 {
     /// <summary>
     /// Wrapper around <see cref="Random"/> that facilitates deterministic unit testing.

@@ -3,11 +3,11 @@
 
 using System;
 using System.Threading;
-using IslandGateway.CoreServicesBorrowed.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.ServiceFabric.Services.Runtime;
+using Yarp.ServiceFabric.CoreServicesBorrowed.Extensions;
 
-namespace IslandGateway.Service
+namespace Yarp.ServiceFabric.Service
 {
     /// <summary>
     /// Entry point.

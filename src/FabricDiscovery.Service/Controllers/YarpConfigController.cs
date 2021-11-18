@@ -5,14 +5,14 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common;
-using IslandGateway.FabricDiscovery.IslandGatewayConfig;
-using IslandGateway.FabricDiscovery.Util;
-using IslandGateway.RemoteConfig.Contract;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Yarp.ServiceFabric.Common;
+using Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig;
+using Yarp.ServiceFabric.FabricDiscovery.Util;
+using Yarp.ServiceFabric.RemoteConfig.Contract;
 
-namespace IslandGateway.FabricDiscovery.Controllers
+namespace Yarp.ServiceFabric.FabricDiscovery.Controllers
 {
     /// <summary>
     /// Serves Island Gateway configuration for consumption by IGW instances.

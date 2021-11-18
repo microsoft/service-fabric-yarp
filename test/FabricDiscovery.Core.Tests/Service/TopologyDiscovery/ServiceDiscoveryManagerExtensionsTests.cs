@@ -5,11 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Fabric.Query;
 using FluentAssertions;
-using IslandGateway.ServiceFabricIntegration;
 using Moq;
 using Xunit;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Topology.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.Topology.Tests
 {
     public class ServiceDiscoveryManagerExtensionsTests
     {

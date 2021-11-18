@@ -3,10 +3,10 @@
 
 using System;
 using System.Collections.Generic;
-using IslandGateway.FabricDiscovery.Util;
-using IslandGateway.ServiceFabricIntegration;
+using Yarp.ServiceFabric.FabricDiscovery.Util;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Topology
+namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 {
     internal record DiscoveredAppEx : DiscoveredApp
     {

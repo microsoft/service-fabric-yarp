@@ -3,10 +3,10 @@
 
 using System;
 using FluentAssertions;
-using IslandGateway.ServiceFabricIntegration;
 using Xunit;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Util.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.Util.Tests
 {
     public class FabricExponentialRetryPolicyTests
     {

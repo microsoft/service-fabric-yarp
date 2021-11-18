@@ -3,7 +3,7 @@
 
 using System.Text.Json;
 
-namespace IslandGateway.RemoteConfig.Contract
+namespace Yarp.ServiceFabric.RemoteConfig.Contract
 {
     /// <summary>
     /// Provides  a method to configure serialization/deserialization settings for Island Gateway remote config objects.

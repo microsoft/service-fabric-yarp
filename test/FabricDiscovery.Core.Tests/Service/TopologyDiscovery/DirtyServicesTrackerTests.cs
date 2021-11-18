@@ -9,12 +9,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using IslandGateway.ServiceFabricIntegration;
 using Moq;
 using Tests.Common;
 using Xunit;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Topology.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.Topology.Tests
 {
     public class DirtyServicesTrackerTests
     {

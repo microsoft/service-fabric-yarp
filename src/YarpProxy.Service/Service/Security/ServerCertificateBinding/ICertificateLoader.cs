@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 
-namespace IslandGateway.Core.Service.Security.ServerCertificateBinding
+namespace Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding
 {
     /// <summary>
     /// Enumerates certificates that might be viable for use as TLS server authentication.

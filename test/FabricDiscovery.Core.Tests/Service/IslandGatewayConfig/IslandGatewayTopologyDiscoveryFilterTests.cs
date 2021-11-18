@@ -3,18 +3,18 @@
 
 using System.Collections.Generic;
 using FluentAssertions;
-using IslandGateway.FabricDiscovery.Topology;
-using IslandGateway.ServiceFabricIntegration;
 using Xunit;
+using Yarp.ServiceFabric.FabricDiscovery.Topology;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig.Tests
 {
     public class IslandGatewayTopologyDiscoveryFilterTests
     {
         private readonly IslandGatewayTopologyDiscoveryFilter sut = new IslandGatewayTopologyDiscoveryFilter();
 
         [Fact]
-        public void ShouldDiscoverServicesOfServiceType_WithIslandGatewayExtension_ReturnsTrue()
+        public void ShouldDiscoverServicesOfServiceType_WithYarpExtension_ReturnsTrue()
         {
             this.sut
                 .ShouldDiscoverServicesOfServiceType(
@@ -25,14 +25,14 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig.Tests
                             Extensions = new Dictionary<string, string>
                             {
                                 { "SomeOtherExtension", "anything" },
-                                { "IslandGateway", "<Labels></Labels>" },
+                                { "Yarp", "<Labels></Labels>" },
                             },
                         }))
                 .Should().BeTrue();
         }
 
         [Fact]
-        public void ShouldDiscoverServicesOfServiceType_NoIslandGatewayExtension_ReturnsFalse()
+        public void ShouldDiscoverServicesOfServiceType_NoYarpExtension_ReturnsFalse()
         {
             this.sut
                 .ShouldDiscoverServicesOfServiceType(

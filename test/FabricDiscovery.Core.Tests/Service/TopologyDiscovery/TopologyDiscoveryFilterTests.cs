@@ -3,10 +3,10 @@
 
 using System.Collections.Generic;
 using FluentAssertions;
-using IslandGateway.ServiceFabricIntegration;
 using Xunit;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Topology.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.Topology.Tests
 {
     public class TopologyDiscoveryFilterTests
     {

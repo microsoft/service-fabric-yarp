@@ -5,18 +5,18 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.Common.Telemetry;
-using IslandGateway.FabricDiscovery.IslandGatewayConfig;
-using IslandGateway.FabricDiscovery.Topology;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Yarp.ServiceFabric.Common;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Telemetry;
+using Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig;
+using Yarp.ServiceFabric.FabricDiscovery.Topology;
 
-namespace IslandGateway.FabricDiscovery
+namespace Yarp.ServiceFabric.FabricDiscovery
 {
     /// <summary>
     /// Logical entry-point of Island Gateway's Fabric Discovery service.

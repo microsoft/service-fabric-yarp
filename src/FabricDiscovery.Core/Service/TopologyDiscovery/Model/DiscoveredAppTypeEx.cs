@@ -3,9 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using IslandGateway.ServiceFabricIntegration;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Topology
+namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 {
     internal record DiscoveredAppTypeEx : DiscoveredAppType
     {

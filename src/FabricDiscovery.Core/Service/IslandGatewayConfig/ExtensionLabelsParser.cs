@@ -8,7 +8,7 @@ using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig
 {
     internal class ExtensionLabelsParser : IExtensionLabelsParser
     {

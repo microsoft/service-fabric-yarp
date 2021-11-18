@@ -4,14 +4,14 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.FabricDiscovery.Topology;
-using IslandGateway.FabricDiscovery.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Yarp.ServiceFabric.Common;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.FabricDiscovery.Topology;
+using Yarp.ServiceFabric.FabricDiscovery.Util;
 
-namespace IslandGateway.FabricDiscovery
+namespace Yarp.ServiceFabric.FabricDiscovery
 {
     internal class BackgroundMetricsWorker : CriticalBackgroundService
     {

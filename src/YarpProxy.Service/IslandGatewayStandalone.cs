@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using IslandGateway.CoreServicesBorrowed;
 using Microsoft.AspNetCore.Hosting;
+using Yarp.ServiceFabric.CoreServicesBorrowed;
 using YarpProxy.Service.Lifecycle;
 
-namespace IslandGateway.Service
+namespace Yarp.ServiceFabric.Service
 {
     internal static class IslandGatewayStandalone
     {

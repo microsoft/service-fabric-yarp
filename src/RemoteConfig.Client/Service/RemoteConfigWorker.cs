@@ -6,18 +6,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.Common.Util;
-using IslandGateway.RemoteConfig.Contract;
-using IslandGateway.RemoteConfig.Infra;
-using IslandGateway.RemoteConfig.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Yarp.ReverseProxy.Configuration;
+using Yarp.ServiceFabric.Common;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Util;
+using Yarp.ServiceFabric.RemoteConfig.Contract;
+using Yarp.ServiceFabric.RemoteConfig.Infra;
+using Yarp.ServiceFabric.RemoteConfig.Metrics;
 
-namespace IslandGateway.RemoteConfig
+namespace Yarp.ServiceFabric.RemoteConfig
 {
     /// <summary>
     /// The service startup configuration class.

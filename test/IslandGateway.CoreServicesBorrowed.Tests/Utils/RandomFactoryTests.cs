@@ -4,7 +4,7 @@
 using FluentAssertions;
 using Xunit;
 
-namespace IslandGateway.CoreServicesBorrowed.Tests
+namespace Yarp.ServiceFabric.CoreServicesBorrowed.Tests
 {
     public class RandomFactoryTests
     {

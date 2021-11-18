@@ -3,7 +3,7 @@
 
 using System;
 
-namespace IslandGateway.CoreServicesBorrowed.CoreFramework
+namespace Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework
 {
     /// <summary>
     /// Simple argument validation helpers.

@@ -3,9 +3,9 @@
 
 using System.Collections.Generic;
 using System.Threading;
-using IslandGateway.RemoteConfig.Contract;
+using Yarp.ServiceFabric.RemoteConfig.Contract;
 
-namespace IslandGateway.RemoteConfig.Infra
+namespace Yarp.ServiceFabric.RemoteConfig.Infra
 {
     /// <summary>
     /// Provides a method to fetch configurations from an external provider.

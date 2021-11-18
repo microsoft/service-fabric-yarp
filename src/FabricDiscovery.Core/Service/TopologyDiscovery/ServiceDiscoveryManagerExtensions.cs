@@ -3,7 +3,7 @@
 
 using System;
 
-namespace IslandGateway.FabricDiscovery.Topology
+namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 {
     internal static class ServiceDiscoveryManagerExtensions
     {

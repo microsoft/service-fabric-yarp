@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace IslandGateway.Common.Util
+namespace Yarp.ServiceFabric.Common.Util
 {
     /// <summary>
     /// Provides a method to compare 2 string dictionaries for value equality.

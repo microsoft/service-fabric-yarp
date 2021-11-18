@@ -3,7 +3,7 @@
 
 using System;
 
-namespace IslandGateway.Common.Abstractions.Telemetry
+namespace Yarp.ServiceFabric.Common.Abstractions.Telemetry
 {
     /// <summary>
     /// Interface used to create new metrics.

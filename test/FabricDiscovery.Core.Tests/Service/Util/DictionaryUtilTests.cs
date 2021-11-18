@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using Xunit;
 
-namespace IslandGateway.FabricDiscovery.Util.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.Util.Tests
 {
     public class DictionaryUtilTests
     {

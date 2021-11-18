@@ -11,19 +11,19 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.Common.Telemetry;
-using IslandGateway.FabricDiscovery.Topology;
-using IslandGateway.FabricDiscovery.Util;
-using IslandGateway.ServiceFabricIntegration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Moq;
 using Tests.Common;
 using Xunit;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Telemetry;
+using Yarp.ServiceFabric.FabricDiscovery.Topology;
+using Yarp.ServiceFabric.FabricDiscovery.Util;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig.Tests
 {
     public class IslandGatewayTopologyMapperWorkerTests : TestAutoMockBase
     {
@@ -84,19 +84,19 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig.Tests
             echoService.EffectiveLabels.Should().Equal(
                 new Dictionary<string, string>
                 {
-                    { "IslandGateway.Enable", "true" },
-                    { "IslandGateway.EnableDynamicOverrides", "false" },
-                    { "IslandGateway.Routes.route1.Rule", "Host('echo.example.com') && Path('/echoservice/{**catchall}')" },
-                    { "IslandGateway.Routes.route1.Transformations", "StripPrefix('/echoservice/')" },
-                    { "IslandGateway.Routes.route2.Rule", "Host('tm-echo.example.com') && Path('/{**catchall}')" },
-                    { "IslandGateway.Routes.route3.Rule", "Host('gw.example.com') && Path('/externalproxy/{**catchall}')" },
-                    { "IslandGateway.Routes.route3.Metadata.RouteAction", "externalproxy" },
-                    { "IslandGateway.Routes.route3.Transformations", "StripPrefix('/externalproxy/')" },
-                    { "IslandGateway.Routes.TM.Rule", "Host('gw.example.com') && Path('/{**catchall}')" },
-                    { "IslandGateway.Backend.Healthcheck.Enabled", "true" },
-                    { "IslandGateway.Backend.Healthcheck.Path", "cf000000-7ae3-459b-927c-338515c95158/healthcheck" },
-                    { "IslandGateway.Backend.Healthcheck.Timeout", "PT30S" },
-                    { "IslandGateway.Backend.Healthcheck.Interval", "PT10S" },
+                    { "Yarp.Enable", "true" },
+                    { "Yarp.EnableDynamicOverrides", "false" },
+                    { "Yarp.Routes.route1.Rule", "Host('echo.example.com') && Path('/echoservice/{**catchall}')" },
+                    { "Yarp.Routes.route1.Transformations", "StripPrefix('/echoservice/')" },
+                    { "Yarp.Routes.route2.Rule", "Host('tm-echo.example.com') && Path('/{**catchall}')" },
+                    { "Yarp.Routes.route3.Rule", "Host('gw.example.com') && Path('/externalproxy/{**catchall}')" },
+                    { "Yarp.Routes.route3.Metadata.RouteAction", "externalproxy" },
+                    { "Yarp.Routes.route3.Transformations", "StripPrefix('/externalproxy/')" },
+                    { "Yarp.Routes.TM.Rule", "Host('gw.example.com') && Path('/{**catchall}')" },
+                    { "Yarp.Backend.Healthcheck.Enabled", "true" },
+                    { "Yarp.Backend.Healthcheck.Path", "cf000000-7ae3-459b-927c-338515c95158/healthcheck" },
+                    { "Yarp.Backend.Healthcheck.Timeout", "PT30S" },
+                    { "Yarp.Backend.Healthcheck.Interval", "PT10S" },
                 });
             echoService.FinalEffectiveLabels.Should().BeSameAs(echoService.EffectiveLabels);
         }
@@ -140,23 +140,23 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig.Tests
                 Extensions = new Dictionary<string, string>
                 {
                     {
-                        "IslandGateway",
+                        "Yarp",
                         @"<Labels xmlns=""http://schemas.microsoft.com/2015/03/fabact-no-schema"">
-                              <Label Key=""IslandGateway.Enable"">true</Label>
-                              <Label Key=""IslandGateway.EnableDynamicOverrides"">[EchoService_DynamicOverrides]</Label>
-                              <Label Key=""IslandGateway.Routes.route1.Rule"">[EchoService_Route1_Rule]</Label>
-                              <Label Key=""IslandGateway.Routes.route1.Transformations"">StripPrefix('/echoservice/')</Label>
-                              <Label Key=""IslandGateway.Routes.route2.Rule"">[EchoService_Route2_Rule]</Label>
-                              <Label Key=""IslandGateway.Routes.route3.Rule"">[EchoService_Route3_Rule]</Label>
-                              <Label Key=""IslandGateway.Routes.route3.Metadata.RouteAction"">[EchoService_Route3_RouteAction]</Label>
-                              <Label Key=""IslandGateway.Routes.route3.Transformations"">StripPrefix('/externalproxy/')</Label>
-                              <Label Key=""IslandGateway.Routes.TM.Rule"">[EchoService_TrafficManager_Rule]</Label>
+                              <Label Key=""Yarp.Enable"">true</Label>
+                              <Label Key=""Yarp.EnableDynamicOverrides"">[EchoService_DynamicOverrides]</Label>
+                              <Label Key=""Yarp.Routes.route1.Rule"">[EchoService_Route1_Rule]</Label>
+                              <Label Key=""Yarp.Routes.route1.Transformations"">StripPrefix('/echoservice/')</Label>
+                              <Label Key=""Yarp.Routes.route2.Rule"">[EchoService_Route2_Rule]</Label>
+                              <Label Key=""Yarp.Routes.route3.Rule"">[EchoService_Route3_Rule]</Label>
+                              <Label Key=""Yarp.Routes.route3.Metadata.RouteAction"">[EchoService_Route3_RouteAction]</Label>
+                              <Label Key=""Yarp.Routes.route3.Transformations"">StripPrefix('/externalproxy/')</Label>
+                              <Label Key=""Yarp.Routes.TM.Rule"">[EchoService_TrafficManager_Rule]</Label>
                               <!-- enable health probe -->
-                              <Label Key=""IslandGateway.Backend.Healthcheck.Enabled"">true</Label>
+                              <Label Key=""Yarp.Backend.Healthcheck.Enabled"">true</Label>
                               <!-- use CoreServiceShim middleware health endpoint to provide echo service gracefully shutdown -->
-                              <Label Key=""IslandGateway.Backend.Healthcheck.Path"">cf000000-7ae3-459b-927c-338515c95158/healthcheck</Label>
-                              <Label Key=""IslandGateway.Backend.Healthcheck.Timeout"">PT30S</Label>
-                              <Label Key=""IslandGateway.Backend.Healthcheck.Interval"">PT10S</Label>
+                              <Label Key=""Yarp.Backend.Healthcheck.Path"">cf000000-7ae3-459b-927c-338515c95158/healthcheck</Label>
+                              <Label Key=""Yarp.Backend.Healthcheck.Timeout"">PT30S</Label>
+                              <Label Key=""Yarp.Backend.Healthcheck.Interval"">PT10S</Label>
                           </Labels>"
                     },
                 },

@@ -6,7 +6,7 @@ using System.Fabric;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IslandGateway.ServiceFabricIntegration
+namespace Yarp.ServiceFabric.ServiceFabricIntegration
 {
     /// <summary>
     /// Helps translate Service Fabric aborted exceptions to standard types.

@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IslandGateway.Common.Abstractions.Time
+namespace Yarp.ServiceFabric.Common.Abstractions.Time
 {
     /// <summary>
     /// Models a way to measure time that tracks the wall clock time. Unlike IMonotonicTimer, this class allows the possibility

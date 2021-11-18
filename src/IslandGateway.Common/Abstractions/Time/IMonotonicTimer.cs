@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IslandGateway.Common.Abstractions.Time
+namespace Yarp.ServiceFabric.Common.Abstractions.Time
 {
     /// <summary>
     /// Abstraction for measuring time that is monotonically increasing.

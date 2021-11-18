@@ -5,14 +5,14 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
-using IslandGateway.Common.Util;
-using IslandGateway.FabricDiscovery.IslandGatewayConfig;
-using IslandGateway.ServiceFabricIntegration;
 using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Forwarder;
 using Yarp.ReverseProxy.LoadBalancing;
+using Yarp.ServiceFabric.Common.Util;
+using Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.Util
+namespace Yarp.ServiceFabric.FabricDiscovery.Util
 {
     /// <summary>
     /// Helper class to parse configuration labels of the gateway into actual objects.
@@ -23,18 +23,18 @@ namespace IslandGateway.FabricDiscovery.Util
 
         internal static bool IsEnabled(IReadOnlyDictionary<string, string> labels)
         {
-            return string.Equals(labels.GetValueOrDefault("IslandGateway.Enable", null), "true", StringComparison.OrdinalIgnoreCase);
+            return string.Equals(labels.GetValueOrDefault("Yarp.Enable", null), "true", StringComparison.OrdinalIgnoreCase);
         }
 
         internal static bool UseDynamicOverrides(IReadOnlyDictionary<string, string> labels)
         {
-            return string.Equals(labels.GetValueOrDefault("IslandGateway.EnableDynamicOverrides", null), "true", StringComparison.OrdinalIgnoreCase);
+            return string.Equals(labels.GetValueOrDefault("Yarp.EnableDynamicOverrides", null), "true", StringComparison.OrdinalIgnoreCase);
         }
 
         internal static List<RouteConfig> BuildRoutes(IslandGatewayBackendService backendService, List<string> errors)
         {
             // Look for route IDs
-            const string RoutesLabelsPrefix = "IslandGateway.Routes.";
+            const string RoutesLabelsPrefix = "Yarp.Routes.";
             var routesNames = new HashSet<string>();
             IReadOnlyDictionary<string, string> labels = backendService.FinalEffectiveLabels;
             Uri serviceName = backendService.FabricService.Service.ServiceName;
@@ -159,7 +159,7 @@ namespace IslandGateway.FabricDiscovery.Util
         {
             List<ClusterConfig> clusters = new List<ClusterConfig>();
 
-            var metadata = ExtractMetadata("IslandGateway.Backend.Metadata.", service.FinalEffectiveLabels);
+            var metadata = ExtractMetadata("Yarp.Backend.Metadata.", service.FinalEffectiveLabels);
 
             // Populate service fabric info into metric dimensions.
             metadata["__SF.ApplicationTypeName"] = service.FabricApplication.Application.ApplicationTypeName;
@@ -181,16 +181,16 @@ namespace IslandGateway.FabricDiscovery.Util
                     {
                         Active = new ActiveHealthCheckConfig
                         {
-                            Enabled = GetLabel(service.FinalEffectiveLabels, "IslandGateway.Backend.Healthcheck.Enabled", false, errors),
-                            Interval = GetLabel<TimeSpanIso8601>(service.FinalEffectiveLabels, "IslandGateway.Backend.Healthcheck.Interval", TimeSpan.Zero, errors),
-                            Timeout = GetLabel<TimeSpanIso8601>(service.FinalEffectiveLabels, "IslandGateway.Backend.Healthcheck.Timeout", TimeSpan.Zero, errors),
-                            Path = GetLabel<string>(service.FinalEffectiveLabels, "IslandGateway.Backend.Healthcheck.Path", null, errors),
+                            Enabled = GetLabel(service.FinalEffectiveLabels, "Yarp.Backend.Healthcheck.Enabled", false, errors),
+                            Interval = GetLabel<TimeSpanIso8601>(service.FinalEffectiveLabels, "Yarp.Backend.Healthcheck.Interval", TimeSpan.Zero, errors),
+                            Timeout = GetLabel<TimeSpanIso8601>(service.FinalEffectiveLabels, "Yarp.Backend.Healthcheck.Timeout", TimeSpan.Zero, errors),
+                            Path = GetLabel<string>(service.FinalEffectiveLabels, "Yarp.Backend.Healthcheck.Path", null, errors),
                         },
                     },
                     Metadata = metadata,
                     HttpRequest = new ForwarderRequestConfig
                     {
-                        ActivityTimeout = GetLabel<TimeSpanIso8601>(service.FinalEffectiveLabels, "IslandGateway.Backend.ProxyTimeout", TimeSpan.FromSeconds(30), errors),
+                        ActivityTimeout = GetLabel<TimeSpanIso8601>(service.FinalEffectiveLabels, "Yarp.Backend.ProxyTimeout", TimeSpan.FromSeconds(30), errors),
                     },
                     Destinations = destinations,
                 };
@@ -208,7 +208,7 @@ namespace IslandGateway.FabricDiscovery.Util
 
         private static string GetClusterId(Uri serviceName, IReadOnlyDictionary<string, string> labels)
         {
-            if (!labels.TryGetValue("IslandGateway.Backend.BackendId", out string backendId) ||
+            if (!labels.TryGetValue("Yarp.Backend.BackendId", out string backendId) ||
                 string.IsNullOrEmpty(backendId))
             {
                 backendId = serviceName.ToString();

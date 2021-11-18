@@ -5,7 +5,7 @@ using FluentAssertions;
 using Tests.Common;
 using Xunit;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig.Tests
 {
     public class ExtensionLabelsParserTests : TestAutoMockBase
     {

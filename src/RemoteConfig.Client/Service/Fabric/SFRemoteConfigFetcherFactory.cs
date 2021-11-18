@@ -3,13 +3,13 @@
 
 using System;
 using System.Linq;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.RemoteConfig.Infra;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.ServiceFabric.Services.Client;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.RemoteConfig.Infra;
 
-namespace IslandGateway.RemoteConfig.Fabric
+namespace Yarp.ServiceFabric.RemoteConfig.Fabric
 {
     internal class SFRemoteConfigFetcherFactory : IRemoteConfigFetcherFactory
     {

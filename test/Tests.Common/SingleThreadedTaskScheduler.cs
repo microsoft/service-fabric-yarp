@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.CoreServicesBorrowed;
-using IslandGateway.CoreServicesBorrowed.CoreFramework;
+using Yarp.ServiceFabric.CoreServicesBorrowed;
+using Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework;
 
 namespace Tests.Common
 {

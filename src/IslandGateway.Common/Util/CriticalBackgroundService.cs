@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace IslandGateway.Common
+namespace Yarp.ServiceFabric.Common
 {
     /// <summary>
     /// Base class for an <see cref="IHostedService"/> that is mission-critical

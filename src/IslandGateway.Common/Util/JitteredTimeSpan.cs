@@ -3,7 +3,7 @@
 
 using System;
 
-namespace IslandGateway.Common
+namespace Yarp.ServiceFabric.Common
 {
     /// <summary>
     /// A <see cref="TimeSpan"/> with support for jitter.

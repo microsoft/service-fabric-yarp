@@ -5,9 +5,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.Common.Telemetry;
-using IslandGateway.FabricDiscovery.Util;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
@@ -15,8 +12,11 @@ using Moq;
 using Tests.Common;
 using Xunit;
 using Yarp.ReverseProxy.Configuration;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Telemetry;
+using Yarp.ServiceFabric.FabricDiscovery.Util;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig.Tests
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig.Tests
 {
     public class IslandGatewayConfigProducerWorkerTests : TestAutoMockBase
     {

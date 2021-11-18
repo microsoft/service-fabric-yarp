@@ -6,10 +6,10 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using IslandGateway.RemoteConfig.Contract;
 using Xunit;
+using Yarp.ServiceFabric.RemoteConfig.Contract;
 
-namespace IslandGateway.RemoteConfig.Infra.Tests
+namespace Yarp.ServiceFabric.RemoteConfig.Infra.Tests
 {
     public class RoundRobinConfigFetcherTests
     {

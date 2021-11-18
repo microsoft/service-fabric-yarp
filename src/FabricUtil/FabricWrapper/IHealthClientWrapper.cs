@@ -3,7 +3,7 @@
 
 using System.Fabric.Health;
 
-namespace IslandGateway.ServiceFabricIntegration
+namespace Yarp.ServiceFabric.ServiceFabricIntegration
 {
     /// <summary>
     /// A wrapper for the service fabric health client SDK to make service fabric API unit testable.

@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig
 {
     /// <summary>
     /// Provides a method to parse the XML contents of a Service Fabric ServiceManifest Extension.

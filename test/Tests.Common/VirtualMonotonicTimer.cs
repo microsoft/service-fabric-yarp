@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common.Abstractions.Time;
+using Yarp.ServiceFabric.Common.Abstractions.Time;
 
 namespace Tests.Common
 {

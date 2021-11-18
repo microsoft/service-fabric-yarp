@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace IslandGateway.RemoteConfig.Contract
+namespace Yarp.ServiceFabric.RemoteConfig.Contract
 {
     /// <summary>
     /// Models the response for the config endpoint.

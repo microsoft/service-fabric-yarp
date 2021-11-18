@@ -5,16 +5,16 @@ using System;
 using System.Collections.Generic;
 using System.Fabric;
 using System.Fabric.Query;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.FabricDiscovery.Topology;
-using IslandGateway.FabricDiscovery.Util;
-using IslandGateway.ServiceFabricIntegration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.ServiceFabric.Services.Communication;
 using Yarp.ReverseProxy.Configuration;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.FabricDiscovery.Topology;
+using Yarp.ServiceFabric.FabricDiscovery.Util;
+using Yarp.ServiceFabric.ServiceFabricIntegration;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig
 {
     internal class IslandGatewayConfigProducer : IIslandGatewayConfigProducer
     {
@@ -79,7 +79,7 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
 
         private List<ClusterConfig> BuildClusters(IslandGatewayBackendService service, List<string> errors)
         {
-            string defaultListenerName = service.FinalEffectiveLabels.GetValueOrDefault("IslandGateway.Backend.ServiceFabric.ListenerName", string.Empty);
+            string defaultListenerName = service.FinalEffectiveLabels.GetValueOrDefault("Yarp.Backend.ServiceFabric.ListenerName", string.Empty);
             var partitionDestinations = this.BuildDestinations(service.FabricService, service.FinalEffectiveLabels, defaultListenerName, errors);
             var clusters = LabelsParserV2.BuildClustersWithDestinations(service, partitionDestinations, errors);
             return clusters;
@@ -89,7 +89,7 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
         {
             var partitionDestinations = new Dictionary<string, Dictionary<string, DestinationConfig>>();
 
-            string healthListenerName = effectiveLabels.GetValueOrDefault("IslandGateway.Backend.Healthcheck.ServiceFabric.ListenerName", string.Empty);
+            string healthListenerName = effectiveLabels.GetValueOrDefault("Yarp.Backend.Healthcheck.ServiceFabric.ListenerName", string.Empty);
             var statefulReplicaSelectionMode = this.ParseStatefulReplicaSelectionMode(effectiveLabels);
             foreach (var partition in service.Partitions)
             {
@@ -222,7 +222,7 @@ namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
         private StatefulReplicaSelectionMode ParseStatefulReplicaSelectionMode(IReadOnlyDictionary<string, string> serviceExtensionLabels)
         {
             // Parse the value for StatefulReplicaSelectionMode: case insensitive, and trim the white space.
-            var statefulReplicaSelectionMode = serviceExtensionLabels.GetValueOrDefault("IslandGateway.Backend.ServiceFabric.StatefulReplicaSelectionMode", StatefulReplicaSelectionLabel.All).Trim();
+            var statefulReplicaSelectionMode = serviceExtensionLabels.GetValueOrDefault("Yarp.Backend.ServiceFabric.StatefulReplicaSelectionMode", StatefulReplicaSelectionLabel.All).Trim();
             if (string.Equals(statefulReplicaSelectionMode, StatefulReplicaSelectionLabel.PrimaryOnly, StringComparison.OrdinalIgnoreCase))
             {
                 return StatefulReplicaSelectionMode.Primary;

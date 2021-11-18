@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Fabric;
 
-namespace IslandGateway.ServiceFabricIntegration
+namespace Yarp.ServiceFabric.ServiceFabricIntegration
 {
     /// <summary>
     /// Unit testable wrapper of a Service Fabric service notification.

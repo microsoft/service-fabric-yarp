@@ -9,10 +9,10 @@
          This name must match the string used in RegisterServiceType call in Program.cs. -->
     <StatelessServiceType ServiceTypeName="EchoServiceType">
       <Extensions>
-        <Extension Name="IslandGateway">
+        <Extension Name="Yarp">
           <Labels xmlns="http://schemas.microsoft.com/2015/03/fabact-no-schema">
-            <Label Key="IslandGateway.Enable">true</Label>
-            <Label Key="IslandGateway.Routes.route1.Path">/{**catchall}</Label>
+            <Label Key="Yarp.Enable">true</Label>
+            <Label Key="Yarp.Routes.route1.Path">/{**catchall}</Label>
           </Labels>
         </Extension>
       </Extensions>

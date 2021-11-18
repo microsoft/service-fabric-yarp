@@ -4,7 +4,7 @@
 using System.Fabric;
 using System.Fabric.Health;
 
-namespace IslandGateway.ServiceFabricIntegration
+namespace Yarp.ServiceFabric.ServiceFabricIntegration
 {
     /// <inheritdoc/>
     public class HealthClientWrapper : IHealthClientWrapper

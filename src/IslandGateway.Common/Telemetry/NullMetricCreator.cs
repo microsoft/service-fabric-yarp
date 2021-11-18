@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
-using IslandGateway.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
 
-namespace IslandGateway.Common.Telemetry
+namespace Yarp.ServiceFabric.Common.Telemetry
 {
     /// <summary>
     /// Implementation of <see cref="IMetricCreator"/>

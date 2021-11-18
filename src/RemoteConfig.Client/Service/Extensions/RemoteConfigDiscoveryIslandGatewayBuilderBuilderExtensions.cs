@@ -1,13 +1,13 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using IslandGateway.Common;
-using IslandGateway.RemoteConfig.Fabric;
-using IslandGateway.RemoteConfig.Metrics;
 using Microsoft.Extensions.DependencyInjection;
 using Yarp.ReverseProxy.Configuration;
+using Yarp.ServiceFabric.Common;
+using Yarp.ServiceFabric.RemoteConfig.Fabric;
+using Yarp.ServiceFabric.RemoteConfig.Metrics;
 
-namespace IslandGateway.RemoteConfig
+namespace Yarp.ServiceFabric.RemoteConfig
 {
     /// <summary>
     /// Extensions used to register remote configuration components.

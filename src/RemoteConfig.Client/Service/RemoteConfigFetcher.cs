@@ -11,12 +11,12 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.RemoteConfig.Contract;
-using IslandGateway.RemoteConfig.Infra;
 using Microsoft.Extensions.Logging;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.RemoteConfig.Contract;
+using Yarp.ServiceFabric.RemoteConfig.Infra;
 
-namespace IslandGateway.RemoteConfig
+namespace Yarp.ServiceFabric.RemoteConfig
 {
     /// <summary>
     /// Provides a method to fetch real-time config updates from a destination service.

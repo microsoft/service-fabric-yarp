@@ -6,22 +6,22 @@ using System.Collections.Generic;
 using System.Fabric;
 using System.Threading;
 using System.Threading.Tasks;
-using IslandGateway.Common;
-using IslandGateway.Common.Abstractions.Telemetry;
-using IslandGateway.Common.Abstractions.Time;
-using IslandGateway.Common.Util;
-using IslandGateway.FabricDiscovery.FabricWrapper;
-using IslandGateway.FabricDiscovery.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Yarp.ReverseProxy.Configuration;
+using Yarp.ServiceFabric.Common;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Abstractions.Time;
+using Yarp.ServiceFabric.Common.Util;
+using Yarp.ServiceFabric.FabricDiscovery.FabricWrapper;
+using Yarp.ServiceFabric.FabricDiscovery.Util;
 
-namespace IslandGateway.FabricDiscovery.IslandGatewayConfig
+namespace Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig
 {
     /// <summary>
     /// Manages discovery of Service Fabric Properties for services that have opted-in
-    /// via label <c>IslandGateway.EnableDynamicOverrides</c>, and computes the final Island Gateway configs.
+    /// via label <c>Yarp.EnableDynamicOverrides</c>, and computes the final Island Gateway configs.
     /// The processing sequence is
     ///   * <see cref="Topology.TopologyDiscoveryWorker"/>, then
     ///   * <see cref="IslandGatewayTopologyMapperWorker"/>, then

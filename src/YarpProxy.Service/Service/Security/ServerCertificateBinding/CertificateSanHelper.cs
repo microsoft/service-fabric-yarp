@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using IslandGateway.CoreServicesBorrowed.CoreFramework;
+using Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework;
 
-namespace IslandGateway.Core.Service.Security.ServerCertificateBinding
+namespace Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding
 {
     /// <summary>
     /// Helper class to extract SAN (Subject Alternative Name) DNS names from a certificate.
