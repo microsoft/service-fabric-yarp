@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
 using Tests.Common;
 using Xunit;
-using Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig;
+using Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig;
 using Yarp.ServiceFabric.FabricDiscovery.Util;
 
 namespace Yarp.ServiceFabric.FabricDiscovery.Controllers.Tests
@@ -33,12 +33,12 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Controllers.Tests
         public async Task GetYarpConfig_WithConfig_Returns200()
         {
             // Arrange
-            var snapshotValue = new IslandGatewaySerializedConfig(
+            var snapshotValue = new SFYarpSerializedConfig(
                 bytes: Encoding.UTF8.GetBytes(@"{""clusters"":[],""routes"":[]}"),
                 etag: "\"etag0\"",
                 contentType: "application/json");
-            var snapshot = new Snapshot<IslandGatewaySerializedConfig>(snapshotValue, NullChangeToken.Singleton);
-            this.Mock<ISnapshotProvider<IslandGatewaySerializedConfig>>().Setup(c => c.GetSnapshot()).Returns(snapshot);
+            var snapshot = new Snapshot<SFYarpSerializedConfig>(snapshotValue, NullChangeToken.Singleton);
+            this.Mock<ISnapshotProvider<SFYarpSerializedConfig>>().Setup(c => c.GetSnapshot()).Returns(snapshot);
 
             var controller = this.CreateController();
 

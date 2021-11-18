@@ -1,8 +1,8 @@
-# IslandGateway RemoteConfig protocol
+# SFYarp RemoteConfig protocol
 
 ## Overview
 
-The Remote Configuration protocol implemented by Island Gateway uses standard REST-based API's with long polling and optimistic concurrency headers to achieve the following goals:
+The Remote Configuration protocol implemented by SFYarp uses standard REST-based API's with long polling and optimistic concurrency headers to achieve the following goals:
 * Standard HTTP. Does not require special protocol support (i.e. no gRPC, no WebSockets, etc.)
 * Best-effort real-time configuration change updates
 * Eventual consistency

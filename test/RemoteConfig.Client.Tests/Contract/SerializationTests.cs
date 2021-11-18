@@ -19,7 +19,7 @@ namespace Yarp.ServiceFabric.RemoteConfig.Contract.Tests
         public SerializationTests()
         {
             this.jsonOptions = new JsonSerializerOptions()
-                .ApplyIslandGatewayRemoteConfigSettings();
+                .ApplySFYarpRemoteConfigSettings();
         }
 
         [Fact]
@@ -73,7 +73,7 @@ namespace Yarp.ServiceFabric.RemoteConfig.Contract.Tests
                         },
                         HttpRequest = new ForwarderRequestConfig
                         {
-                            Timeout = TimeSpan.FromSeconds(30),
+                            ActivityTimeout = TimeSpan.FromSeconds(30),
                         },
                         HealthCheck = new HealthCheckConfig
                         {

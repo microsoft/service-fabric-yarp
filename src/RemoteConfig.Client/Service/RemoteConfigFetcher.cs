@@ -45,7 +45,7 @@ namespace Yarp.ServiceFabric.RemoteConfig
             this.operationLogger = operationLogger ?? throw new ArgumentNullException(nameof(operationLogger));
 
             this.jsonOptions = new JsonSerializerOptions()
-                .ApplyIslandGatewayRemoteConfigSettings();
+                .ApplySFYarpRemoteConfigSettings();
         }
 
         private enum Outcome

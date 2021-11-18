@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <RootNamespace>IslandGateway.ServiceFabricIntegration</RootNamespace>
+    <RootNamespace>SFYarp.ServiceFabricIntegration</RootNamespace>
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
     <Platforms>x64</Platforms>
 
@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IslandGateway.Common\IslandGateway.Common.csproj" />
+    <ProjectReference Include="..\SFYarp.Common\SFYarp.Common.csproj" />
   </ItemGroup>
 
 </Project>

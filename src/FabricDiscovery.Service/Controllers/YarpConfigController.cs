@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Yarp.ServiceFabric.Common;
-using Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig;
+using Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig;
 using Yarp.ServiceFabric.FabricDiscovery.Util;
 using Yarp.ServiceFabric.RemoteConfig.Contract;
 
 namespace Yarp.ServiceFabric.FabricDiscovery.Controllers
 {
     /// <summary>
-    /// Serves Island Gateway configuration for consumption by IGW instances.
+    /// Serves SFYarp configuration for consumption by IGW instances.
     /// </summary>
     [ApiController]
     [Route("/api/v1/yarpconfig")]
@@ -25,12 +25,12 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Controllers
         private const int MaxPollTimeoutSeconds = 30;
         private const int DefaultPollTimeoutSeconds = 10;
 
-        private readonly ISnapshotProvider<IslandGatewaySerializedConfig> snapshotProvider;
+        private readonly ISnapshotProvider<SFYarpSerializedConfig> snapshotProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="YarpConfigController"/> class.
         /// </summary>
-        public YarpConfigController(ISnapshotProvider<IslandGatewaySerializedConfig> snapshotProvider)
+        public YarpConfigController(ISnapshotProvider<SFYarpSerializedConfig> snapshotProvider)
         {
             this.snapshotProvider = snapshotProvider ?? throw new ArgumentNullException(nameof(snapshotProvider));
         }

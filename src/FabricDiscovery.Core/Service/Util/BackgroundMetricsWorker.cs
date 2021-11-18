@@ -19,14 +19,14 @@ namespace Yarp.ServiceFabric.FabricDiscovery
 
         private readonly IServiceDiscoveryManager serviceDiscoveryManager;
         private readonly TopologyFreshnessTracker topologyFreshnessTracker;
-        private readonly IslandGatewayFreshnessTracker igwFreshnessTracker;
+        private readonly SFYarpFreshnessTracker igwFreshnessTracker;
         private readonly FabricDiscoveryMetrics metrics;
         private readonly RecurringTask recurringTask;
 
         public BackgroundMetricsWorker(
             IServiceDiscoveryManager serviceDiscoveryManager,
             TopologyFreshnessTracker topologyFreshnessTracker,
-            IslandGatewayFreshnessTracker igwFreshnessTracker,
+            SFYarpFreshnessTracker igwFreshnessTracker,
             FabricDiscoveryMetrics metrics,
             IProcessExiter processExiter,
             IOptions<FabricDiscoveryOptions> options,

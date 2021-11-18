@@ -3,15 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <RootNamespace>SFYarp.RemoteConfig</RootNamespace>
+    <RootNamespace>SFYarp.CoreServicesBorrowed</RootNamespace>
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
     <Platforms>x64</Platforms>
-
-    <!-- 
-      Use C# 9. See https://btburnett.com/csharp/2020/12/11/csharp-9-records-and-init-only-setters-without-dotnet5.html
-      for considerations of using this while targetting .NET runtimes older than .NET 5.
-    -->
-    <LangVersion>9</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\RemoteConfig.Client\RemoteConfig.Client.csproj" />
+    <ProjectReference Include="..\..\src\SFYarp.CoreServicesBorrowed\SFYarp.CoreServicesBorrowed.csproj" />
     <ProjectReference Include="..\Tests.Common\Tests.Common.csproj" />
   </ItemGroup>
 </Project>

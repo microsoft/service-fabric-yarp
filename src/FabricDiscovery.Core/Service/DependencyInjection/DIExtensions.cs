@@ -9,7 +9,7 @@ using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
 using Yarp.ServiceFabric.Common.Abstractions.Time;
 using Yarp.ServiceFabric.Common.Telemetry;
 using Yarp.ServiceFabric.FabricDiscovery.FabricWrapper;
-using Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig;
+using Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig;
 using Yarp.ServiceFabric.FabricDiscovery.Topology;
 using Yarp.ServiceFabric.FabricDiscovery.Util;
 using Yarp.ServiceFabric.ServiceFabricIntegration;
@@ -33,30 +33,30 @@ namespace Yarp.ServiceFabric.FabricDiscovery
             services.AddSingleton<IAppTypeDiscoveryManager, AppTypeDiscoveryManager>();
             services.AddSingleton<IServiceDiscoveryManager, ServiceDiscoveryManager>();
             services.AddSingleton<IServiceDiscoveryHelper, ServiceDiscoveryHelper>();
-            services.AddSingleton<TopologyDiscoveryFilter, IslandGatewayTopologyDiscoveryFilter>();
+            services.AddSingleton<TopologyDiscoveryFilter, SFYarpTopologyDiscoveryFilter>();
 
             services.AddSingleton<IExtensionLabelsParser, ExtensionLabelsParser>();
             services.AddSingleton<IProcessExiter, FailFastProcessExiter>();
             services.AddSingleton<TopologyFreshnessTracker>();
-            services.AddSingleton<IslandGatewayFreshnessTracker>();
+            services.AddSingleton<SFYarpFreshnessTracker>();
             services.AddSingleton<FabricDiscoveryMetrics>();
 
             services.AddSingleton<TopologyDiscoveryWorker>();
             services.AddSingleton<ISnapshotProvider<IReadOnlyDictionary<ApplicationNameKey, DiscoveredApp>>>(services => services.GetRequiredService<TopologyDiscoveryWorker>());
             services.AddHostedService(services => services.GetRequiredService<TopologyDiscoveryWorker>());
 
-            services.AddSingleton<IslandGatewayTopologyMapperWorker>();
-            services.AddSingleton<ISnapshotProvider<IReadOnlyList<IslandGatewayBackendService>>>(services => services.GetRequiredService<IslandGatewayTopologyMapperWorker>());
-            services.AddHostedService(services => services.GetRequiredService<IslandGatewayTopologyMapperWorker>());
+            services.AddSingleton<SFYarpTopologyMapperWorker>();
+            services.AddSingleton<ISnapshotProvider<IReadOnlyList<SFYarpBackendService>>>(services => services.GetRequiredService<SFYarpTopologyMapperWorker>());
+            services.AddHostedService(services => services.GetRequiredService<SFYarpTopologyMapperWorker>());
 
-            services.AddSingleton<IIslandGatewayConfigProducer, IslandGatewayConfigProducer>();
-            services.AddSingleton<IslandGatewayConfigProducerWorker>();
-            services.AddSingleton<IProxyConfigProvider>(services => services.GetRequiredService<IslandGatewayConfigProducerWorker>());
-            services.AddHostedService(services => services.GetRequiredService<IslandGatewayConfigProducerWorker>());
+            services.AddSingleton<ISFYarpConfigProducer, SFYarpConfigProducer>();
+            services.AddSingleton<SFYarpConfigProducerWorker>();
+            services.AddSingleton<IProxyConfigProvider>(services => services.GetRequiredService<SFYarpConfigProducerWorker>());
+            services.AddHostedService(services => services.GetRequiredService<SFYarpConfigProducerWorker>());
 
-            services.AddSingleton<IslandGatewayConfigSerializerWorker>();
-            services.AddSingleton<ISnapshotProvider<IslandGatewaySerializedConfig>>(services => services.GetRequiredService<IslandGatewayConfigSerializerWorker>());
-            services.AddHostedService(services => services.GetRequiredService<IslandGatewayConfigSerializerWorker>());
+            services.AddSingleton<SFYarpConfigSerializerWorker>();
+            services.AddSingleton<ISnapshotProvider<SFYarpSerializedConfig>>(services => services.GetRequiredService<SFYarpConfigSerializerWorker>());
+            services.AddHostedService(services => services.GetRequiredService<SFYarpConfigSerializerWorker>());
 
             services.AddHostedService<BackgroundMetricsWorker>();
 

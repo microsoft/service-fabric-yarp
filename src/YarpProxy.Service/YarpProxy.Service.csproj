@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IslandGateway.CoreServicesBorrowed\IslandGateway.CoreServicesBorrowed.csproj" />
+    <ProjectReference Include="..\SFYarp.CoreServicesBorrowed\SFYarp.CoreServicesBorrowed.csproj" />
     <ProjectReference Include="..\RemoteConfig.Client\RemoteConfig.Client.csproj" />
   </ItemGroup>
 </Project>

@@ -42,27 +42,27 @@ namespace Yarp.ServiceFabric.Service
             {
                 var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
 
-                entrypointLogger = loggerFactory.CreateLogger("IslandGateway.EntryPoint");
-                entrypointLogger.LogInformation("Island Gateway starting...");
+                entrypointLogger = loggerFactory.CreateLogger("SFYarp.EntryPoint");
+                entrypointLogger.LogInformation("SFYarp starting...");
                 entrypointLogger.LogUnhandledExceptions(typeof(Program));
 
                 ServiceRuntime.RegisterServiceAsync(
                     "YarpProxyType",
-                    context => new IslandGatewayService(context, entrypointLogger)).GetAwaiter().GetResult();
+                    context => new SFYarpService(context, entrypointLogger)).GetAwaiter().GetResult();
 
                 // Prevents this host process from terminating so services keep running.
                 Thread.Sleep(Timeout.Infinite);
             }
             catch (Exception ex)
             {
-                entrypointLogger?.LogError(ex, "Island Gateway startup failed.");
+                entrypointLogger?.LogError(ex, "SFYarp startup failed.");
                 throw;
             }
         }
 
         private static void StandaloneMain()
         {
-            IslandGatewayStandalone.Run();
+            SFYarpStandalone.Run();
         }
     }
 }

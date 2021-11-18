@@ -16,17 +16,17 @@ TopologyDiscoveryWorker
     │
     │  IReadOnlyDictionary<ApplicationNameKey, DiscoveredApp>
     ▼
-IslandGatewayTopologyMapperWorker
+SFYarpTopologyMapperWorker
     │
-    │  IReadOnlyList<IslandGatewayBackendService>
+    │  IReadOnlyList<SFYarpBackendService>
     ▼ 
-IslandGatewayConfigProducerWorker
+SFYarpConfigProducerWorker
     │
     │  Yarp.ReverseProxy.IProxyConfig
     ▼
-IslandGatewayConfigSerializerWorker
+SFYarpConfigSerializerWorker
     │
-    │  IslandGatewaySerializedConfig
+    │  SFYarpSerializedConfig
     ▼
 API controller (consumed by YarpProxy service instances)
 ```

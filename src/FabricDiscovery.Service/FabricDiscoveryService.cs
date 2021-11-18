@@ -13,13 +13,13 @@ using Microsoft.Extensions.Logging;
 using Yarp.ServiceFabric.Common;
 using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
 using Yarp.ServiceFabric.Common.Telemetry;
-using Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig;
+using Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig;
 using Yarp.ServiceFabric.FabricDiscovery.Topology;
 
 namespace Yarp.ServiceFabric.FabricDiscovery
 {
     /// <summary>
-    /// Logical entry-point of Island Gateway's Fabric Discovery service.
+    /// Logical entry-point of SFYarp's Fabric Discovery service.
     /// Control is transferred to methods in this class after the service is bootstrapped and selected as Primary.
     /// </summary>
     /// <remarks>
@@ -33,12 +33,12 @@ namespace Yarp.ServiceFabric.FabricDiscovery
     ///     but it also reacts to Service Fabric endpoint change notifications to quickly detect replica movement.
     ///   </item>
     ///   <item>
-    ///     <see cref="IslandGatewayTopologyMapperWorker"/> transforms the raw Service Fabric topology into something that
-    ///     is more directly applicable to producing Island Gateway configs (e.g. it pre-parses Service Manifest Extensions labels).
+    ///     <see cref="SFYarpTopologyMapperWorker"/> transforms the raw Service Fabric topology into something that
+    ///     is more directly applicable to producing SFYarp configs (e.g. it pre-parses Service Manifest Extensions labels).
     ///   </item>
     ///   <item>
-    ///     <see cref="IslandGatewayConfigProducerWorker"/> queries Service Fabric Properties
-    ///     for services that have opted-in to dynamic overrides, and produces the final Island Gateway configs when there are changes.
+    ///     <see cref="SFYarpConfigProducerWorker"/> queries Service Fabric Properties
+    ///     for services that have opted-in to dynamic overrides, and produces the final SFYarp configs when there are changes.
     ///     This also implements a debouncing logic to ensure we are not spending too much time updating configs unnecessarily.
     ///   </item>
     ///   <item>
@@ -46,7 +46,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery
     ///   </item>
     /// </list>
     /// Ordering of the steps above is critical, and we require successful initialization of this pipeline
-    /// (which includes producing the first complete Island Gateway configuration). If any step fails during initialization,
+    /// (which includes producing the first complete SFYarp configuration). If any step fails during initialization,
     /// the entire service is brought down.
     /// Subsequently, each pipeline stage configures their own thresholds for early termination, and the service commits suicide
     /// if a stage is unable to make progress. This can help e.g. when a single machine in a Service Fabric Cluster is experiencing

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <RootNamespace>IslandGateway.FabricDiscovery</RootNamespace>
+    <RootNamespace>SFYarp.FabricDiscovery</RootNamespace>
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
     <Platforms>x64</Platforms>
 

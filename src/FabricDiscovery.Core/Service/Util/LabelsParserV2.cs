@@ -9,13 +9,13 @@ using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Forwarder;
 using Yarp.ReverseProxy.LoadBalancing;
 using Yarp.ServiceFabric.Common.Util;
-using Yarp.ServiceFabric.FabricDiscovery.IslandGatewayConfig;
+using Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig;
 using Yarp.ServiceFabric.ServiceFabricIntegration;
 
 namespace Yarp.ServiceFabric.FabricDiscovery.Util
 {
     /// <summary>
-    /// Helper class to parse configuration labels of the gateway into actual objects.
+    /// Helper class to parse configuration labels into actual objects.
     /// </summary>
     internal static class LabelsParserV2
     {
@@ -31,7 +31,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util
             return string.Equals(labels.GetValueOrDefault("Yarp.EnableDynamicOverrides", null), "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        internal static List<RouteConfig> BuildRoutes(IslandGatewayBackendService backendService, List<string> errors)
+        internal static List<RouteConfig> BuildRoutes(SFYarpBackendService backendService, List<string> errors)
         {
             // Look for route IDs
             const string RoutesLabelsPrefix = "Yarp.Routes.";
@@ -155,7 +155,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util
             return routes;
         }
 
-        internal static List<ClusterConfig> BuildClustersWithDestinations(IslandGatewayBackendService service, Dictionary<string, Dictionary<string, DestinationConfig>> partitionDestinations, List<string> errors)
+        internal static List<ClusterConfig> BuildClustersWithDestinations(SFYarpBackendService service, Dictionary<string, Dictionary<string, DestinationConfig>> partitionDestinations, List<string> errors)
         {
             List<ClusterConfig> clusters = new List<ClusterConfig>();
 
