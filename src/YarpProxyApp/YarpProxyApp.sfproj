@@ -44,7 +44,6 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Fabric.MSBuild" GeneratePathProperty="true" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\EchoService\EchoService.csproj" />
     <ProjectReference Include="..\FabricDiscovery.Service\FabricDiscovery.Service.csproj" />
     <ProjectReference Include="..\YarpProxy.Service\YarpProxy.Service.csproj" />
   </ItemGroup>

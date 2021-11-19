@@ -9,8 +9,6 @@
     <Parameter Name="FabricDiscovery_AbortAfterTimeoutInSeconds" DefaultValue="600" />
     <Parameter Name="FabricDiscovery_AbortAfterConsecutiveFailures" DefaultValue="3" />
     <Parameter Name="FabricDiscovery_FullRefreshPollPeriodInSeconds" DefaultValue="300" />
-    <Parameter Name="EchoService_PlacementConstraints" DefaultValue="" />
-    <Parameter Name="EchoService_InstanceCount" DefaultValue="" />
   </Parameters>
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="YarpProxyPkg" ServiceManifestVersion="1.0.0" />
@@ -35,9 +33,6 @@
       </ConfigOverride>
     </ConfigOverrides>
   </ServiceManifestImport>
-  <ServiceManifestImport>
-    <ServiceManifestRef ServiceManifestName="EchoServicePkg" ServiceManifestVersion="1.0.0" />
-  </ServiceManifestImport>
   <DefaultServices>
     <Service Name="YarpProxy" ServicePackageActivationMode="ExclusiveProcess">
       <StatelessService ServiceTypeName="YarpProxyType" DefaultMoveCost="High" InstanceCount="[YarpProxy_InstanceCount]">
@@ -49,12 +44,6 @@
       <StatelessService ServiceTypeName="FabricDiscoveryServiceType" InstanceCount="[FabricDiscovery_InstanceCount]">
         <SingletonPartition />
         <PlacementConstraints>[YarpProxy_PlacementConstraints]</PlacementConstraints>
-      </StatelessService>
-    </Service>
-    <Service Name="EchoService" ServicePackageActivationMode="ExclusiveProcess">
-      <StatelessService ServiceTypeName="EchoServiceType" InstanceCount="[EchoService_InstanceCount]">
-        <SingletonPartition />
-        <PlacementConstraints>[EchoService_PlacementConstraints]</PlacementConstraints>
       </StatelessService>
     </Service>
   </DefaultServices>
