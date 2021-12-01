@@ -128,18 +128,8 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
                             // Stateless service replicas are always eligible
                             return true;
                         }
-                        /*
-                        switch (statefulReplicaSelectionMode)
-                        {
-                            case StatefulReplicaSelectionMode.Primary:
-                                return replica.Role == ReplicaRole.Primary;
-                            case StatefulReplicaSelectionMode.ActiveSecondary:
-                                return replica.Role == ReplicaRole.ActiveSecondary;
-                            case StatefulReplicaSelectionMode.All:
-                            default:
-                                return true;
-                        }
-                        */
+
+                        // Future: Should we enable support for replicas with active secondary role
 
                         // Currently only support replicas with primary role to be eligible
                         return replica.Role == ReplicaRole.Primary;

@@ -37,6 +37,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFYarp.CoreServicesBorrowed
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFYarp.CoreServicesBorrowed.Tests", "test\SFYarp.CoreServicesBorrowed.Tests\SFYarp.CoreServicesBorrowed.Tests.csproj", "{29B83566-C189-4733-9B40-010737FD4507}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFYarp.Common.Tests", "test\SFYarp.Common.Tests\SFYarp.Common.Tests.csproj", "{BECCB7DF-A471-475F-847D-DAEA897F9E4B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -105,6 +107,10 @@ Global
 		{29B83566-C189-4733-9B40-010737FD4507}.Debug|x64.Build.0 = Debug|x64
 		{29B83566-C189-4733-9B40-010737FD4507}.Release|x64.ActiveCfg = Release|x64
 		{29B83566-C189-4733-9B40-010737FD4507}.Release|x64.Build.0 = Release|x64
+		{BECCB7DF-A471-475F-847D-DAEA897F9E4B}.Debug|x64.ActiveCfg = Debug|x64
+		{BECCB7DF-A471-475F-847D-DAEA897F9E4B}.Debug|x64.Build.0 = Debug|x64
+		{BECCB7DF-A471-475F-847D-DAEA897F9E4B}.Release|x64.ActiveCfg = Release|x64
+		{BECCB7DF-A471-475F-847D-DAEA897F9E4B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -125,6 +131,7 @@ Global
 		{7D2B000B-32C6-41B4-B219-DD4501B8AFD0} = {EAC439A1-814B-4892-BBEC-C1A851011240}
 		{09A45973-D8FB-46B6-888F-E2A67F46039F} = {EAC439A1-814B-4892-BBEC-C1A851011240}
 		{29B83566-C189-4733-9B40-010737FD4507} = {AB76B6E2-4AEC-4387-80AF-E41BFEDDF4EC}
+		{BECCB7DF-A471-475F-847D-DAEA897F9E4B} = {AB76B6E2-4AEC-4387-80AF-E41BFEDDF4EC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C4C27131-8953-4248-86F2-3E600D7FB80B}

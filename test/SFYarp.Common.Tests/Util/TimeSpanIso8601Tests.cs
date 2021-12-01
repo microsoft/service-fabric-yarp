@@ -4,14 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-
 using FluentAssertions;
-
-using IslandGateway.Common.Util;
-
 using Xunit;
+using Yarp.ServiceFabric.Common.Util;
 
-namespace IslandGateway.Common.Tests
+namespace Yarp.ServiceFabric.Common.Tests
 {
     public class TimeSpanIso8601Tests
     {

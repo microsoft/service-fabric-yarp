@@ -51,9 +51,7 @@ namespace Yarp.ServiceFabric.Service
             services.AddSingleton<ICertificateLoader, CertificateLoader>();
             services.AddSingleton<ISniServerCertificateSelector, SniServerCertificateSelector>();
             services.AddHostedService<SniServerCertificateUpdater>();
-
             services.TryAddSingleton<ShutdownStateManager>();
-
             services.Configure<RemoteConfigDiscoveryOptions>(this.configuration.GetSection("RemoteConfigDiscovery"));
         }
 

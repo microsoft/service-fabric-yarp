@@ -4,16 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-
 using FluentAssertions;
-
-using IslandGateway.Common.Abstractions.Time;
-using IslandGateway.Common.Util;
 using Tests.Common;
-
 using Xunit;
+using Yarp.ServiceFabric.Common.Abstractions.Time;
+using Yarp.ServiceFabric.Common.Util;
 
-namespace IslandGateway.Common.Tests
+namespace Yarp.ServiceFabric.Common.Tests
 {
     public class CacheTests : TestAutoMockBase
     {

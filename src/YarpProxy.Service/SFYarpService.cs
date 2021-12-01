@@ -82,6 +82,7 @@ namespace Yarp.ServiceFabric.Service
                 .UseUrls(urls)
                 .UseShutdownTimeout(TimeSpan.FromSeconds(DrainTimeSeconds))
                 .Build();
+
             var certSelector = host.Services.GetRequiredService<ISniServerCertificateSelector>();
             certSelectorFunc = certSelector.SelectCertificate;
             return host;

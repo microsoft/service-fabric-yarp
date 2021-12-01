@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Security.Authentication;
 using System.Text.RegularExpressions;
 using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Forwarder;
@@ -69,13 +70,6 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util
             {
                 string thisRoutePrefix = $"{RoutesLabelsPrefix}{routeName}";
 
-                /*
-                if (!labels.TryGetValue($"{thisRoutePrefix}.Path", out string path))
-                {
-                    errors.Add($"Missing {thisRoutePrefix}.Path.");
-                    return null;
-                }
-                */
                 labels.TryGetValue($"{thisRoutePrefix}.Path", out string path);
 
                 // Combine default path generation (/appName/serviceName) and user defined path from service manifest.
@@ -188,6 +182,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util
                         },
                     },
                     Metadata = metadata,
+                    HttpClient = new HttpClientConfig { DangerousAcceptAnyServerCertificate = true },
                     HttpRequest = new ForwarderRequestConfig
                     {
                         ActivityTimeout = GetLabel<TimeSpanIso8601>(service.FinalEffectiveLabels, "Yarp.Backend.ProxyTimeout", TimeSpan.FromSeconds(30), errors),
