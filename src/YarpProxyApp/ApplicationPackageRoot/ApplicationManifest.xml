@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="YarpProxyAppType" ApplicationTypeVersion="1.0.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+<ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="YarpProxyAppType" ApplicationTypeVersion="0.1.0-beta" xmlns="http://schemas.microsoft.com/2011/01/fabric">
   <Parameters>
     <Parameter Name="YarpProxy_PlacementConstraints" DefaultValue="" />
     <Parameter Name="YarpProxy_InstanceCount" DefaultValue="" />
@@ -11,7 +11,7 @@
     <Parameter Name="FabricDiscovery_FullRefreshPollPeriodInSeconds" DefaultValue="300" />
   </Parameters>
   <ServiceManifestImport>
-    <ServiceManifestRef ServiceManifestName="YarpProxyPkg" ServiceManifestVersion="1.0.0" />
+    <ServiceManifestRef ServiceManifestName="YarpProxyPkg" ServiceManifestVersion="0.1.0-beta" />
     <ResourceOverrides>
       <Endpoints>
         <Endpoint Name="HttpServiceEndpoint" Port="[YarpProxy_HttpPort]" />
@@ -23,7 +23,7 @@
 	  </Policies>
   </ServiceManifestImport>
   <ServiceManifestImport>
-    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="1.0.0" />
+    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="0.1.0-beta" />
     <ConfigOverrides>
       <ConfigOverride Name="Config">
         <Settings>
