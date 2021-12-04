@@ -46,8 +46,9 @@ As of this release, the services need to be explicitly exposed via [service exte
 
 ## Using the application
 
-You can clone the repo, build, and deploy or simply grab the latest [ZIP/SFPKG application](https://github.com/microsoft/service-fabric-traefik/releases/latest) from Releases section, modify configs, and deploy.
+You can clone the repo, build, and deploy or simply grab the latest [ZIP/SFPKG application](https://github.com/microsoft/service-fabric-yarp/releases/latest) from Releases section, modify configs, and deploy.
 
+https://github.com/microsoft/service-fabric-yarp/releases/tag/v0.1.0-beta
 ![alt text](/docs/yarp-cluster-view.png "Cluster View UI")
 
 ![alt text](/docs/yarp-service-view.png "Cluster Service View UI")
