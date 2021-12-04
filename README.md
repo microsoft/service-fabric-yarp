@@ -1,33 +1,56 @@
 # ServiceFabricYarp 0.1.0-beta
 
+
+Table of Contents
+=================
+  * [Background](#background)
+  * [Limitations](#limitations)
+  * [How it works](#how-it-works)
+  * [Pre-reqs](#pre-reqs)
+  * [Using the Application](#using-the-application)
+      * [Deploy it using PowerShell](#deploy-it-using-powershell)
+      * [Add the right labels to your services](#add-the-right-labels-to-your-services)
+      * [Supported Labels](#supported-labels)
+      * [Sample Test application](#sample-test-application)
+  * [YARP Reverse Proxy for Service Fabric Integration](#yarp-reverse-proxy-for-service-fabric-integration)
+      * [Pre-reqs for development machine](#pre-reqs-for-development-machine)
+      * [Building and Unit Testing](#building-and-unit-testing)
+      * [Project Structure](#project-structure)
+      * [Running Locally](#running-locally)
+ 
+
+## Background
 The reverse proxy is an application, supplied out of band from the service fabric distribution, that customers deploy to their clusters and handles proxying traffic to backend services. The service, that potentially runs on every node in the cluster, takes care of handling endpoint resolution, automatic retry, and other connection failures on behalf of the clients. The reverse proxy can be configured to apply various policies as it handles requests from client services.
 
 Using a reverse proxy allows the client service to use any client-side HTTP communication libraries and does not require special resolution and retry logic in the service. The reverse proxy is mostly a terminating endpoint for the TLS connections
 
 >Note that, at this time, this is a reverse proxy built-in replacement and not a generic service fabric “gateway” able to handle partition queries, but that might be added (via customer written plugins or similar) in the future.
 
-## Pre-reqs
-
-* Windows 10 Version 1909 or later, x64
-* .NET SDK (version indicated in global.json)
-* .NET Core 5.x runtime (to run net5.0 tests)
-* To setup certs, use `eng/Create-DevCerts.ps1`.
-* To enable ACL to cert for Network Service user, use `eng/ACLCertificates.ps1`.
-
-Dotnet sdks and runtimes can be downloaded from https://dotnet.microsoft.com/download .
+## Limitations
+* YarpProxy app is only supported at the moment on Windows
+* Path-based route matching is ONLY supported.
+* Basic HTTPS endpoint proxying includes ONLY TLS termination and no YARP endpoint server certificate validation.
+* No middleware/transform support to strip path prefix for the service to receive the stripped path.
+* No TCP proxying support ONLY HTTP.
 
 
 ## How it works 
-As of this release, the services need to be explicitly exposed via [service extension labels](), enabling the proxying (HTTP) functionality for a particular service and endpoint. With the right labels’ setup, the reverse proxy will expose one or more endpoints on the local nodes for client services to use. The ports can then be exposed to the load balancer in order to get the services available outside of the cluster. The required certificates should be already deployed to the nodes where the proxy is running as is the case with any other Service Fabric application. For TLS scenario on remote SF cluster add appropriate ACL on cert, the proccess fabric.exe needs to be able to access the cert which runs as Network Service account. Also, certificate selection is done dynamically via SNI, therefore certificate needs to be stored under cert:\LocalMachine\My and binded with SF cluster's root domain name (i.e "sf-win-cluster.westus2.cloudapp.azure.com") in either the cert Subject Name and/or Subject Alternative Names
+As of this release, the services need to be explicitly exposed via [service extension labels](), enabling the proxying (HTTP) functionality for a particular service and endpoint. With the right labels’ setup, the reverse proxy will expose one or more endpoints on the local nodes for client services to use. The ports can then be exposed to the load balancer in order to get the services available outside of the cluster. The required certificates should be already deployed to the nodes where the proxy is running as is the case with any other Service Fabric application. Both http and https ports are being listened on, but for TLS to work on https port, need to satisfy the requirements regarding certificates mentioned in [Pre-reqs](#pre-reqs).
 
-## Using the application  
+## Pre-reqs
+
+* For TLS, certificate selection is done dynamically via SNI, therefore certificate needs to be created with the CN an DNS Names binded with SF cluster's FQDN (i.e "sf-win-cluster.westus2.cloudapp.azure.com", "localhost") and stored under cert:\LocalMachine\My. **Note:** If using self signed certificate or a non trusted certificate make sure it is placed in [Trusted Root Certification Authorities Certificate Store](https://docs.microsoft.com/en-us/windows-hardware/drivers/install/trusted-root-certification-authorities-certificate-store). Certificate selector does not consider non trusted certificates.
+* To setup certs for local managed cluster, use `eng/Create-DevCerts.ps1`.
+* To setup certs for remote managed cluster, first create cert via Key Vault, again with the CN and DNS Names binded with the SF cluster's FQDN. Next, need to [deploy the certificate to your cluster](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-application-secrets). Note: For TLS, if you get issues related to the certificates such as an error related to "System.Security.Authentication.AuthenticationException: The server mode SSL must use a certificate with the associated private key", try force adding security permissions so that cluster can access the certificate using `eng/ACLCertificates.ps1`.
+
+
+## Using the application
 
 You can clone the repo, build, and deploy or simply grab the latest [ZIP/SFPKG application](https://github.com/microsoft/service-fabric-traefik/releases/latest) from Releases section, modify configs, and deploy.
 
 ![alt text](/docs/yarp-cluster-view.png "Cluster View UI")
 
 ![alt text](/docs/yarp-service-view.png "Cluster Service View UI")
-
 
 ## Deploy it using PowerShell  
 
@@ -36,8 +59,6 @@ After either downloading the sfapp package from the releases or cloning the repo
 >If you need a quick test cluster, you can deploy a test Service Fabric managed cluster following the instructions from here: [SFMC](https://docs.microsoft.com/en-us/azure/service-fabric/quickstart-managed-cluster-template), or via this template if you already have a client certificate and thumbprint available: [Deploy](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fservice-fabric-cluster-templates%2Fmaster%2FSF-Managed-Basic-SKU-1-NT%2Fazuredeploy.json)
 
 >Retrieve the cluster certificate TP using:  $serverThumbprint = (Get-AzResource -ResourceId /subscriptions/$SUBSCRIPTION/resourceGroups/$RESOURCEGROUP/providers/Microsoft.ServiceFabric/managedclusters/$CLUSTERNAME).Properties.clusterCertificateThumbprints
-
->Retrieve the client certificate TP using: $clientThumbprint = (Get-AzResource -ResourceId /subscriptions/$SUBSCRIPTION/resourceGroups/$RESOURCEGROUP/providers/Microsoft.ServiceFabric/managedclusters/$CLUSTERNAME).Properties.clients[0].thumbprint
 
 ```PowerShell
 
@@ -59,7 +80,7 @@ $appPath = "C:\downloads\service-fabric-yarp\windows\YarpProxyApp"
 
 #Connect to target cluster, for example:
 
-Connect-ServiceFabricCluster -ConnectionEndpoint @('sf-win-cluster.westus2.cloudapp.azure.com:19000') -X509Credential -FindType FindByThumbprint -FindValue $clientThumbprint -StoreLocation LocalMachine -StoreName 'My' -ServerCertThumbprint $serverThumbprint
+Connect-ServiceFabricCluster -ConnectionEndpoint @('sf-win-cluster.westus2.cloudapp.azure.com:19000') -X509Credential -FindType FindByThumbprint -FindValue '[Client_TP]' -StoreLocation LocalMachine -StoreName 'My' # -ServerCertThumbprint [Server_TP]
 
 # Use this to remove a previous YarpProxy Application
 #Remove-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -Force
@@ -73,7 +94,7 @@ Register-ServiceFabricApplicationType -ApplicationPathInImageStore YarpProxyApp
 $p = @{
     YarpProxy_InstanceCount="1"
     YarpProxy_HttpPort="8080"
-    YarpProxy_HttpsPort = "443"
+    #YarpProxy_HttpPort="443"
     #YarpProxy_PlacementConstraints="NodeType == NT2"
 }
 $p
@@ -115,7 +136,7 @@ This is a sample SF enabled service showing the currently supported labels. If t
 
 ---
 
-The only required label to expose a service via the reverse proxy is the **Yarp.Enable** set to true. Setting only this label will expose the service on a well known path and handle the basic scenarios.
+The only required label to expose a service via the reverse proxy is the **Yarp.Enable** set to true. Setting only this label will expose the service on a well-known path and handle the basic scenarios.
 
 ```
 http(s)://<Cluster FQDN | internal IP>:Port/ApplicationInstanceName/ServiceInstanceName?PartitionGuid=xxxxx
@@ -128,7 +149,7 @@ If you need to change the routes then you can add different labels configuring t
 
 Route section
 
-* **Yarp.Routes.[routeName].Path**    Yarp rule to apply path prefix ['/id']. This rule is added on top of the default path generation. If this is set you **cannot** remove the prefix for the service to receive the stripped path. At the moment, there is no middleware/transform that allows you to strip the prefix. {**catch-all} path may be used to route all requests.
+* **Yarp.Routes.[routeName].Path**    Yarp rule to apply path prefix ['/id']. This rule is added on top of the default path generation. If this is set, you **cannot** remove the prefix for the service to receive the stripped path. At the moment, there is no middleware/transform that allows you to strip the prefix. {**catch-all} path may be used to route all requests.
 
 *Backend section*
 
@@ -147,7 +168,7 @@ https://your-cluster:8080/pinger0/PingerService/id
 
 ```Powershell
 
-# Sample pinger app for validating (navidate to /pinger0/PingerService/id on https)
+# Sample pinger app for validating (navigate to /pinger0/PingerService/id on https)
 #Remove-ServiceFabricApplication -ApplicationName fabric:/pinger$i -Force
 #Unregister-ServiceFabricApplicationType -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 1.0 -Force
 
@@ -164,14 +185,57 @@ $p = @{
 
 New-ServiceFabricApplication -ApplicationName fabric:/pinger0 -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 1.0 -ApplicationParameter $p
 
-
 ```
-## Limitations
-* *Path-based route matching is ONLY supported*
-* *Basic HTTPS endpoint proxying includes ONLY TLS termination and no YARP endpoint server certificate validation*
-* *No middleware/transform support to strip path prefix for the service to receive the stripped path*
-* *No TCP proxying support ONLY HTTP*
 
+# YARP Reverse Proxy for Service Fabric Integration
+
+## Pre-reqs for development machine
+
+* Windows 10 Version 1909 or later, x64
+* .NET SDK (version indicated in global.json)
+* .NET Core 5.x runtime (to run net5.0 tests)
+* [Pre-reqs](#pre-reqs) above also apply regarding tls cert for local deployment
+
+Dotnet sdks and runtimes can be downloaded from https://dotnet.microsoft.com/download .
+
+## Building and Unit Testing
+
+1. dotnet build dirs.proj
+2. dotnet test dirs.proj
+3. dotnet pack dirs.proj
+
+For unit tests, you may want to filter out some tests. Refer to [the docs](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-vstest?tabs=netcore21) for information on how to use them. Example:
+
+```cmd
+dotnet test dirs.proj --filter HttpProxyTest
+```
+
+Alternatively, you can also open `YarpSF.sln` at the root of the repo with Visual Studio 2019.
+Running builds and unit tests from VS2019 is supported (verified with Visual Studio 2019 16.10.2+ .NET 5 SDK version 5.0.201).
+
+## Project Structure
+
+This repo includes:
+
+* `YarpProxyApp`: an example Service Fabric application, consisting of:
+  * `YarpProxy.Service`: The runtime component that implements a Reverse Proxy using YARP. It reads configurations from remote service `FabricDiscovery.Service`
+  * `FabricDiscovery.Service`: Responsible for discovering Service Fabric services that are configured to use YARP via Service Manifest Extensions, and exposes the summarized configurations for `YarpProxy.Service` to consume in real-time
+
+
+## Running Locally
+
+* Deploy `YarpProxyApp` to the local cluster
+* Observe in Service Fabric Explorer that the application starts and all services are running without errors:
+
+  ![Service Fabric Explorer](docs/sfx.png)
+
+* Deploy the pinger test application mentioned above. Using a browser, access `https://localhost/pinger0/PingerService`. If all works, you should get a `200 OK` response with contents resembling the following:
+
+   ```json
+   {
+     "Pinger: I'm alive on ... "
+   }
+   ```
 
 ## Contributing
 
