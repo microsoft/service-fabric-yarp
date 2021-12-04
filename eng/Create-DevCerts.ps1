@@ -120,8 +120,8 @@ function Ensure-CertAndHostsFileMapping($subjectName) {
 try {
     # Localhost cert
     Ensure-Cert -subjectName "localhost"
-    Ensure-CertAndHostsFileMapping -subjectName $intracommcertname
-    Ensure-CertAndHostsFileMapping -subjectName "echo.localhost"
+    #Ensure-CertAndHostsFileMapping -subjectName $intracommcertname
+    #Ensure-CertAndHostsFileMapping -subjectName "echo.localhost"
 }
 catch {
     Write-Host -ForegroundColor Red $($_ | Out-String)

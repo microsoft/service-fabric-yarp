@@ -19,7 +19,7 @@
       </Endpoints>
     </ResourceOverrides>
 	  <Policies>
-      <RunAsPolicy CodePackageRef="Code" UserRef="AdminUser" EntryPointType="All" />
+		  <RunAsPolicy CodePackageRef="Code" UserRef="SetupLocalSystem" />
 	  </Policies>
   </ServiceManifestImport>
   <ServiceManifestImport>
@@ -52,11 +52,7 @@
   </DefaultServices>
 <Principals>
     <Users>
-      <User Name="AdminUser">
-        <MemberOf>
-          <SystemGroup Name="Administrators" />
-        </MemberOf>
-      </User>
+      <User Name="SetupLocalSystem" AccountType="LocalSystem" />
     </Users>
   </Principals>
 </ApplicationManifest>
