@@ -35,20 +35,19 @@ Using a reverse proxy allows the client service to use any client-side HTTP comm
 
 
 ## How it works 
-As of this release, the services need to be explicitly exposed via [service extension labels](), enabling the proxying (HTTP) functionality for a particular service and endpoint. With the right labels’ setup, the reverse proxy will expose one or more endpoints on the local nodes for client services to use. The ports can then be exposed to the load balancer in order to get the services available outside of the cluster. The required certificates should be already deployed to the nodes where the proxy is running as is the case with any other Service Fabric application. Both http and https ports are being listened on, but for TLS to work on https port, need to satisfy the requirements regarding certificates mentioned in [Pre-reqs](#pre-reqs).
+As of this release, the services need to be explicitly exposed via [service extension labels](), enabling the proxying (HTTP) functionality for a particular service and endpoint. With the right labels’ setup, the reverse proxy will expose one or more endpoints on the local nodes for client services to use. The ports can then be exposed to the load balancer in order to get the services available outside of the cluster. The required certificates should be already deployed to the nodes where the proxy is running as is the case with any other Service Fabric application. For this preview, both http and https ports are being listened on by default, but for TLS to work on https port, need to satisfy the requirements regarding certificates mentioned in [Pre-reqs](#pre-reqs).
 
 ## Pre-reqs
 
-* For TLS, certificate selection is done dynamically via SNI, therefore certificate needs to be created with the CN an DNS Names binded with SF cluster's FQDN (i.e "sf-win-cluster.westus2.cloudapp.azure.com", "localhost") and stored under cert:\LocalMachine\My. **Note:** If using self signed certificate or a non trusted certificate make sure it is placed in [Trusted Root Certification Authorities Certificate Store](https://docs.microsoft.com/en-us/windows-hardware/drivers/install/trusted-root-certification-authorities-certificate-store). Certificate selector does not consider non trusted certificates.
+* For TLS, certificate selection is done dynamically via SNI, therefore certificate needs to be created with the CN and DNS Names configured with the SF cluster's FQDN (i.e "sf-win-cluster.westus2.cloudapp.azure.com", "localhost", etc.) and provisioned under cert:\LocalMachine\My for each node were YarpProxy app is running. **Note:** If using self signed certificate or a non trusted certificate make sure it is placed in [Trusted Root Certification Authorities Certificate Store](https://docs.microsoft.com/en-us/windows-hardware/drivers/install/trusted-root-certification-authorities-certificate-store). Certificate selector does not consider non trusted certificates.
 * To setup certs for local managed cluster, use `eng/Create-DevCerts.ps1`.
-* To setup certs for remote managed cluster, first create cert via Key Vault, again with the CN and DNS Names binded with the SF cluster's FQDN. Next, need to [deploy the certificate to your cluster](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-application-secrets). Note: For TLS, if you get issues related to the certificates such as an error related to "System.Security.Authentication.AuthenticationException: The server mode SSL must use a certificate with the associated private key", try force adding security permissions so that cluster can access the certificate using `eng/ACLCertificates.ps1`.
+* To setup certs for remote managed cluster, this can be done using Azure Key Vault. Again, make sure the CN and DNS Names are configured with the SF cluster's FQDN. Next, need to [deploy the certificate to your cluster](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-application-secrets). Note: For TLS, if you get issues related to the certificates such as an error related to "System.Security.Authentication.AuthenticationException: The server mode SSL must use a certificate with the associated private key", try adding security permissions manually so that cluster can access the certificate using `eng/ACLCertificates.ps1`.
 
 
 ## Using the application
 
 You can clone the repo, build, and deploy or simply grab the latest [ZIP/SFPKG application](https://github.com/microsoft/service-fabric-yarp/releases/latest) from Releases section, modify configs, and deploy.
 
-https://github.com/microsoft/service-fabric-yarp/releases/tag/v0.1.0-beta
 ![alt text](/docs/yarp-cluster-view.png "Cluster View UI")
 
 ![alt text](/docs/yarp-service-view.png "Cluster Service View UI")
@@ -95,7 +94,7 @@ Register-ServiceFabricApplicationType -ApplicationPathInImageStore YarpProxyApp
 $p = @{
     YarpProxy_InstanceCount="1"
     YarpProxy_HttpPort="8080"
-    #YarpProxy_HttpPort="443"
+    #YarpProxy_HttpsPort="443" #By default https port is still being listened on. Reference application manifest
     #YarpProxy_PlacementConstraints="NodeType == NT2"
 }
 $p
@@ -105,7 +104,7 @@ New-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -ApplicationT
 
 #OR if updating existing version:  
 
-Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:YarpProxyApp -ApplicationTypeVersion 0.1.0-beta -Monitored -FailureAction rollback
+Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:/YarpProxyApp -ApplicationTypeVersion 0.1.0-beta -ApplicationParameter $p -Monitored -FailureAction rollback 
 ```  
 
 ## Add the right labels to your services
@@ -230,7 +229,7 @@ This repo includes:
 
   ![Service Fabric Explorer](docs/sfx.png)
 
-* Deploy the pinger test application mentioned above. Using a browser, access `https://localhost/pinger0/PingerService`. If all works, you should get a `200 OK` response with contents resembling the following:
+* Deploy the pinger test application mentioned in [Sample-Test-Application](#sample-test-application). Using a browser, access `https://localhost/pinger0/PingerService`. If all works, you should get a `200 OK` response with contents resembling the following:
 
    ```json
    {
