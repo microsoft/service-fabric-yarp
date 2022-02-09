@@ -4,13 +4,13 @@
 namespace Yarp.ServiceFabric.RemoteConfig
 {
     /// <summary>
-    /// Options affecting Island Gateway service discovery.
+    /// Options affecting SFYarp service discovery.
     /// </summary>
     public class RemoteConfigDiscoveryOptions
     {
         /// <summary>
         /// Semicolon-delimited list of Service Fabric service names that should be used for service discovery.
-        /// The destination service is expected to honor the "Island Gateway External Configuration Provider" API specs.
+        /// The destination service is expected to honor the "SFYarp External Configuration Provider" API specs.
         /// </summary>
         public string ExternalDiscoveryServiceNames { get; set; }
     }

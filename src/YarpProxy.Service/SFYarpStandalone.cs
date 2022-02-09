@@ -18,6 +18,7 @@ namespace Yarp.ServiceFabric.Service
             var host = SFYarpService.CreateWebHost(
                 shutdownStateManager: shutdownStateManager,
                 urls: new[] { "http://+:280", "https://+:2443" },
+                serviceContext: null,
                 configureAppConfigurationAction: _ => { });
             host.Run();
         }

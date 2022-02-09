@@ -2,16 +2,29 @@
 <ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="YarpProxyAppType" ApplicationTypeVersion="0.1.0-beta" xmlns="http://schemas.microsoft.com/2011/01/fabric">
   <Parameters>
     <Parameter Name="YarpProxy_PlacementConstraints" DefaultValue="" />
-    <Parameter Name="YarpProxy_InstanceCount" DefaultValue="" />
+    <Parameter Name="YarpProxy_InstanceCount" DefaultValue="1" />
     <Parameter Name="YarpProxy_HttpPort" DefaultValue="8080" />
     <Parameter Name="YarpProxy_HttpsPort" DefaultValue="443" />
     <Parameter Name="FabricDiscovery_InstanceCount" DefaultValue="1" />
     <Parameter Name="FabricDiscovery_AbortAfterTimeoutInSeconds" DefaultValue="600" />
     <Parameter Name="FabricDiscovery_AbortAfterConsecutiveFailures" DefaultValue="3" />
     <Parameter Name="FabricDiscovery_FullRefreshPollPeriodInSeconds" DefaultValue="300" />
+	<!-- YarpProxy TelemetryManager Configuration -->
+    <Parameter Name="YarpProxyEnableTelemetry" DefaultValue="true" />
+    <Parameter Name="YarpProxyTelemetryLogPath" DefaultValue="" />
   </Parameters>
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="YarpProxyPkg" ServiceManifestVersion="0.1.0-beta" />
+	  <ConfigOverrides>
+		  <ConfigOverride Name="Config">
+			  <Settings>
+				  <Section Name="TelemetryManagerConfiguration">
+					  <Parameter Name="EnableTelemetry" Value="[YarpProxyEnableTelemetry]" />
+					  <Parameter Name="TelemetryLogPath" Value="[YarpProxyTelemetryLogPath]" />
+				  </Section>
+			  </Settings>
+		  </ConfigOverride>
+	  </ConfigOverrides>
     <ResourceOverrides>
       <Endpoints>
         <Endpoint Name="HttpServiceEndpoint" Port="[YarpProxy_HttpPort]" />

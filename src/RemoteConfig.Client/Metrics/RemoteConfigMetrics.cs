@@ -26,9 +26,9 @@ namespace Yarp.ServiceFabric.RemoteConfig.Metrics
         }
 
         /// <summary>
-        /// Metric to measure the health of Island Gateway's remote configuration provider.
-        /// This measures how Island Gateway is performing.
-        /// If this is ever unhealthy, it could be a fault at the remote service, or in Island Gateway itself.
+        /// Metric to measure the health of SFYarp's remote configuration provider.
+        /// This measures how SFYarp is performing.
+        /// If this is ever unhealthy, it could be a fault at the remote service, or in SFYarp itself.
         /// This is a reliable signal to detect service discovery issues early as it verifies the entire stack is healthy.
         /// </summary>
         public void RemoteConfigHealth(long value)
@@ -37,7 +37,7 @@ namespace Yarp.ServiceFabric.RemoteConfig.Metrics
         }
 
         /// <summary>
-        /// Metric to measure the end-to-end delay of Island Gateway's remote configurations.
+        /// Metric to measure the end-to-end delay of SFYarp's remote configurations.
         /// This value is computed based on date/time's measures potentially on different machines, and is subject to clock skew.
         /// Negative values, if they occur, are clamped to zero.
         /// </summary>

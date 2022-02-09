@@ -21,7 +21,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 {
     /// <summary>
     /// Manages discovery of Service Fabric Properties for services that have opted-in
-    /// via label <c>Yarp.EnableDynamicOverrides</c>, and computes the final Island Gateway configs.
+    /// via label <c>Yarp.EnableDynamicOverrides</c>, and computes the final SFYarp configs.
     /// The processing sequence is
     ///   * <see cref="Topology.TopologyDiscoveryWorker"/>, then
     ///   * <see cref="SFYarpTopologyMapperWorker"/>, then
@@ -30,7 +30,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
     /// </summary>
     internal class SFYarpConfigSerializerWorker : CriticalBackgroundService, ISnapshotProvider<SFYarpSerializedConfig>
     {
-        private readonly IProxyConfigProvider igwConfigProvider;
+        private readonly IProxyConfigProvider sfyConfigProvider;
         private readonly ILogger<SFYarpConfigSerializerWorker> logger;
         private readonly IOperationLogger operationLogger;
         private readonly RecurringTask recurringTask;
@@ -43,13 +43,13 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
         private CancellationTokenSource changeToken;
 
         public SFYarpConfigSerializerWorker(
-            IProxyConfigProvider igwConfigProvider,
+            IProxyConfigProvider sfyConfigProvider,
             IProcessExiter processExiter,
             ILogger<SFYarpConfigSerializerWorker> logger,
             IOperationLogger operationLogger)
             : base(new WorkerOptions(), processExiter, logger)
         {
-            this.igwConfigProvider = igwConfigProvider ?? throw new ArgumentNullException(nameof(igwConfigProvider));
+            this.sfyConfigProvider = sfyConfigProvider ?? throw new ArgumentNullException(nameof(sfyConfigProvider));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.operationLogger = operationLogger ?? throw new ArgumentNullException(nameof(operationLogger));
             this.recurringTask = new RecurringTask(this.RunIterationAsync)
@@ -65,10 +65,10 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 
         protected override Task InitAsync(CancellationToken cancellation)
         {
-            this.currentConfigSnapshot = this.igwConfigProvider.GetConfig();
+            this.currentConfigSnapshot = this.sfyConfigProvider.GetConfig();
             if (this.currentConfigSnapshot == null)
             {
-                throw new InvalidOperationException($"Island Gateway config should already be known when {nameof(SFYarpConfigSerializerWorker)} starts.");
+                throw new InvalidOperationException($"SFYarp config should already be known when {nameof(SFYarpConfigSerializerWorker)} starts.");
             }
 
             this.UpdateSnapshot();
@@ -84,14 +84,14 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
         private async Task RunIterationAsync(CancellationToken cancellation)
         {
             await this.currentConfigSnapshot.ChangeToken.WaitForChanges(cancellation);
-            this.currentConfigSnapshot = this.igwConfigProvider.GetConfig();
+            this.currentConfigSnapshot = this.sfyConfigProvider.GetConfig();
             this.UpdateSnapshot();
         }
 
         private void UpdateSnapshot()
         {
             var config = this.currentConfigSnapshot;
-            this.logger.LogInformation($"Serializing new Island Gateway configs. {config.Clusters.Count} clusters, {config.Routes.Count} routes.");
+            this.logger.LogInformation($"Serializing new SFYarp configs. {config.Clusters.Count} clusters, {config.Routes.Count} routes.");
 
             using var oldToken = this.changeToken;
             this.changeToken = new CancellationTokenSource();

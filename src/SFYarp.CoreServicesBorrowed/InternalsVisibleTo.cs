@@ -3,4 +3,4 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly:InternalsVisibleTo("IslandGateway.CoreServicesBorrowed.Tests")]
+[assembly:InternalsVisibleTo("SFYarp.CoreServicesBorrowed.Tests")]

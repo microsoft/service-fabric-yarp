@@ -4,19 +4,19 @@
 namespace YarpProxy.Service.Lifecycle
 {
     /// <summary>
-    /// Helps manage graceful teardown of Island Gateway.
+    /// Helps manage graceful teardown of SFYarp.
     /// </summary>
     public class ShutdownStateManager
     {
         private volatile bool isShuttingDown;
 
         /// <summary>
-        /// Gets a value indcating whether Island gateway is currently shutting down.
+        /// Gets a value indcating whether SFYarp is currently shutting down.
         /// </summary>
         public bool IsShuttingDown => this.isShuttingDown;
 
         /// <summary>
-        /// Marks that Island Gateway graceful shutdown has commenced.
+        /// Marks that SFYarp graceful shutdown has commenced.
         /// </summary>
         public void MarkShuttingDown()
         {

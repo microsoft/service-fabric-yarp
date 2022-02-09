@@ -28,7 +28,7 @@ namespace Yarp.ServiceFabric.Service
     /// We implement the following sequence of steps:
     ///    1. Service Fabric asks us to shutdown gracefully by invoking <see cref="CloseAsync(CancellationToken)"/>
     ///    2. We mark that we are shutting down in the provided <see cref="shutdownStateManager"/>.
-    ///       This causes Island Gateway's health endpoint to respond an unhealthy status code for subsequent health probes
+    ///       This causes SFYarp's health endpoint to respond an unhealthy status code for subsequent health probes
     ///    3. We wait some time to ensure Load Balancer has taken us out of rotation,
     ///       while we continue to accept and process new requests as normal
     ///    4. We initiate ASP .NET Core's graceful shutdown by forwarding the <see cref="CloseAsync(CancellationToken)"/> call

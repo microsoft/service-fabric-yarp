@@ -1,3 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+	<Section Name="TelemetryManagerConfiguration">
+		<!-- *** Application Parameters - Must Override, set in ApplicationManifest.xml, not here. *** -->
+
+		<!-- Required: Location on disk to store telemetry data, including TelemetryManager. 
+        The below (default) works on both platforms: on Windows it will be C:\TelemetryLogs** -->
+		<Parameter Name="TelemetryLogPath" Value="" MustOverride="true" />
+
+		<!-- Required: Internal operational telemetry. No PII.  
+         See TelemetryManager.cs and TelemetryLib project for telemetry data that is collected. -->
+		<Parameter Name="EnableTelemetry" Value="" MustOverride="true" />
+
+	</Section>
 </Settings>

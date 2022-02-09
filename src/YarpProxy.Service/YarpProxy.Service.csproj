@@ -32,6 +32,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
+    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" />
     <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" />
     <PackageReference Include="System.Net.Http" />
     <PackageReference Include="Yarp.ReverseProxy" />
@@ -40,5 +42,10 @@
   <ItemGroup>
     <ProjectReference Include="..\SFYarp.CoreServicesBorrowed\SFYarp.CoreServicesBorrowed.csproj" />
     <ProjectReference Include="..\RemoteConfig.Client\RemoteConfig.Client.csproj" />
+    <ProjectReference Include="..\SFYarp.InternalTelemetry\SFYarp.InternalTelemetry.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="System.Text.Encodings.Web" />
   </ItemGroup>
 </Project>

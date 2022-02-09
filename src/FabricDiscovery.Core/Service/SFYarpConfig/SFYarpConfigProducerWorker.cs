@@ -21,7 +21,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 {
     /// <summary>
     /// Manages discovery of Service Fabric Properties for services that have opted-in
-    /// via label <c>Yarp.EnableDynamicOverrides</c>, and computes the final Island Gateway configs.
+    /// via label <c>Yarp.EnableDynamicOverrides</c>, and computes the final SFYarp configs.
     /// The processing sequence is
     ///   * <see cref="Topology.TopologyDiscoveryWorker"/>, then
     ///   * <see cref="SFYarpTopologyMapperWorker"/>, then
@@ -34,7 +34,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
         private static readonly TimeSpan DefaultPropertyUpdateInterval = TimeSpan.FromSeconds(10);
         private static readonly TimeSpan DefaultCoolDownPropertyUpdateInterval = TimeSpan.FromSeconds(20);
 
-        private readonly ISnapshotProvider<IReadOnlyList<SFYarpBackendService>> igwTopologyProvider;
+        private readonly ISnapshotProvider<IReadOnlyList<SFYarpBackendService>> sfyTopologyProvider;
         private readonly IPropertyManagementClientWrapper propertyClient;
         private readonly IMonotonicTimer timer;
         private readonly ISFYarpConfigProducer configProducer;
@@ -44,14 +44,14 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
         private readonly IOperationLogger operationLogger;
         private readonly RecurringTask recurringTask;
 
-        private Snapshot<IReadOnlyList<SFYarpBackendService>> currentIgwTopology;
+        private Snapshot<IReadOnlyList<SFYarpBackendService>> currentSfyTopology;
         private TimeSpan? nextPropertiesFetch;
 
         private IProxyConfig snapshot;
         private CancellationTokenSource changeToken;
 
         public SFYarpConfigProducerWorker(
-            ISnapshotProvider<IReadOnlyList<SFYarpBackendService>> igwTopologyProvider,
+            ISnapshotProvider<IReadOnlyList<SFYarpBackendService>> sfyTopologyProvider,
             IPropertyManagementClientWrapper propertyClient,
             IMonotonicTimer timer,
             ISFYarpConfigProducer configProducer,
@@ -62,7 +62,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
             IOperationLogger operationLogger)
             : base(CreateWorkerOptions(options), processExiter, logger)
         {
-            this.igwTopologyProvider = igwTopologyProvider ?? throw new ArgumentNullException(nameof(igwTopologyProvider));
+            this.sfyTopologyProvider = sfyTopologyProvider ?? throw new ArgumentNullException(nameof(sfyTopologyProvider));
             this.propertyClient = propertyClient ?? throw new ArgumentNullException(nameof(propertyClient));
             this.timer = timer ?? throw new ArgumentNullException(nameof(timer));
             this.configProducer = configProducer ?? throw new ArgumentNullException(nameof(configProducer));
@@ -80,14 +80,14 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 
         protected override async Task InitAsync(CancellationToken cancellation)
         {
-            this.currentIgwTopology = this.igwTopologyProvider.GetSnapshot();
-            if (this.currentIgwTopology == null)
+            this.currentSfyTopology = this.sfyTopologyProvider.GetSnapshot();
+            if (this.currentSfyTopology == null)
             {
-                throw new InvalidOperationException($"Island Gateway topology should already be known when {nameof(SFYarpConfigProducerWorker)} starts.");
+                throw new InvalidOperationException($"SFYarp topology should already be known when {nameof(SFYarpConfigProducerWorker)} starts.");
             }
 
-            (_, this.nextPropertiesFetch) = await this.UpdateAllPropertiesAsync(this.currentIgwTopology.Value, cancellation);
-            var (clusters, routes) = this.configProducer.ProduceConfig(this.currentIgwTopology.Value);
+            (_, this.nextPropertiesFetch) = await this.UpdateAllPropertiesAsync(this.currentSfyTopology.Value, cancellation);
+            var (clusters, routes) = this.configProducer.ProduceConfig(this.currentSfyTopology.Value);
             this.UpdateSnapshot(clusters, routes);
         }
 
@@ -109,7 +109,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
         private async Task RunIterationAsync(CancellationToken cancellation)
         {
             using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellation))
-            using (this.currentIgwTopology.ChangeToken.RegisterChangeCallback(static state => ((CancellationTokenSource)state).Cancel(), cts))
+            using (this.currentSfyTopology.ChangeToken.RegisterChangeCallback(static state => ((CancellationTokenSource)state).Cancel(), cts))
             {
                 try
                 {
@@ -140,8 +140,8 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 
             // When we get here, it's either because the topology has just changed or it's time to re-check properties.
             this.freshnessTracker.Properties.SetFresh();
-            var newTopology = this.igwTopologyProvider.GetSnapshot();
-            bool topologyChanged = !object.ReferenceEquals(this.currentIgwTopology, newTopology);
+            var newTopology = this.sfyTopologyProvider.GetSnapshot();
+            bool topologyChanged = !object.ReferenceEquals(this.currentSfyTopology, newTopology);
 
             bool propertiesChanged;
             (propertiesChanged, this.nextPropertiesFetch) = await this.UpdateAllPropertiesAsync(newTopology.Value, cancellation);
@@ -153,7 +153,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 
                 // Only update the current topology at the end -- if anything fails before we get here, we want the next iteration to retry
                 // (otherwise it might sit doing nothing until the next SF topology change.
-                this.currentIgwTopology = newTopology;
+                this.currentSfyTopology = newTopology;
             }
         }
 
@@ -264,7 +264,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 
         private void UpdateSnapshot(List<ClusterConfig> clusters, List<RouteConfig> routes)
         {
-            this.logger.LogInformation($"Signaling new Island Gateway configs. {clusters.Count} clusters, {routes.Count} routes.");
+            this.logger.LogInformation($"Signaling new SFYarp configs. {clusters.Count} clusters, {routes.Count} routes.");
 
             using var oldToken = this.changeToken;
             this.changeToken = new CancellationTokenSource();

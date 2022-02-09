@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.ServiceFabric.Services.Runtime;
 using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
 using Yarp.ServiceFabric.Common.Abstractions.Time;
 using Yarp.ServiceFabric.Common.Telemetry;
@@ -13,6 +14,7 @@ using Yarp.ServiceFabric.Common.Util;
 using Yarp.ServiceFabric.Core.Abstractions;
 using Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding;
 using Yarp.ServiceFabric.Hosting.Common;
+using Yarp.ServiceFabric.InternalTelemetry;
 using Yarp.ServiceFabric.RemoteConfig;
 using Yarp.ServiceFabric.RemoteConfig.Infra;
 using YarpProxy.Service.Lifecycle;
@@ -44,6 +46,7 @@ namespace Yarp.ServiceFabric.Service
             services.AddSingleton<IMonotonicTimer, MonotonicTimer>();
             services.AddSingleton<IOperationLogger, TextOperationLogger>();
             services.AddSingleton<IMetricCreator, NullMetricCreator>();
+
             services.AddReverseProxy()
                 .LoadFromRemoteConfigProvider();
             services.AddSingleton<IRemoteConfigClientFactory, RemoteConfigClientFactory>();
@@ -52,6 +55,8 @@ namespace Yarp.ServiceFabric.Service
             services.AddSingleton<ISniServerCertificateSelector, SniServerCertificateSelector>();
             services.AddHostedService<SniServerCertificateUpdater>();
             services.TryAddSingleton<ShutdownStateManager>();
+
+            services.AddHostedService<TelemetryManager>();
             services.Configure<RemoteConfigDiscoveryOptions>(this.configuration.GetSection("RemoteConfigDiscovery"));
         }
 

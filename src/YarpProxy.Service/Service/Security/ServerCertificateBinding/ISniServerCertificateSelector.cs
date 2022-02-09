@@ -53,7 +53,7 @@ namespace Yarp.ServiceFabric.Core.Abstractions
 
         /// <summary>
         /// Selects a TLS server authentication certificate (if available) for the specified inbound TLS SNI host name.
-        /// This enables Island Gateway to serve multiple hosts on the same IP address.
+        /// This enables SFYarp to serve multiple hosts on the same IP address.
         /// </summary>
         X509Certificate2 SelectCertificate(ConnectionContext connectionContext, string hostName);
     }

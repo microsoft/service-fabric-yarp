@@ -103,11 +103,11 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig.Tests
 
         private void SetupEchoServiceScenario()
         {
-            var igwApp = this.SimulateSFYarpApp();
+            var sfyApp = this.SimulateSFYarpApp();
 
             var discoveredApps = new Dictionary<ApplicationNameKey, DiscoveredApp>
             {
-                { igwApp.Application.ApplicationName, igwApp },
+                { sfyApp.Application.ApplicationName, sfyApp },
             };
             this.fabricTopologyProvider
                 .Setup(s => s.GetSnapshot())
@@ -116,7 +116,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig.Tests
 
         private DiscoveredAppEx SimulateSFYarpApp()
         {
-            var igwAppType = new ApplicationTypeWrapper
+            var sfyAppType = new ApplicationTypeWrapper
             {
                 ApplicationTypeName = new ApplicationTypeNameKey("CoreServices.SFYarpAppType"),
                 ApplicationTypeVersion = new ApplicationTypeVersionKey("1.16.01516.107-master-abc2ab1e"),
@@ -161,11 +161,11 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig.Tests
                     },
                 },
             };
-            var igwApp = new ApplicationWrapper
+            var sfyApp = new ApplicationWrapper
             {
                 ApplicationName = new ApplicationNameKey(new Uri("fabric:/CoreServices.SFYarp")),
-                ApplicationTypeName = igwAppType.ApplicationTypeName,
-                ApplicationTypeVersion = igwAppType.ApplicationTypeVersion,
+                ApplicationTypeName = sfyAppType.ApplicationTypeName,
+                ApplicationTypeVersion = sfyAppType.ApplicationTypeVersion,
                 ApplicationParameters = new Dictionary<string, string>
                 {
                     { "EchoService_Route1_Rule", "Host('echo.example.com') && Path('/echoservice/{**catchall}')" },
@@ -208,10 +208,10 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig.Tests
                 },
             };
 
-            var discoveredIgwAppType = new DiscoveredAppType(igwAppType);
+            var discoveredSfyAppType = new DiscoveredAppType(sfyAppType);
             var discoveredEchoServiceType = new DiscoveredServiceType(echoServiceType);
-            var discoveredIgwAppTypeEx = new DiscoveredAppTypeEx(
-                discoveredIgwAppType,
+            var discoveredSfyAppTypeEx = new DiscoveredAppTypeEx(
+                discoveredSfyAppType,
                 new Dictionary<ServiceTypeNameKey, DiscoveredServiceType>
                 {
                     { echoServiceType.ServiceTypeName, discoveredEchoServiceType },
@@ -226,16 +226,16 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig.Tests
                     new DiscoveredPartition(echoPartition, discoveredEchoReplicas),
                 });
 
-            var discoveredIgwApp = new DiscoveredApp(igwApp);
-            var discoveredIgwAppEx = new DiscoveredAppEx(
-                discoveredIgwApp,
-                discoveredIgwAppTypeEx,
+            var discoveredSfyApp = new DiscoveredApp(sfyApp);
+            var discoveredSfyAppEx = new DiscoveredAppEx(
+                discoveredSfyApp,
+                discoveredSfyAppTypeEx,
                 new Dictionary<ServiceNameKey, DiscoveredService>
                 {
                     { echoService.ServiceName, discoveredEchoServiceEx },
                 });
 
-            return discoveredIgwAppEx;
+            return discoveredSfyAppEx;
         }
     }
 }

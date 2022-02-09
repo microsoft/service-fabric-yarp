@@ -29,7 +29,6 @@ namespace Yarp.ServiceFabric.Service
         private const long MaxRequestBodySize = 100 * 1024 * 1024;
         private const int HealthEndpointReactionTimeSeconds = 15;
         private const int DrainTimeSeconds = 60 * 3;
-
         private readonly ILogger entrypointLogger;
         private readonly ShutdownStateManager shutdownStateManager;
 
@@ -43,13 +42,13 @@ namespace Yarp.ServiceFabric.Service
         {
             Contracts.CheckValue(entrypointLogger, nameof(entrypointLogger));
             this.entrypointLogger = entrypointLogger;
-
             this.shutdownStateManager = new ShutdownStateManager();
         }
 
         internal static IWebHost CreateWebHost(
             ShutdownStateManager shutdownStateManager,
             string[] urls,
+            StatelessServiceContext serviceContext,
             Action<IConfigurationBuilder> configureAppConfigurationAction)
         {
             Contracts.CheckValue(urls, nameof(urls));
@@ -73,13 +72,19 @@ namespace Yarp.ServiceFabric.Service
                                 httpsOptions.ServerCertificateSelector = (connectionContext, hostName) => certSelectorFunc(connectionContext, hostName);
                             });
                     })
-                .ConfigureServices(services =>
-                {
-                    services.AddSingleton(shutdownStateManager);
-                })
+                .ConfigureServices(services => services
+                    .AddSingleton(shutdownStateManager)
+                    .AddSingleton(serviceContext))
                 .ConfigureAppConfiguration(configureAppConfigurationAction)
                 .UseStartup<Startup>()
                 .UseUrls(urls)
+                .ConfigureLogging((hostingContext, logging) =>
+                {
+                    logging.AddEventLog(configuration => configuration.SourceName = "YarpProxyLogs");
+
+                    var appInsightKey = hostingContext.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
+                    logging.AddApplicationInsights(appInsightKey);
+                })
                 .UseShutdownTimeout(TimeSpan.FromSeconds(DrainTimeSeconds))
                 .Build();
 
@@ -105,6 +110,7 @@ namespace Yarp.ServiceFabric.Service
                             var host = CreateWebHost(
                                 shutdownStateManager: this.shutdownStateManager,
                                 urls: urls,
+                                serviceContext: serviceContext,
                                 configureAppConfigurationAction: configBuilder =>
                                 {
                                     // NOTE: `WebHost.CreateDefaultBuilder` has already added the default configuration sources at this point

@@ -20,8 +20,8 @@ using Yarp.ServiceFabric.ServiceFabricIntegration;
 namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 {
     /// <summary>
-    /// Hosted service responsible for producing Island Gateway abstractions from the Service Fabric topology,
-    /// as an intermediary step before additional processing steps performed specifically for Island Gateway.
+    /// Hosted service responsible for producing SFYarp abstractions from the Service Fabric topology,
+    /// as an intermediary step before additional processing steps performed specifically for SFYarp.
     /// The processing sequence is
     ///   * <see cref="TopologyDiscoveryWorker"/>, then
     ///   * this, then
@@ -175,19 +175,19 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
                         continue;
                     }
 
-                    if (!this.serviceLookup.TryGetValue(serviceEx, out var igwBackendService))
+                    if (!this.serviceLookup.TryGetValue(serviceEx, out var sfyBackendService))
                     {
-                        igwBackendService = this.MapService(appEx, serviceEx, now);
-                        if (igwBackendService == null)
+                        sfyBackendService = this.MapService(appEx, serviceEx, now);
+                        if (sfyBackendService == null)
                         {
                             continue;
                         }
 
-                        this.serviceLookup[serviceEx] = igwBackendService;
+                        this.serviceLookup[serviceEx] = sfyBackendService;
                     }
 
-                    igwBackendService.LastUsed = now;
-                    newBackendServices.Add(igwBackendService);
+                    sfyBackendService.LastUsed = now;
+                    newBackendServices.Add(sfyBackendService);
                 }
             }
 
@@ -201,23 +201,23 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 
         private SFYarpBackendService MapService(DiscoveredAppEx appEx, DiscoveredServiceEx serviceEx, TimeSpan now)
         {
-            if (!this.serviceTypeLookup.TryGetValue(serviceEx.ServiceType, out var igwServiceType))
+            if (!this.serviceTypeLookup.TryGetValue(serviceEx.ServiceType, out var sfyServiceType))
             {
-                igwServiceType = this.serviceTypeLookup[serviceEx.ServiceType] = this.MapServiceType(serviceEx.ServiceType);
+                sfyServiceType = this.serviceTypeLookup[serviceEx.ServiceType] = this.MapServiceType(serviceEx.ServiceType);
             }
 
-            igwServiceType.LastUsed = now;
-            if (igwServiceType.RawLabels == null)
+            sfyServiceType.LastUsed = now;
+            if (sfyServiceType.RawLabels == null)
             {
                 return null;
             }
 
-            var effectiveLabels = ComputeEffectiveLabels(igwServiceType.RawLabels, appEx);
+            var effectiveLabels = ComputeEffectiveLabels(sfyServiceType.RawLabels, appEx);
             return new SFYarpBackendService
             {
                 FabricApplication = appEx,
                 FabricService = serviceEx,
-                ParsedServiceType = igwServiceType,
+                ParsedServiceType = sfyServiceType,
                 EffectiveLabels = effectiveLabels,
                 LabelOverrides = null, // If there are overrides from Properties, the next stage in the pipeline (`SFYarpConfigProducerWorker`) will add them
                 FinalEffectiveLabels = effectiveLabels,
@@ -266,7 +266,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 
         private void UpdateSnapshot(List<SFYarpBackendService> backendServices)
         {
-            this.logger.LogInformation($"Signaling new Island Gateway topology. {backendServices.Count} backend services.");
+            this.logger.LogInformation($"Signaling new SFYarp topology. {backendServices.Count} backend services.");
 
             using var oldToken = this.changeToken;
             this.changeToken = new CancellationTokenSource();

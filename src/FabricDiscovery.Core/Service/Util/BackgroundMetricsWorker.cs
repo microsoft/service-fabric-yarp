@@ -19,14 +19,14 @@ namespace Yarp.ServiceFabric.FabricDiscovery
 
         private readonly IServiceDiscoveryManager serviceDiscoveryManager;
         private readonly TopologyFreshnessTracker topologyFreshnessTracker;
-        private readonly SFYarpFreshnessTracker igwFreshnessTracker;
+        private readonly SFYarpFreshnessTracker sfyFreshnessTracker;
         private readonly FabricDiscoveryMetrics metrics;
         private readonly RecurringTask recurringTask;
 
         public BackgroundMetricsWorker(
             IServiceDiscoveryManager serviceDiscoveryManager,
             TopologyFreshnessTracker topologyFreshnessTracker,
-            SFYarpFreshnessTracker igwFreshnessTracker,
+            SFYarpFreshnessTracker sfyFreshnessTracker,
             FabricDiscoveryMetrics metrics,
             IProcessExiter processExiter,
             IOptions<FabricDiscoveryOptions> options,
@@ -36,7 +36,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery
         {
             this.serviceDiscoveryManager = serviceDiscoveryManager ?? throw new ArgumentNullException(nameof(serviceDiscoveryManager));
             this.topologyFreshnessTracker = topologyFreshnessTracker ?? throw new ArgumentNullException(nameof(topologyFreshnessTracker));
-            this.igwFreshnessTracker = igwFreshnessTracker ?? throw new ArgumentNullException(nameof(igwFreshnessTracker));
+            this.sfyFreshnessTracker = sfyFreshnessTracker ?? throw new ArgumentNullException(nameof(sfyFreshnessTracker));
             this.metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
             _ = options?.Value ?? throw new ArgumentNullException($"{nameof(options)}.{nameof(options.Value)}");
             _ = operationLogger ?? throw new ArgumentNullException(nameof(operationLogger));
@@ -54,7 +54,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery
         {
             this.metrics.FabricDiscoveryTopologyFreshness((long)this.topologyFreshnessTracker.Topology.Freshness.TotalMilliseconds);
             this.metrics.FabricDiscoveryFullTopologyFreshness((long)this.topologyFreshnessTracker.FullTopology.Freshness.TotalMilliseconds);
-            this.metrics.FabricDiscoveryPropertiesFreshness((long)this.igwFreshnessTracker.Properties.Freshness.TotalMilliseconds);
+            this.metrics.FabricDiscoveryPropertiesFreshness((long)this.sfyFreshnessTracker.Properties.Freshness.TotalMilliseconds);
 
             this.metrics.FabricDiscoveryTotalElements(this.serviceDiscoveryManager.CountTotalElements());
         }

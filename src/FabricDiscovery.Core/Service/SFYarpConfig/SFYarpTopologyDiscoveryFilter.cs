@@ -8,7 +8,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 {
     /// <summary>
     /// Filters what elements of the Service Fabric cluster are discovered
-    /// so that we don't waste efforts discovering items that are irrelevant for Island Gateway.
+    /// so that we don't waste efforts discovering items that are irrelevant for SFYarp.
     /// </summary>
     internal class SFYarpTopologyDiscoveryFilter : TopologyDiscoveryFilter
     {

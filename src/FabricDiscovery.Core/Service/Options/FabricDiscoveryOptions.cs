@@ -9,7 +9,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery
     public sealed class FabricDiscoveryOptions
     {
         /// <summary>
-        /// Whether to allow Island Gateway to discover non-https endpoints.
+        /// Whether to allow SFYarp to discover non-https endpoints.
         /// Defaults to <c>false</c>.
         /// </summary>
         // TODO: Make defaults more secure
