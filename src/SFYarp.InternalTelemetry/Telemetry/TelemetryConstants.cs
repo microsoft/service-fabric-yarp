@@ -10,6 +10,6 @@ namespace Yarp.ServiceFabric.InternalTelemetry
         internal const string ClusterTypeStandalone = "standalone";
         internal const string ClusterTypeSfrp = "SFRP";
         internal const string ClusterTypePaasV1 = "PaasV1";
-        internal const string ConnectionString = "InstrumentationKey=00000000-0000-0000-0000-000000000000";
+        internal const string ConnectionString = "InstrumentationKey=9bc81947-17d7-4a85-8f50-a081074c6414";
     }
 }

@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="PingerApplicationType" ApplicationTypeVersion="1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Parameters>
+    <Parameter Name="Pinger_Instance_Count" DefaultValue="1" />
+    <Parameter Name="Pinger_PlacementConstraints" DefaultValue="" />
+	<Parameter Name="Pinger_Port" DefaultValue="8080" />
+
+  </Parameters>
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="PingerService" ServiceManifestVersion="1.0" />
+    <ConfigOverrides>
+    </ConfigOverrides>
+
+    <ResourceOverrides>
+      <Endpoints>
+        <Endpoint Name="PingerEndpoint0" Port="[Pinger_Port]" UriScheme="http" />
+      </Endpoints>
+    </ResourceOverrides>
+
+    <EnvironmentOverrides CodePackageRef="Pinger.Code">
+      <EnvironmentVariable Name="PORT" Value="[Pinger_Port]" />
+    </EnvironmentOverrides>
+
+    <Policies>
+      <PackageSharingPolicy Scope="All" />
+      <RunAsPolicy CodePackageRef="Pinger.Code" UserRef="SetupLocalSystem" EntryPointType="Main" />
+    </Policies>
+  </ServiceManifestImport>
+  <DefaultServices>
+    <Service Name="PingerService" ServicePackageActivationMode="ExclusiveProcess">
+      <StatelessService ServiceTypeName="PingerServiceType" InstanceCount="[Pinger_Instance_Count]">
+        <SingletonPartition />
+        <PlacementConstraints>[Pinger_PlacementConstraints]</PlacementConstraints>
+      </StatelessService>
+    </Service>
+  </DefaultServices>
+  <Principals>
+    <Users>
+      <User Name="SetupLocalSystem" AccountType="LocalSystem" />
+    </Users>
+  </Principals>
+</ApplicationManifest>

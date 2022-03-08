@@ -1,4 +1,4 @@
-# ServiceFabricYarp 0.1.0-beta
+# ServiceFabricYarp 1.0.0
 
 
 Table of Contents
@@ -11,7 +11,9 @@ Table of Contents
       * [Deploy it using PowerShell](#deploy-it-using-powershell)
       * [Add the right labels to your services](#add-the-right-labels-to-your-services)
       * [Supported Labels](#supported-labels)
-      * [Sample Test application](#sample-test-application)
+      * [Internal Telemetry](#internal-telemetry)
+      * [Tracing](#tracing)
+
   * [YARP Reverse Proxy for Service Fabric Integration](#yarp-reverse-proxy-for-service-fabric-integration)
       * [Pre-reqs for development machine](#pre-reqs-for-development-machine)
       * [Building and Unit Testing](#building-and-unit-testing)
@@ -84,7 +86,7 @@ Connect-ServiceFabricCluster -ConnectionEndpoint @('sf-win-cluster.westus2.cloud
 
 # Use this to remove a previous YarpProxy Application
 #Remove-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -Force
-#Unregister-ServiceFabricApplicationType -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 0.1.0-beta -Force
+#Unregister-ServiceFabricApplicationType -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.0.0 -Force
 
 #Copy and register and run the YarpProxy Application
 Copy-ServiceFabricApplicationPackage -CompressPackage -ApplicationPackagePath $appPath # -ApplicationPackagePathInImageStore YarpProxyApp
@@ -99,12 +101,12 @@ $p = @{
 }
 $p
 
-New-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 0.1.0-beta -ApplicationParameter $p
+New-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.0.0 -ApplicationParameter $p
 
 
 #OR if updating existing version:  
 
-Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:/YarpProxyApp -ApplicationTypeVersion 0.1.0-beta -ApplicationParameter $p -Monitored -FailureAction rollback 
+Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:/YarpProxyApp -ApplicationTypeVersion 1.0.0 -ApplicationParameter $p -Monitored -FailureAction rollback 
 ```  
 
 ## Add the right labels to your services
@@ -186,6 +188,54 @@ $p = @{
 New-ServiceFabricApplication -ApplicationName fabric:/pinger0 -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 1.0 -ApplicationParameter $p
 
 ```
+
+## Internal Telemetry
+
+Internal telemetry data is transmitted to Microsoft and contains information about YarpProxyApp. This information helps us track how many people are using the reverse proxy app as well as get a perspectice on the app's retention rate. This data does not contain PII or any information about the services running in your cluster or the data handled by the applications. Nor do we capture the user application-specific configurations set for YarpProxyApp. 
+
+**This information is only used by the Service Fabric team and will be retained for no more than 90 days. This telemetry is sent once every 24 hours** 
+
+### Disabling / Enabling transmission of Internal Telemetry Data: 
+
+Transmission of internal telemetry data is controlled by a setting and can be easily turned off. ```YarpProxyEnableTelemetry``` setting in ```ApplicationManifest.xml``` controls transmission of internal telemetry data. **Note that if you are deploying YarpProxyApp to a cluster running in a restricted region (China) or cloud (Gov) you should disable this feature before deploying to remain compliant. Please do not send data outside of any restricted boundary.**  
+
+Setting the value to false as below will prevent the transmission of operational data: 
+
+**\<Parameter Name="YarpProxyEnableTelemetry" DefaultValue="false" />** 
+
+#### Internal telemetry data details: 
+
+Here is a full example of exactly what is sent in one of these telemetry events, in this case, from an SFRP cluster: 
+
+```JSON
+  {"EventName":"TelemetryEvent",
+  "TaskName":"YarpProxy",
+  "ClusterId":"00000000-1111-1111-0000-00f00d000d",
+  "ClusterType":"SFRP",
+  "Timestamp":"2022-03-08T00:00:16.2290850Z",
+  "NodeNameHash":"3e83569d4c6aad78083cd081215dafc81e5218556b6a46cb8dd2b183ed0095ad"}
+```
+
+ We'll go through each object property in the JSON above.
+-	**EventName** - this is the name of the telemetry event.
+-	**TaskName** - this specifies that the event is from YarpProxyApp.
+-	**ClusterId** - this is used to both uniquely identify a telemetry event and to correlate data that comes from a cluster.
+-	**ClusterType** - this is the type of cluster: Standalone or SFRP.
+-	**NodeNameHash** - this is a sha256 hash of the name of the Fabric node from where the data originates. It is used to correlate data from specific nodes in a cluster (the hashed node name will be known to be part of the cluster with a specific cluster id).
+-	**Timestamp** - this is the time, in UTC, when YarpProxyApp sent the telemetry.
+
+If the ClusterType is not SFRP then a TenantId (Guid) is sent for use in the same way we use ClusterId. 
+
+This information will **really** help us so we greatly appreciate you sharing it with us!
+
+
+## Tracing
+At the moment, logs can be locally collected on every node that the app is running on (e.g "C:\SfDevCluster\Data\_App\_Node_0\YarpProxyAppType_App0\log").
+
+Since YarpProxyApp is an ASP.NET Core application it comes built in with various [logging capabilities](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-6.0). By default the logging providers that are supported included console, debug, eventsource and eventlog. We have also added the application insight logging provider so that logs can be collected outside the cluster. Just provide the Application Insight instrumentation key in the appsettings.json file under YarpProxy.Service. 
+
+
+
 
 # YARP Reverse Proxy for Service Fabric Integration
 

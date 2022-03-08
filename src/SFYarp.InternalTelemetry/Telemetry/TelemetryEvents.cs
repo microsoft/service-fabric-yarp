@@ -66,7 +66,7 @@ namespace Yarp.ServiceFabric.InternalTelemetry
                     { "ClusterType", this.clusterType },
                     { "Timestamp", DateTime.UtcNow.ToString("o") },
                 };
-
+                /* TODO: Verify if this data is needed for internal telemetry
                 if (eventProperties.TryGetValue("ClusterType", out string clustType))
                 {
                     if (clustType != TelemetryConstants.ClusterTypeSfrp)
@@ -74,6 +74,7 @@ namespace Yarp.ServiceFabric.InternalTelemetry
                         eventProperties.Add("TenantId", this.tenantId);
                     }
                 }
+                */
 
                 string nodeHashString = string.Empty;
                 _ = TryGetHashStringSha256(this.serviceContext.NodeContext.NodeName, out nodeHashString);
