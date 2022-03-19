@@ -37,7 +37,7 @@ Using a reverse proxy allows the client service to use any client-side HTTP comm
 
 
 ## How it works 
-As of this release, the services need to be explicitly exposed via [service extension labels](), enabling the proxying (HTTP) functionality for a particular service and endpoint. With the right labels’ setup, the reverse proxy will expose one or more endpoints on the local nodes for client services to use. The ports can then be exposed to the load balancer in order to get the services available outside of the cluster. The required certificates should be already deployed to the nodes where the proxy is running as is the case with any other Service Fabric application. For this preview, both http and https ports are being listened on by default, but for TLS to work on https port, need to satisfy the requirements regarding certificates mentioned in [Pre-reqs](#pre-reqs).
+As of this release, the services need to be explicitly exposed via [service extension labels](#add-the-right-labels-to-your-services), enabling the proxying (HTTP) functionality for a particular service and endpoint. With the right labels’ setup, the reverse proxy will expose one or more endpoints on the local nodes for client services to use. The ports can then be exposed to the load balancer in order to get the services available outside of the cluster. The required certificates should be already deployed to the nodes where the proxy is running as is the case with any other Service Fabric application. For this preview, both http and https ports are being listened on by default, but for TLS to work on https port, need to satisfy the requirements regarding certificates mentioned in [Pre-reqs](#pre-reqs).
 
 ## Pre-reqs
 
