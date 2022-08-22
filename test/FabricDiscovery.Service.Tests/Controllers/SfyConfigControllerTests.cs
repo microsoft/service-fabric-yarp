@@ -14,7 +14,7 @@ using Yarp.ServiceFabric.FabricDiscovery.Util;
 
 namespace Yarp.ServiceFabric.FabricDiscovery.Controllers.Tests
 {
-    public class IgwConfigControllerTests : TestAutoMockBase
+    public class SfyConfigControllerTests : TestAutoMockBase
     {
         [Fact]
         public async Task GetYarpConfig_NoConfigYet_Returns503()

@@ -60,14 +60,24 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
                 });
         }
 
-        private (List<ClusterConfig> Clusters, List<RouteConfig> Routes)? ComputeYarpModel(SFYarpBackendService service, List<string> errors)
+        public (List<ClusterConfig> Clusters, List<RouteConfig> Routes)? ComputeYarpModel(SFYarpBackendService service, List<string> errors)
         {
             if (!LabelsParserV2.IsEnabled(service.FinalEffectiveLabels))
             {
                 return null;
             }
-            var clusters = this.BuildClusters(service, errors);
+            var destinations = this.BuildDestinations(service, errors);
+            var clusters = LabelsParserV2.BuildClusters(service, destinations, errors);
             var routes = LabelsParserV2.BuildRoutes(service, errors);
+
+            // TODO: Look into seperating each error type and add other useful details in error messages
+            // this.logger.LogError($"Destination parsing label errors: {error}"))
+            // this.logger.LogError($"Clusters parsing label errors: {error}"))
+            this.logger.LogInformation($"There are {errors.Count} label parsing errors");
+            if (errors.Count > 0)
+            {
+                errors.ForEach(error => this.logger.LogError(error));
+            }
 
             if (clusters == null || routes == null)
             {
@@ -77,28 +87,22 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
             return (clusters, routes);
         }
 
-        private List<ClusterConfig> BuildClusters(SFYarpBackendService service, List<string> errors)
+        public Dictionary<string, Dictionary<string, DestinationConfig>> BuildDestinations(SFYarpBackendService service, List<string> errors)
         {
-            string defaultListenerName = service.FinalEffectiveLabels.GetValueOrDefault("Yarp.Backend.ServiceFabric.ListenerName", string.Empty);
-            var partitionDestinations = this.BuildDestinations(service.FabricService, service.FinalEffectiveLabels, defaultListenerName, errors);
-            var clusters = LabelsParserV2.BuildClustersWithDestinations(service, partitionDestinations, errors);
-            return clusters;
-        }
+            string listenerName = service.FinalEffectiveLabels.GetValueOrDefault("Yarp.Backend.ServiceFabric.ListenerName", string.Empty);
 
-        private Dictionary<string, Dictionary<string, DestinationConfig>> BuildDestinations(DiscoveredServiceEx service, IReadOnlyDictionary<string, string> effectiveLabels, string listenerName, List<string> errors)
-        {
             var partitionDestinations = new Dictionary<string, Dictionary<string, DestinationConfig>>();
 
-            string healthListenerName = effectiveLabels.GetValueOrDefault("Yarp.Backend.Healthcheck.ServiceFabric.ListenerName", string.Empty);
-            var statefulReplicaSelectionMode = this.ParseStatefulReplicaSelectionMode(effectiveLabels);
-            foreach (var partition in service.Partitions)
+            string healthListenerName = service.FinalEffectiveLabels.GetValueOrDefault("Yarp.Backend.Healthcheck.Active.ServiceFabric.ListenerName", string.Empty);
+            var statefulReplicaSelectionMode = this.ParseStatefulReplicaSelectionMode(service.FinalEffectiveLabels);
+            foreach (var partition in service.FabricService.Partitions)
             {
                 var destinations = new Dictionary<string, DestinationConfig>();
                 foreach (var replica in partition.Replicas)
                 {
                     if (!IsHealthyReplica(replica.Replica))
                     {
-                        this.logger.LogInformation($"Skipping unhealthy replica '{replica.Replica.Id}' from partition '{partition.Partition.PartitionId}', service '{service.Service.ServiceName}': ReplicaStatus={replica.Replica.ReplicaStatus}, HealthState={replica.Replica.HealthState}.");
+                        this.logger.LogInformation($"Skipping unhealthy replica '{replica.Replica.Id}' from partition '{partition.Partition.PartitionId}', service '{service.FabricService.Service.ServiceName}': ReplicaStatus={replica.Replica.ReplicaStatus}, HealthState={replica.Replica.HealthState}.");
                         continue;
                     }
 
@@ -106,7 +110,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
                     if (!IsReplicaEligible(replica.Replica, statefulReplicaSelectionMode))
                     {
                         // Skip this endpoint.
-                        this.logger.LogInformation($"Skipping ineligible endpoint '{replica.Replica.Id}' of service '{service.Service.ServiceName}'. {nameof(statefulReplicaSelectionMode)}: {statefulReplicaSelectionMode}.");
+                        this.logger.LogInformation($"Skipping ineligible endpoint '{replica.Replica.Id}' of service '{service.FabricService.Service.ServiceName}'. {nameof(statefulReplicaSelectionMode)}: {statefulReplicaSelectionMode}.");
                         continue;
                     }
 
@@ -129,18 +133,25 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
                             return true;
                         }
 
-                        // Future: Should we enable support for replicas with active secondary role
-
-                        // Currently only support replicas with primary role to be eligible
-                        return replica.Role == ReplicaRole.Primary;
+                        switch (statefulReplicaSelectionMode)
+                        {
+                            case StatefulReplicaSelectionMode.Primary:
+                                return replica.Role == ReplicaRole.Primary;
+                            case StatefulReplicaSelectionMode.ActiveSecondary:
+                                return replica.Role == ReplicaRole.ActiveSecondary;
+                            case StatefulReplicaSelectionMode.All:
+                            default:
+                                return true;
+                        }
                     }
 
                     try
                     {
-                        var destinationResult = this.BuildDestination(replica.Replica, listenerName, healthListenerName, this.options);
+                        var destinationResult = this.BuildDestination(partition.Partition, replica.Replica, listenerName, healthListenerName, this.options);
+                        var destinationId = $"{partition.Partition.PartitionId}/{replica.Replica.Id}";
                         if (destinationResult.IsSuccess)
                         {
-                            destinations.Add($"{partition.Partition.PartitionId}/{replica.Replica.Id}", destinationResult.Value);
+                            destinations.Add(destinationId, destinationResult.Value);
                         }
                         else
                         {
@@ -150,7 +161,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
                     catch (Exception ex)
                     {
                         // Not the user's problem
-                        string error = $"Internal error while building destination for replica {replica.Replica.Id} of service {service.Service.ServiceName}.";
+                        string error = $"Internal error while building destination for replica {replica.Replica.Id} of service {service.FabricService.Service.ServiceName}.";
                         errors.Add(error);
                         this.logger.LogError(ex, error);
                     }
@@ -161,7 +172,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
             return partitionDestinations;
         }
 
-        private Result<DestinationConfig, string> BuildDestination(ReplicaWrapper replica, string listenerName, string healthListenerName, FabricDiscoveryOptions options)
+        private Result<DestinationConfig, string> BuildDestination(PartitionWrapper partition, ReplicaWrapper replica, string listenerName, string healthListenerName, FabricDiscoveryOptions options)
         {
             if (!ServiceEndpointCollection.TryParseEndpointsString(replica.ReplicaAddress, out var serviceEndpointCollection))
             {
@@ -193,9 +204,13 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
 
             var destination = new DestinationConfig
             {
-                Address = endpointUri.ToString(),
-                Health = healthEndpointUri?.ToString(),
-                Metadata = null,
+                Address = endpointUri.AbsoluteUri,
+                Health = healthEndpointUri?.AbsoluteUri,
+                Metadata = new Dictionary<string, string>
+                {
+                    { "__SF.PartitionId", partition.PartitionId.ToString() ?? string.Empty },
+                    { "__SF.ReplicaId", replica.Id.ToString() ?? string.Empty },
+                },
             };
             return Result<DestinationConfig, string>.Success(destination);
 
@@ -212,7 +227,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
         private StatefulReplicaSelectionMode ParseStatefulReplicaSelectionMode(IReadOnlyDictionary<string, string> serviceExtensionLabels)
         {
             // Parse the value for StatefulReplicaSelectionMode: case insensitive, and trim the white space.
-            var statefulReplicaSelectionMode = serviceExtensionLabels.GetValueOrDefault("Yarp.Backend.ServiceFabric.StatefulReplicaSelectionMode", StatefulReplicaSelectionLabel.All).Trim();
+            var statefulReplicaSelectionMode = serviceExtensionLabels.GetValueOrDefault("Yarp.Backend.ServiceFabric.StatefulReplicaSelectionMode", StatefulReplicaSelectionLabel.PrimaryOnly).Trim();
             if (string.Equals(statefulReplicaSelectionMode, StatefulReplicaSelectionLabel.PrimaryOnly, StringComparison.OrdinalIgnoreCase))
             {
                 return StatefulReplicaSelectionMode.Primary;
@@ -228,8 +243,8 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
                 return StatefulReplicaSelectionMode.All;
             }
 
-            this.logger.LogWarning($"Invalid replica selection mode: {statefulReplicaSelectionMode}, fallback to selection mode: All.");
-            return StatefulReplicaSelectionMode.All;
+            this.logger.LogWarning($"Invalid replica selection mode: {statefulReplicaSelectionMode}, fallback to selection mode: Primary.");
+            return StatefulReplicaSelectionMode.Primary;
         }
     }
 }
