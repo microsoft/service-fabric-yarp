@@ -3,7 +3,7 @@
   <Parameters>
     <Parameter Name="Pinger_Instance_Count" DefaultValue="1" />
     <Parameter Name="Pinger_PlacementConstraints" DefaultValue="" />
-	<Parameter Name="Pinger_Port" DefaultValue="8080" />
+	<Parameter Name="Pinger_Port" DefaultValue="7000" />
 
   </Parameters>
   <ServiceManifestImport>
