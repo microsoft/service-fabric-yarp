@@ -10,6 +10,9 @@
 		<!-- Required: Internal operational telemetry. No PII.  
          See TelemetryManager.cs and TelemetryLib project for telemetry data that is collected. -->
 		<Parameter Name="EnableTelemetry" Value="" MustOverride="true" />
-
+	</Section>
+	<Section Name="ApplicationInsights">
+		<Parameter Name="InstrumentationKey" Value="" MustOverride="true" />
+		
 	</Section>
 </Settings>

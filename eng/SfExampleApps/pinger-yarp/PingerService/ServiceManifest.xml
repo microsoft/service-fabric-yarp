@@ -14,7 +14,7 @@
 			<!-- <Label Key="Yarp.Routes.firstRoute.Path">/id</Label> -->
 			<Label Key="Yarp.Routes.defaultRoute.Path">/{**catchall}</Label>
 			<Label Key='Yarp.Backend.HealthCheck.Active.Enabled'>true</Label>
-			<Label Key='Yarp.Backend.Healthcheck.Path'>/</Label>
+			<Label Key='Yarp.Backend.Healthcheck.Active.Path'>/</Label>
 			<Label Key='Yarp.Backend.HealthCheck.Active.Interval'>00:00:10</Label>
 			<Label Key='Yarp.Backend.HealthCheck.Active.Timeout'>00:00:30</Label>
           </Labels>

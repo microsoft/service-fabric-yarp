@@ -719,7 +719,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util.Tests
 
             var routes = LabelsParserV2.BuildRoutes(backendService, errors);
 
-            errors.Should().HaveCount(1).And.ContainMatch($"Invalid query matching index '*', should only contain alphanumerical characters, underscores or hyphens.");
+            errors.Should().HaveCount(1).And.ContainMatch($"Invalid query matching index '*', should be query index wrapped in square brackets.");
         }
 
         [Theory]
@@ -819,7 +819,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util.Tests
 
             var routes = LabelsParserV2.BuildRoutes(backendService, errors);
 
-            errors.Should().HaveCount(1).And.ContainMatch($"Invalid header matching index '*', should only contain alphanumerical characters, underscores or hyphens.");
+            errors.Should().HaveCount(1).And.ContainMatch($"Invalid header matching index '*', should be header index wrapped in square brackets.");
         }
 
         [Theory]

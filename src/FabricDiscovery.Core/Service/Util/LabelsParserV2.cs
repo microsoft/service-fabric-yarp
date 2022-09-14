@@ -44,7 +44,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util
         private static readonly Regex AllowedTransformNamesRegex = new Regex(@"^\[\d\d*\]$", RegexOptions.Compiled);
 
         /// <summary>
-        /// Requires all transform names to follow the .[0]. pattern to simulate indexing in an array.
+        /// Requires all query parameter names to follow the .[0]. pattern to simulate indexing in an array.
         /// </summary>
         private static readonly Regex AllowedQueryParameterNamesRegex = new Regex(@"^\[\d\d*\]$", RegexOptions.Compiled);
 
@@ -141,7 +141,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util
                         var headerIndex = keyRemainder.Slice(0, headerIndexLength).ToString();
                         if (!AllowedHeaderNamesRegex.IsMatch(headerIndex))
                         {
-                            errors.Add($"Invalid header matching index '{headerIndex}', should only contain alphanumerical characters, underscores or hyphens.");
+                            errors.Add($"Invalid header matching index '{headerIndex}', should be header index wrapped in square brackets.");
                         }
                         if (!headerMatches.ContainsKey(headerIndex))
                         {
@@ -187,7 +187,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util
                         var queryIndex = keyRemainder.Slice(0, queryIndexLength).ToString();
                         if (!AllowedQueryParameterNamesRegex.IsMatch(queryIndex))
                         {
-                            errors.Add($"Invalid query matching index '{queryIndex}', should only contain alphanumerical characters, underscores or hyphens.");
+                            errors.Add($"Invalid query matching index '{queryIndex}', should be query index wrapped in square brackets.");
                         }
                         if (!queryMatches.ContainsKey(queryIndex))
                         {
