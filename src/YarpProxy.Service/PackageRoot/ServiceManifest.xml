@@ -12,7 +12,7 @@
       <ExeHost>
         <Program>YarpProxy.Service.exe</Program>
         <WorkingFolder>CodePackage</WorkingFolder>
-		  <ConsoleRedirection FileRetentionCount="10" FileMaxSizeInKb="2048"/>
+		<!--<ConsoleRedirection FileRetentionCount="10" FileMaxSizeInKb="2048"/>-->
       </ExeHost>
     </EntryPoint>
   </CodePackage>

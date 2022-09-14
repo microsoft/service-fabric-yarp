@@ -14,9 +14,6 @@
     <LangVersion>9</LangVersion>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Service\SFYarpConfig\SFYarpConfigDiscovererTests.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentAssertions" />
