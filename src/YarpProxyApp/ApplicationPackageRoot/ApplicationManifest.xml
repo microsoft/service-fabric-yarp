@@ -36,9 +36,6 @@
         <Endpoint Name="HttpsServiceEndpoint" Port="[YarpProxy_HttpsPort]" />
       </Endpoints>
     </ResourceOverrides>
-	  <Policies>
-		  <RunAsPolicy CodePackageRef="Code" UserRef="SetupLocalSystem" />
-	  </Policies>
   </ServiceManifestImport>
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="1.1.0" />
@@ -68,9 +65,4 @@
       </StatelessService>
     </Service>
   </DefaultServices>
-<Principals>
-    <Users>
-      <User Name="SetupLocalSystem" AccountType="LocalSystem" />
-    </Users>
-  </Principals>
 </ApplicationManifest>

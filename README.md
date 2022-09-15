@@ -128,7 +128,7 @@ SF YARP reverse proxy listens on https port (443) by default and can be configur
 
 The certificates need to be created with the CN and DNS Names configured with the SF cluster's FQDN (i.e "sf-win-cluster.westus2.cloudapp.azure.com", "localhost", etc.) and added in the following certificate store cert:\LocalMachine\My for each node were YarpProxy service is running. When a connection request is sent over HTTPS to YarpProxy it  will select a TLS server authentication certificate (if available) for the specified inbound TLS SNI host name.
 
-To setup certs on each node in a remote managed cluster, this can be done using [Azure Key Vault Extension](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-application-secrets) either from Azure portal or ARM templates anytime. 
+To setup certs on each node in a remote managed cluster, this can be done using [Azure Key Vault Extension](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-application-secrets) either from Azure portal or ARM templates. 
 
 Need to also make sure certificate has proper ACL to be retrieved by YarpProxy process running under the configured local account (by default SF applications run under Network Service account) so that the private key can be accessed during the SNI step in TLS handshake.
 
