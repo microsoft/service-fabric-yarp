@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ServiceManifest Name="FabricDiscoveryServicePkg"
-                 Version="0.1.0-beta"
+                 Version="1.1.0"
                  xmlns="http://schemas.microsoft.com/2011/01/fabric"
                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ServiceTypes>
     <StatelessServiceType ServiceTypeName="FabricDiscoveryServiceType" />
   </ServiceTypes>
-  <CodePackage Name="Code" Version="0.1.0-beta">
+  <CodePackage Name="Code" Version="1.1.0">
     <EntryPoint>
       <ExeHost>
         <Program>FabricDiscovery.Service.exe</Program>
         <WorkingFolder>CodePackage</WorkingFolder>
+		<!--<ConsoleRedirection FileRetentionCount="10" FileMaxSizeInKb="2048"/>-->
       </ExeHost>
     </EntryPoint>
   </CodePackage>
-  <ConfigPackage Name="Config" Version="0.1.0-beta" />
+  <ConfigPackage Name="Config" Version="1.1.0" />
   <Resources>
     <Endpoints>
       <Endpoint Protocol="http" Name="ServiceEndpoint" />

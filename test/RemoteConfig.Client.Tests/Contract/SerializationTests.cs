@@ -133,7 +133,7 @@ namespace Yarp.ServiceFabric.RemoteConfig.Contract.Tests
       },
       ""httpClient"": null,
       ""httpRequest"": {
-        ""timeout"": ""PT30S"",
+        ""activityTimeout"": ""PT30S"",
         ""version"": null,
         ""allowResponseBuffering"": null
       },

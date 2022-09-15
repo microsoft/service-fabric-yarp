@@ -15,7 +15,7 @@ using Yarp.ServiceFabric.RemoteConfig.Contract;
 namespace Yarp.ServiceFabric.FabricDiscovery.Controllers
 {
     /// <summary>
-    /// Serves SFYarp configuration for consumption by IGW instances.
+    /// Serves SFYarp configuration for consumption by SFY instances.
     /// </summary>
     [ApiController]
     [Route("/api/v1/yarpconfig")]

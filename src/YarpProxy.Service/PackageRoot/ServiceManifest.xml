@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ServiceManifest Name="YarpProxyPkg"
-                 Version="0.1.0-beta"
+                 Version="1.1.0"
                  xmlns="http://schemas.microsoft.com/2011/01/fabric"
                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ServiceTypes>
     <StatelessServiceType ServiceTypeName="YarpProxyType" />
   </ServiceTypes>
-  <CodePackage Name="Code" Version="0.1.0-beta">
+  <CodePackage Name="Code" Version="1.1.0">
     <EntryPoint>
       <ExeHost>
         <Program>YarpProxy.Service.exe</Program>
         <WorkingFolder>CodePackage</WorkingFolder>
-		  <ConsoleRedirection FileRetentionCount="10" FileMaxSizeInKb="2048"/>
+		<!--<ConsoleRedirection FileRetentionCount="10" FileMaxSizeInKb="2048"/>-->
       </ExeHost>
     </EntryPoint>
   </CodePackage>
-  <ConfigPackage Name="Config" Version="0.1.0-beta" />
+  <ConfigPackage Name="Config" Version="1.1.0" />
   <Resources>
     <Endpoints>
       <!--
@@ -31,7 +31,7 @@
         so whether we set Protocol="http" or "tcp" for these  endpoints is purely cosmetic.
 
         NOTE 3: While we don't care about the http.sys arrangements that Service Fabric does
-        in reaction to these endpoint definiions, we *do* care about the Windows Firewall configs this takes care of.
+        in reaction to these endpoint definitions, we *do* care about the Windows Firewall configs this takes care of.
         Without this, we might need to configure Windows Firewall ourselves to accept inbound traffic to these ports.
       -->
       <Endpoint Protocol="http" Name="HttpServiceEndpoint" UriScheme="http" Type="Input" />

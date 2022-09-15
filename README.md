@@ -1,4 +1,4 @@
-# ServiceFabricYarp 1.0.0
+# ServiceFabricYarp 1.1.0
 
 
 Table of Contents
@@ -6,11 +6,17 @@ Table of Contents
   * [Background](#background)
   * [Limitations](#limitations)
   * [How it works](#how-it-works)
-  * [Pre-reqs](#pre-reqs)
-  * [Using the Application](#using-the-application)
+  * [Using SF YarpProxy Application](#using-sf-yarpproxy-application)
       * [Deploy it using PowerShell](#deploy-it-using-powershell)
+      * [URI format for addressing services by using the reverse proxy](#uri-format-for-addressing-services-by-using-the-reverse-proxy)
+      * [HTTPS](#https-tls)
       * [Add the right labels to your services](#add-the-right-labels-to-your-services)
       * [Supported Labels](#supported-labels)
+      * [Replica endpoint selection](#replica-endpoint-selection)
+      * [Fabric Discovery Service Configuration](#fabric-discovery-service-configuration)
+      * [Stateful services](#stateful-services)
+      * [Metadata](#metadata)
+      * [Sample Test Application](#sample-test-application)
       * [Internal Telemetry](#internal-telemetry)
       * [Tracing](#tracing)
 
@@ -26,27 +32,19 @@ The reverse proxy is an application, supplied out of band from the service fabri
 
 Using a reverse proxy allows the client service to use any client-side HTTP communication libraries and does not require special resolution and retry logic in the service. The reverse proxy is mostly a terminating endpoint for the TLS connections
 
->Note that, at this time, this is a reverse proxy built-in replacement and not a generic service fabric “gateway” able to handle partition queries, but that might be added (via customer written plugins or similar) in the future.
+> Note that, at this time, this is a reverse proxy built-in replacement and not a generic service fabric “gateway” able to handle partition queries, but that might be added (via customer written plugins or similar) in the future.
 
 ## Limitations
-* YarpProxy app is only supported at the moment on Windows
-* Path-based route matching is ONLY supported.
-* Basic HTTPS endpoint proxying includes ONLY TLS termination and no YARP endpoint server certificate validation.
-* No middleware/transform support to strip path prefix for the service to receive the stripped path.
+* YarpProxy app is only supported on Windows
 * No TCP proxying support ONLY HTTP.
+* Limited partitioning support. Partitions are enumerated to retrieve all of the nested replicas/instances, but the partitioning key is not handled in any way. In other words there is no [partition scheme](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-concepts-partitioning#get-started-with-partitioning) support. Instead to send a request to a replica running on a certain partition need to pass the partition GUID as a query parameter. More details can be found in [Stateful services](#stateful-services).
+- Only one endpoint per each SF service's replica/instance is considered and gets converted to a [DestinationConfig](https://github.com/microsoft/reverse-proxy/blob/464a3dcb5a6a69cf256fb2d83700e3edbb39d78b/src/ReverseProxy/Configuration/DestinationConfig.cs#L13).
 
 
 ## How it works 
-As of this release, the services need to be explicitly exposed via [service extension labels](), enabling the proxying (HTTP) functionality for a particular service and endpoint. With the right labels’ setup, the reverse proxy will expose one or more endpoints on the local nodes for client services to use. The ports can then be exposed to the load balancer in order to get the services available outside of the cluster. The required certificates should be already deployed to the nodes where the proxy is running as is the case with any other Service Fabric application. For this preview, both http and https ports are being listened on by default, but for TLS to work on https port, need to satisfy the requirements regarding certificates mentioned in [Pre-reqs](#pre-reqs).
+As of this release, the services need to be explicitly exposed via [service extension labels](#add-the-right-labels-to-your-services), enabling the proxying (HTTP) functionality for a particular service and endpoint. With the right labels’ setup, the reverse proxy will expose one or more endpoints on the local nodes for client services to use. The ports can then be exposed to the load balancer in order to get the services available outside of the cluster. SF YarpProxy app has both http and https ports being listened on by default. For HTTPS the required certificates should be already deployed to the nodes where the proxy is running.
 
-## Pre-reqs
-
-* For TLS, certificate selection is done dynamically via SNI, therefore certificate needs to be created with the CN and DNS Names configured with the SF cluster's FQDN (i.e "sf-win-cluster.westus2.cloudapp.azure.com", "localhost", etc.) and provisioned under cert:\LocalMachine\My for each node were YarpProxy app is running. **Note:** If using self signed certificate or a non trusted certificate make sure it is placed in [Trusted Root Certification Authorities Certificate Store](https://docs.microsoft.com/en-us/windows-hardware/drivers/install/trusted-root-certification-authorities-certificate-store). Certificate selector does not consider non trusted certificates.
-* To setup certs for local managed cluster, use `eng/Create-DevCerts.ps1`.
-* To setup certs for remote managed cluster, this can be done using Azure Key Vault. Again, make sure the CN and DNS Names are configured with the SF cluster's FQDN. Next, need to [deploy the certificate to your cluster](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-application-secrets). Note: For TLS, if you get issues related to the certificates such as an error related to "System.Security.Authentication.AuthenticationException: The server mode SSL must use a certificate with the associated private key", try adding security permissions manually so that cluster can access the certificate using `eng/ACLCertificates.ps1`.
-
-
-## Using the application
+## Using SF YarpProxy Application
 
 You can clone the repo, build, and deploy or simply grab the latest [ZIP/SFPKG application](https://github.com/microsoft/service-fabric-yarp/releases/latest) from Releases section, modify configs, and deploy.
 
@@ -56,7 +54,7 @@ You can clone the repo, build, and deploy or simply grab the latest [ZIP/SFPKG a
 
 ## Deploy it using PowerShell  
 
-After either downloading the sfapp package from the releases or cloning the repo and building, you need to adjust the configuration settings to meet to your needs (this means changing settings in Settings.xml, ApplicationManifest.xml and any other changes needed).
+After either downloading the SF app package from the releases or cloning the repo and building, you need to adjust the configuration settings to meet to your needs (this means changing settings in Settings.xml, ApplicationManifest.xml and any other changes needed).
 
 >If you need a quick test cluster, you can deploy a test Service Fabric managed cluster following the instructions from here: [SFMC](https://docs.microsoft.com/en-us/azure/service-fabric/quickstart-managed-cluster-template), or via this template if you already have a client certificate and thumbprint available: [Deploy](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fservice-fabric-cluster-templates%2Fmaster%2FSF-Managed-Basic-SKU-1-NT%2Fazuredeploy.json)
 
@@ -86,7 +84,7 @@ Connect-ServiceFabricCluster -ConnectionEndpoint @('sf-win-cluster.westus2.cloud
 
 # Use this to remove a previous YarpProxy Application
 #Remove-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -Force
-#Unregister-ServiceFabricApplicationType -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.0.0 -Force
+#Unregister-ServiceFabricApplicationType -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.1.0 -Force
 
 #Copy and register and run the YarpProxy Application
 Copy-ServiceFabricApplicationPackage -CompressPackage -ApplicationPackagePath $appPath # -ApplicationPackagePathInImageStore YarpProxyApp
@@ -101,19 +99,46 @@ $p = @{
 }
 $p
 
-New-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.0.0 -ApplicationParameter $p
+New-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.1.0 -ApplicationParameter $p
 
 
 #OR if updating existing version:  
 
-Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:/YarpProxyApp -ApplicationTypeVersion 1.0.0 -ApplicationParameter $p -Monitored -FailureAction rollback 
+Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:/YarpProxyApp -ApplicationTypeVersion 1.1.0 -ApplicationParameter $p -Monitored -FailureAction rollback 
 ```  
+
+## URI format for addressing services by using the reverse proxy
+The SF YARP reverse proxy uses a specific uniform resource identifier (URI) format to identify the service partition to which the incoming request should be forwarded:
+
+```
+http(s)://<Cluster FQDN | internal IP>:Port/<ServiceInstanceName>/<Suffix path>?PartitionID=<PartitionGUID>
+
+```
+
+- `http(s):` The reverse proxy can be configured to accept HTTP or HTTPS traffic. For HTTPS forwarding, refer to [HTTPS section](#https-tls).
+- `Cluster fully qualified domain name (FQDN) | internal IP:` For external clients, you can configure the reverse proxy so that it is reachable through the cluster domain, such as mycluster.eastus.cloudapp.azure.com. The reverse proxy can be configured to run on every node. For internal traffic, the reverse proxy can be reached on localhost or on any internal node IP, such as 10.0.0.1.
+- `Port:` This is the port, such as 8080, that has been specified for the reverse proxy.
+- `ServiceInstanceName:` This is the fully-qualified name of the deployed service instance that you are trying to reach without the "fabric:/" scheme. For example, to reach the fabric:/myapp/myservice/ service, you would use myapp/myservice.
+- `Suffix path:` This is the actual URL path, such as myapi/values/add/3, for the service that you want to connect to.
+- `PartitionGUID:`  The partition ID GUID of the partition that you want to reach.
+
+
+## HTTPS (TLS)
+SF YARP reverse proxy listens on https port (443) by default and can be configured in ApplicationManifest.xml. SF YARP takes care of TLS certificate binding on its own. For HTTPS the required certificates should be already deployed to the nodes where the reverse proxy is running as is the case with any other SF application.
+
+The certificates need to be created with the CN and DNS Names configured with the SF cluster's FQDN (i.e "sf-win-cluster.westus2.cloudapp.azure.com", "localhost", etc.) and added in the following certificate store cert:\LocalMachine\My for each node were YarpProxy service is running. When a connection request is sent over HTTPS to YarpProxy it  will select a TLS server authentication certificate (if available) for the specified inbound TLS SNI host name.
+
+To setup certs on each node in a remote managed cluster, this can be done using [Azure Key Vault Extension](https://docs.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-application-secrets) either from Azure portal or ARM templates. 
+
+Need to also make sure certificate has proper ACL to be retrieved by YarpProxy process running under the configured local account (by default SF applications run under Network Service account) so that the private key can be accessed during the SNI step in TLS handshake.
+
+
 
 ## Add the right labels to your services
 
-### ServiceManifest file
+Service Fabric YARP integration is enabled and configured per each SF service. The configuration is specified in the `Service Manifest` as a service extension named `Yarp` containing a set of labels defining specific YARP parameters. The parameter's name is set as `Key` attribute of `<Label>` element and the value is the element's content.
 
-This is a sample SF enabled service showing the currently supported labels. If the sf name is fabric:/pinger/PingerService, the endpoint will be exposed at that prefix: '/pinger/PingerService/'
+This is a sample SF enabled service showing a subset of the supported labels. If the SF name is fabric:/pinger/PingerService, the endpoint will be exposed at that prefix: '/pinger/PingerService/'
 
 ```xml
   ...
@@ -125,7 +150,7 @@ This is a sample SF enabled service showing the currently supported labels. If t
             <Label Key="Yarp.Enable">true</Label>
             <Label Key="Yarp.Routes.defaultRoute.Path">/{**catchall}</Label>
             <Label Key='Yarp.Backend.HealthCheck.Active.Enabled'>true</Label>
-            <Label Key='Yarp.Backend.Healthcheck.Path'>/</Label>
+            <Label Key='Yarp.Backend.HealthCheck.Active.Path'>/</Label>
             <Label Key='Yarp.Backend.HealthCheck.Active.Interval'>00:00:10</Label>
             <Label Key='Yarp.Backend.HealthCheck.Active.Timeout'>00:00:30</Label>
           </Labels>
@@ -140,32 +165,157 @@ This is a sample SF enabled service showing the currently supported labels. If t
 
 The only required label to expose a service via the reverse proxy is the **Yarp.Enable** set to true. Setting only this label will expose the service on a well-known path and handle the basic scenarios.
 
-```
-http(s)://<Cluster FQDN | internal IP>:Port/ApplicationInstanceName/ServiceInstanceName?PartitionGuid=xxxxx
-```
-
 If you need to change the routes then you can add different labels configuring them.
 
 
 ## Supported Labels
 
-Route section
+There are 3 types of labels that are currently supported that allow users to configure the expected behavior for YARP and service fabric integration. These include: route, backend/cluster and service fabric integration labels. 
 
-* **Yarp.Routes.[routeName].Path**    Yarp rule to apply path prefix ['/id']. This rule is added on top of the default path generation. If this is set, you **cannot** remove the prefix for the service to receive the stripped path. At the moment, there is no middleware/transform that allows you to strip the prefix. {**catch-all} path may be used to route all requests.
+More information regarding the Route and Backend/Cluster parameters can be found in the [YARP documentation](https://microsoft.github.io/reverse-proxy/articles/config-files.html). All SF integration specific labels will be explained below.
 
-*Backend section*
+### Service fabric integration section
+- `Yarp.Enable` - indicates whether the service opt-ins to serving traffic through YARP. Default `false`
+- `Yarp.EnableDynamicOverrides` - indicates whether application parameters replacement is enabled on the service. Default `false`
 
-* **Yarp.Backend.HealthCheck.Active.Enabled**          HealthCheck enabled ['true'/'false']
-* **Yarp.Backend.Healthcheck.Path**        Healthcheck endpoint path ['/healtz']
-* **Yarp.Backend.HealthCheck.Active.Timeout**    Healthcheck Timeout ['00:00:30']
-* **Yarp.Backend.HealthCheck.Active.Interval**    Healthcheck interval ['00:00:10']
+### Route section
+
+Multiple routes can be defined in a SF service configuration with the following parameters:
+- `Yarp.Routes.<routeName>.Path` - configures path-based route matching. The value directly assigned to [RouteMatch.Path](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteMatch.cs#L29) property and the standard route matching logic will be applied. `{**catch-all}` path may be used to route all requests.
+- `Yarp.Routes.<routeName>.Hosts` - configures `Host` based route matching. Multiple hosts should be separated by comma. The value is split into a list of host names which is then directly assigned to [RouteMatch.Hosts](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteMatch.cs#L24) property and the standard route matching logic will be applied.
+- `Yarp.Routes.<routeName>.Methods` - configures `Methods` based route matching. Only match requests that use these optional HTTP methods. E.g. GET, POST. Multiple methods should be separated by comma. The value is split into a list of HTTP methods which is then directly assigned to [RouteMatch.Methods](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteMatch.cs#L18) property and the standard route matching logic will be applied.
+- `Yarp.Routes.<routeName>.MatchHeaders.[<Index>].*` - configures `Header` based route matching. Only match requests that contain all of these headers. Can configure each header separately by passing a unique index value. The parameters configured at each index will be used to create a [RouteHeader](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteHeader.cs#L13) 
+object. A list of RouteHeader objects will be created and directly assigned to [RouteMatch.Headers](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteMatch.cs#L39) property and the standard route matching logic will be applied.
+- `Yarp.Routes.<routeName>.MatchQueries.[<Index>].*` - configures `Query` based route matching.  Only match requests that contain all of these query parameters. Can configure each query separately by passing a unique index value. The parameters configured at each index will be used to create a [RouteQueryParameter](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteQueryParameter.cs#L13) 
+object. A list of RouteQueryParameter objects will be created and directly assigned to [RouteMatch.QueryParameters ](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteMatch.cs#L34) property and the standard route matching logic will be applied.
+- `Yarp.Routes.<routeName>.Order` - configures an order value for this route. Routes with lower numbers take precedence over higher numbers. Parameter will be directly assigned to [RouteConfig.Order](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteConfig.cs#L31) property. Optional parameter
+- `Yarp.Routes.<routeName>.Transforms.[<Index>].*` -configures parameters used to transform the request and response. Available parameters and their meanings are provided on [the respective documentation page](https://microsoft.github.io/reverse-proxy/articles/transforms.html). Can configure each transform separately by passing a unique index value. The parameters configured at each index will be used to create a Transform dictionary object. A list of Transform dictionary objects will be created and directly assigned to [RouteConfig.Transforms ](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteConfig.cs#L63) property.
+- `Yarp.Routes.<routeName>.AuthorizationPolicy` - configures the name of the AuthorizationPolicy to apply to this route. If not set then only the FallbackPolicy will apply. Parameter will be directly assigned to [RouteConfig.AuthorizationPolicy](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteConfig.cs#L45) property. Optional parameter
+- `Yarp.Routes.<routeName>.CorsPolicy` - configures the name of the CorsPolicy to apply to this route. If not set then the route won't be automatically matched for cors preflight requests. Parameter will be directly assigned to [RouteConfig.CorsPolicy](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteConfig.cs#L53) property. Optional parameter
+- `Yarp.Routes.<routeName>.Metadata` - configures arbitrary key-value pairs that further describe this route. Parameter will be directly assigned to [RouteConfig.Metadata](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteConfig.cs#L58) property. Optional parameter
+- `<routeName>` can contain an ASCII letter, a number, or '_' and '-' symbols.
+- `[<Index>]` pattern simulates indexing in an array. Only integer indexing is supported and indexing starts at 0.
+
+Each route requires a `Path` or `Host` (or both). If both of them are specified, then a request is matched to the route only when both of them are matched. In addition to these, a route can also specify one or more headers that must be present on the request.
+
+Route matching is based on the most specific routes having highest precedence. If a route contains multiple route matching rules then look at the [YARP route documentation](https://microsoft.github.io/reverse-proxy/articles/header-routing.html#precedence) on the default route matching precedence order.  Explicit ordering can be achieved using the `Order` field, with lower values taking higher priority.
 
 
+Example:
+```XML
+<Label Key="Yarp.Routes.route-A1.Path">/api</Label>
+<Label Key="Yarp.Routes.route-B2.Path">/control-api</Label>
+<Label Key="Yarp.Routes.route-B2.Hosts">example.com,anotherexample.com</Label>
+<Label Key="Yarp.Routes.ExampleRoute.Path">/exampleroute</Label>
+<Label Key="Yarp.Routes.ExampleRoute.Metadata.Foo">Bar</Label>
+<Label Key="Yarp.Routes.ExampleRoute.Methods">GET,PUT</Label>
+<Label Key="Yarp.Routes.ExampleRoute.Order">2</Label>
+<Label Key="Yarp.Routes.ExampleRoute.MatchQueries.[0].Mode">Exact</Label>
+<Label Key="Yarp.Routes.ExampleRoute.MatchQueries.[0].Name">orgID</Label>
+<Label Key="Yarp.Routes.ExampleRoute.MatchQueries.[0].Values">123456789</Label>
+<Label Key="Yarp.Routes.ExampleRoute.MatchQueries.[0].IsCaseSensitive">true</Label>
+<Label Key="Yarp.Routes.ExampleRoute.MatchHeaders.[0].Mode">ExactHeader</Label>
+<Label Key="Yarp.Routes.ExampleRoute.MatchHeaders.[0].Name">x-company-key</Label>
+<Label Key="Yarp.Routes.ExampleRoute.MatchHeaders.[0].Values">contoso</Label>
+<Label Key="Yarp.Routes.ExampleRoute.MatchHeaders.[0].IsCaseSensitive">true</Label>
+<Label Key="Yarp.Routes.ExampleRoute.Transforms.[0].ResponseHeader">X-Foo</Label>
+<Label Key="Yarp.Routes.ExampleRoute.Transforms.[0].Append">Bar</Label>
+<Label Key="Yarp.Routes.ExampleRoute.Transforms.[0].When">Always</Label>
+<Label Key="Yarp.Routes.ExampleRoute.Transforms.[1].ResponseHeader">X-Ping</Label>
+<Label Key="Yarp.Routes.ExampleRoute.Transforms.[1].Append">Pong</Label>
+<Label Key="Yarp.Routes.ExampleRoute.Transforms.[1].When">Success</Label>
+<Label Key="Yarp.Routes.ExampleRoute.AuthorizationPolicy">Policy1</Label>
+<Label Key="Yarp.Routes.ExampleRoute.CorsPolicy">Policy1</Label>
+
+```
+
+### Backend section
+
+- `Yarp.Backend.LoadBalancingPolicy` - configures YARP load balancing policy. Available parameters and their meanings are provided on [the respective documentation page](https://microsoft.github.io/reverse-proxy/articles/load-balancing.html). Optional parameter
+- `Yarp.Backend.SessionAffinity.*` - configures YARP session affinity. Available parameters and their meanings are provided on [the respective documentation page](https://microsoft.github.io/reverse-proxy/articles/session-affinity.html). Optional parameter
+- `Yarp.Backend.HttpRequest.*` - sets proxied HTTP request properties. Available parameters and their meanings are provided on [the respective documentation page](https://microsoft.github.io/reverse-proxy/articles/http-client-config.html#httprequest) in 'HttpRequest' section. Optional parameter
+- `Yarp.Backend.HttpClient.*` - sets HTTP client properties. Available parameters and their meanings are provided on [the respective documentation page](https://microsoft.github.io/reverse-proxy/articles/http-client-config.html#httpclient) in 'HttpClient' section. Optional parameter
+- `Yarp.Backend.HealthCheck.Active.*` - configures YARP active health checks to be run against the given service. Available parameters and their meanings are provided on [the respective documentation page](https://microsoft.github.io/reverse-proxy/articles/dests-health-checks.html#active-health-checks). Optional parameter
+- `Yarp.Backend.HealthCheck.Active.ServiceFabric.ListenerName` - sets an explicit listener name for the health probing endpoint for each replica/instance that is used to probe replica/instance health state and is stored on the `Destination.Health` property in YARP's model. Optional parameter
+- `Yarp.Backend.HealthCheck.Passive.*` - configures YARP passive health checks to be run against the given service. Available parameters and their meanings are provided on [the respective documentation page](https://microsoft.github.io/reverse-proxy/articles/dests-health-checks.html#passive-health-checks). Optional parameter
+- `Yarp.Backend.Metadata.*` - sets the cluster's metadata. Optional parameter
+- `Yarp.Backend.BackendId` - overrides the cluster's Id. Default cluster's Id is the SF service name. Optional parameter
+- `Yarp.Backend.ServiceFabric.ListenerName` - sets an explicit listener name for the main service's endpoint for each replica/instance that is used to route client requests to and is stored on the `Destination.Address` property in YARP's model. Optional parameter
+- `Yarp.Backend.ServiceFabric.StatefulReplicaSelectionMode` - sets stateful replica selection mode. Supported values `All`, `PrimaryOnly`, `SecondaryOnly`. Values `All` and `SecondaryOnly` mean that the active secondary replicas will also be eligible for receiving client requests. Default value `Primary`
+- Labels with `ServiceFabric` are service fabric related configuration and not specific to YARP
+
+> NOTE: Label values can use the special syntax `[AppParamName]` to reference an application parameter with the name given within square brackets. This is consistent with Service Fabric conventions, see e.g. [using parameters in Service Fabric](https://docs.microsoft.com/azure/service-fabric/service-fabric-how-to-specify-port-number-using-parameters).
+
+
+## Replica endpoint selection
+A SF replica/instance can expose several endpoints for client requests and health probes, however SF Yarp currently supports only one endpoint of each respective type. The logic selecting that single endpoint is controlled by the `ListenerName` parameter. A listener name is simply a key in a key-value endpoint list published in form of an "address" string for each replica/instance. If it's specified, SF integration will find and take the respective endpoint URI identified by this key. If the listener name is not specified it will sort that key-value list by the key (i.e. by listener name) in `Ordinal` order and take the first endpoint from the sorted list that matches the configured allowed schemed predicate (i.e https, http) defined in the SF discovery options. By default allows both https and http endpoints  to be selected. More details below on how to configure this option as part of SF discovery options. For stateful services also have the ability to decide on the replica selection mode by the `StatefulReplicaSelectionMode` parameter.
+
+There are several parameters specifying listener names for different endpoint types:
+- `Yarp.Backend.ServiceFabric.ListenerName` - sets an explicit listener name for the main service's endpoint
+- `Yarp.Backend.HealthCheck.Active.ServiceFabric.ListenerName` - sets an explicit listener name for the health probing endpoint
+
+## Fabric Discovery service configuration
+The following SF YARP parameters influence Service Fabric dynamic service discovery and
+can be set in the configuration section `FabricDiscovery`:
+
+- `FullRefreshPollPeriodInSeconds` - indicates 
+how long to wait between complete refreshes of the Service Fabric topology, in seconds. Default `300s`
+- `AbortAfterTimeoutInSeconds` - terminate the primary if Service Fabric topology discovery is taking longer than this amount. Default `600s`
+- `AbortAfterConsecutiveFailures` - terminate the primary after it encounters this number of consecutive failures. Default `3`
+- `AllowInsecureHttp` - indicates whether to discover unencrypted HTTP (i.e. non-HTTPS) endpoints. Default `true`
+
+### Config example
+The following is an example of an `ApplicationManifest.xml` file with `FabricDiscovery` section.
+```XML
+<Parameters>
+  <Parameter Name="FabricDiscovery_InstanceCount" DefaultValue="1" />
+  <Parameter Name="FabricDiscovery_AbortAfterTimeoutInSeconds" DefaultValue="600" />
+  <Parameter Name="FabricDiscovery_AbortAfterConsecutiveFailures" DefaultValue="3" />
+  <Parameter Name="FabricDiscovery_FullRefreshPollPeriodInSeconds" DefaultValue="300" />
+</Parameters>
+
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="1.1.0" />
+    <ConfigOverrides>
+      <ConfigOverride Name="Config">
+        <Settings>
+          <Section Name="FabricDiscovery">
+            <Parameter Name="AbortAfterTimeoutInSeconds" Value="[FabricDiscovery_AbortAfterTimeoutInSeconds]" />
+            <Parameter Name="AbortAfterConsecutiveFailures" Value="[FabricDiscovery_AbortAfterConsecutiveFailures]" />
+            <Parameter Name="FullRefreshPollPeriodInSeconds" Value="[FabricDiscovery_FullRefreshPollPeriodInSeconds]" />
+          </Section>
+        </Settings>
+      </ConfigOverride>
+    </ConfigOverrides>
+  </ServiceManifestImport>
+
+```
+
+## Stateful services
+A stateful/partitioned service maintains a mutable, authoritative state beyond the request and its response. In Service Fabric, a stateful service is modeled as a set of replicas in a partition which allows you to split the data across partitions, a concept known as data partitioning or sharding. A particular service partition is responsible for a portion of the complete state (data) of the service. The replicas of each partition are spread across the cluster's nodes, which allows your named service's state to scale. 
+
+SF YARP does support request to partitioned services. 
+For a stateful service with >1 partitions all configured parameters will be used to create a separate YARP Route and Cluster config per partition. An implicit `Query` route matching rule will be added for each route so that the request can be forwarded to a particular partition. In order to send a request to a specific partition need to pass the specific [partition GUID](#uri-format-for-addressing-services-by-using-the-reverse-proxy) as a query parameter. The GUID can be retrieved using the SF PowerShell command "Get-ServiceFabricPartition" or from Service Fabric Explorer (SFX). When a request is sent to a certain partition it will be handled by one of the replicas running on that partition.
+
+> NOTE: If a stateful service only has 1 partition then do not include PartitionID as a query parameter in the request. 
+
+## Metadata 
+SF Yarp includes known metadata to elements (e.g. Clusters, Destinations) so that any necessary info regarding a SF service is available from the YARP pipeline. 
+
+| Applies To | Metadata Key   | Meaning   | Example value   |
+| :---:   | :---: | :---: | :---: |
+| Cluster/Backend  | __SF.ApplicationTypeName | Service Fabric Application Type of the SF service from which the YARP cluster was created | MyAppType |
+| Cluster/Backend | __SF.ApplicationName   | Service Fabric app name of the SF service from which the YARP cluster was created   | fabric:/MyApp |
+| Cluster/Backend | __SF.ServiceTypeName | Service Fabric Service Type of the SF service from which the YARP cluster was created | MySvcType |
+| Cluster/Backend | __SF.ServiceName | Service Fabric service name from which the YARP cluster was created | fabric:/MyApp/MySvc |
+| Destination | __SF.PartitionId | Partition id of the SF replica | < guid > |
+| Destination | __SF.ReplicaId | ReplicaId/InstanceId for stateful/stateless services | < guid >
+ 
 ## Sample Test application
 
 A sample test application, that is included in the release, can be deployed to test everything is working alright. After deployment, you should be able to reach it at:
 
-https://your-cluster:8080/pinger0/PingerService/id
+http://<Cluster FQDN | internal IP>:8080/pinger0/PingerService/id
 
 
 ```Powershell
@@ -180,7 +330,7 @@ Copy-ServiceFabricApplicationPackage -CompressPackage -ApplicationPackagePath $a
 Register-ServiceFabricApplicationType -ApplicationPathInImageStore pinger-yarp
 
 $p = @{
-    "Pinger_Instance_Count"="3"
+    "Pinger_Instance_Count"="1"
     "Pinger_Port"="7000"
     #"Pinger_PlacementConstraints"= "NodeType == NT2"
 }
@@ -191,7 +341,7 @@ New-ServiceFabricApplication -ApplicationName fabric:/pinger0 -ApplicationTypeNa
 
 ## Internal Telemetry
 
-Internal telemetry data is transmitted to Microsoft and contains information about YarpProxyApp. This information helps us track how many people are using the reverse proxy app as well as get a perspectice on the app's retention rate. This data does not contain PII or any information about the services running in your cluster or the data handled by the applications. Nor do we capture the user application-specific configurations set for YarpProxyApp. 
+Internal telemetry data is transmitted to Microsoft and contains information about YarpProxyApp. This information helps us track how many people are using the reverse proxy app as well as get a perspective on the app's retention rate. This data does not contain PII or any information about the services running in your cluster or the data handled by the applications. Nor do we capture the user application-specific configurations set for YarpProxyApp. 
 
 **This information is only used by the Service Fabric team and will be retained for no more than 90 days. This telemetry is sent once every 24 hours** 
 
@@ -203,7 +353,7 @@ Setting the value to false as below will prevent the transmission of operational
 
 **\<Parameter Name="YarpProxyEnableTelemetry" DefaultValue="false" />** 
 
-#### Internal telemetry data details: 
+### Internal telemetry data details: 
 
 Here is a full example of exactly what is sent in one of these telemetry events, in this case, from an SFRP cluster: 
 
@@ -230,9 +380,12 @@ This information will **really** help us so we greatly appreciate you sharing it
 
 
 ## Tracing
-At the moment, logs can be locally collected on every node that the app is running on (e.g "C:\SfDevCluster\Data\_App\_Node_0\YarpProxyAppType_App0\log").
+Logs can be locally collected on every node that the app is running on. This is done via [Console Redirection](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-deploy-existing-app#set-up-logging) which can be used to redirect console output  to a working directory. This provides the ability to verify that there are no errors during the setup or execution of the application in the Service Fabric cluster. Console redirection is disabled by default but can be enabled in ServiceManifest.xml for both FabricDiscovery and YarpProxy services. 
 
-Since YarpProxyApp is an ASP.NET Core application it comes built in with various [logging capabilities](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-6.0). By default the logging providers that are supported included console, debug, eventsource and eventlog. We have also added the application insight logging provider so that logs can be collected outside the cluster. Just provide the Application Insight instrumentation key in the appsettings.json file under YarpProxy.Service. 
+> WARNING: Never use the console redirection policy in an application that is deployed in production because this can affect the application failover. Only use this for local development and debugging purposes.
+
+
+Since YarpProxyApp is an ASP.NET Core application it comes built in with various [logging capabilities](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-6.0). By default the logging providers that are supported included console, debug, eventsource and eventlog. We have also added the application insight logging provider so that logs can be collected outside the cluster. Just provide the application insight resource instrumentation key in the ApplicationManifest.xml.
 
 
 
@@ -279,7 +432,7 @@ This repo includes:
 
   ![Service Fabric Explorer](docs/sfx.png)
 
-* Deploy the pinger test application mentioned in [Sample-Test-Application](#sample-test-application). Using a browser, access `https://localhost/pinger0/PingerService`. If all works, you should get a `200 OK` response with contents resembling the following:
+* Deploy the pinger test application mentioned in [Sample-Test-Application](#sample-test-application). Using a browser, access `http://localhost:8080/pinger0/PingerService`. If all works, you should get a `200 OK` response with contents resembling the following:
 
    ```json
    {
