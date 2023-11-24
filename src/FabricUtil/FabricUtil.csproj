@@ -18,11 +18,15 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.ServiceFabric" Version="10.1.1541" />
     <PackageReference Include="Microsoft.ServiceFabric.Services" Version="7.1.1541" />
-    <PackageReference Include="System.Text.RegularExpressions" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SFYarp.Common\SFYarp.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
   </ItemGroup>
 
 </Project>

@@ -19,5 +19,9 @@
     <ProjectReference Include="..\FabricUtil\FabricUtil.csproj" />
     <ProjectReference Include="..\RemoteConfig.Contract\RemoteConfig.Contract.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
+  </ItemGroup>
 
 </Project>

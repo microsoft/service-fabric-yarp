@@ -18,5 +18,9 @@
     <ProjectReference Include="..\SFYarp.Common\SFYarp.Common.csproj" />
     <ProjectReference Include="..\FabricUtil\FabricUtil.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
+  </ItemGroup>
 
 </Project>

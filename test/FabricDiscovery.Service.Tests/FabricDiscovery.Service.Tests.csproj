@@ -34,4 +34,8 @@
     <ProjectReference Include="..\Tests.Common\Tests.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
+  </ItemGroup>
+
 </Project>
