@@ -1,0 +1,35 @@
+<Project>
+  <!-- 
+    This targets file contains upgrades of transitive nuget dependencies to ingest
+    various security fixes. 
+
+    Note regarding use: when possible, prefer to upgrade the immediate dependency to
+    ingest the security fix. Only perform a force upgrade of the transitive dependency
+    if the immediate dependency refuses or is unable to improve their package.
+  -->
+  <ItemGroup Condition="'@(PackageReference->AnyHaveMetadataValue('Identity', 'Microsoft.ServiceFabric.AspNetCore.Kestrel'))' == 'True' And '$(TargetFramework)' == 'net5.0'">
+    <!--
+      Microsoft.ServiceFabric.AspNetCore.Abstractions/4.1.409 transitively references vuln versions of aspnetcore.
+      Upgrade the transitive dependencies.
+      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-1045
+      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-0808 
+    -->
+    <PackageReference Include="Microsoft.AspNetCore.Http" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" />
+    <!--
+      Microsoft.ServiceFabric.AspNetCore.Abstractions/4.1.409 transitively references
+      vuln System.Text.Encodings.Web/4.5.0. Update the transitive dependency. 
+      Reference task 9596100.
+    -->
+    <PackageReference Include="System.Text.Encodings.Web" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+    <!--
+      System.Runtime/4.3.1 transitively depends on System.Private.Uri/4.3.0 with vuln. Upgrade
+      transitive dependency. (Note: latest dotnetcore 5.0.202 sdk still not patched, so need
+      to update this transitive dependency ourselves).
+      Reference https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-0980 
+    -->
+    <PackageReference Include="System.Private.Uri" />
+  </ItemGroup>
+</Project>
