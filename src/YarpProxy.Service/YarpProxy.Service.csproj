@@ -12,7 +12,7 @@
       The following helps support self-contained .NET Core runtime publishing.
       See: https://docs.microsoft.com/en-us/dotnet/core/deploying/runtime-patch-selection
     -->
-    <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 
     <!--
       .NET Core SDK 3.1 SDK sets ServerGarbageCollection=true by default for Microsoft.NET.Sdk.Web projects,
