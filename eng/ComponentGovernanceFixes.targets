@@ -23,7 +23,7 @@
     -->
     <PackageReference Include="System.Text.Encodings.Web" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <!--
       System.Runtime/4.3.1 transitively depends on System.Private.Uri/4.3.0 with vuln. Upgrade
       transitive dependency. (Note: latest dotnetcore 5.0.202 sdk still not patched, so need
