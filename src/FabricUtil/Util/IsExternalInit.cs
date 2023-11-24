@@ -10,7 +10,7 @@ namespace System.Runtime.CompilerServices
     /// <remarks>
     /// Notes from Jared Parsons from the .NET team indicating there is no need to #if-guard this to only older frameworks:
     /// "
-    ///     It�s not a concern for this to be manually defined for net8.0. The compiler can handle it just fine. There is a small bug we had in 16.8 about ambiguities when we find several of these in a specific config but we fixed that in 16.9.
+    ///     It�s not a concern for this to be manually defined for net6.0. The compiler can handle it just fine. There is a small bug we had in 16.8 about ambiguities when we find several of these in a specific config but we fixed that in 16.9.
     ///     Also, make the type public not internal. It�s a part of your method signature. You can get into a couple of strange corner cases if you don�t do this.
     /// ".
     /// </remarks>

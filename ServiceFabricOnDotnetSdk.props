@@ -36,7 +36,7 @@
       the PackageReference mechanism expects the project to have a target framework
       for resolving package versions.
     -->
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
 
     <!--
       Instruct Service Fabric vs extension to _not_ edit our sfproj without our permission.
