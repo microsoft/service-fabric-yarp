@@ -42,19 +42,23 @@ namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
             do
             {
                 var page = await FabricCallHelper.RunWithExponentialRetries(
-                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
-                        "FabricApi.GetApplicationTypePagedListAsync",
-                        () => this.queryClient.GetApplicationTypePagedListAsync(
-                            queryDescription: query,
-                            timeout: eachApiCallTimeout,
-                            cancellationToken: cancellationToken),
-                        new[]
+                    (attempt, cancellationToken) =>
+                    {
+                        KeyValuePair<string, string>[] properties = new[]
                         {
                             KeyValuePair.Create(nameof(query.ApplicationTypeNameFilter), query.ApplicationTypeNameFilter ?? string.Empty),
                             KeyValuePair.Create(nameof(query.ApplicationTypeVersionFilter), query.ApplicationTypeVersionFilter ?? string.Empty),
                             KeyValuePair.Create("page", pageIndex.ToString()),
                             KeyValuePair.Create("attempt", attempt.ToString()),
-                        }),
+                        };
+                        return this.operationLogger.ExecuteAsync(
+                                                "FabricApi.GetApplicationTypePagedListAsync",
+                                                () => this.queryClient.GetApplicationTypePagedListAsync(
+                                                    queryDescription: query,
+                                                    timeout: eachApiCallTimeout,
+                                                    cancellationToken: cancellationToken),
+                                                properties);
+                    },
                     FabricExponentialRetryPolicy.Default,
                     cancellationToken);
 
@@ -84,19 +88,23 @@ namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
             do
             {
                 var page = await FabricCallHelper.RunWithExponentialRetries(
-                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
-                        "FabricApi.GetApplicationPagedListAsync",
-                        () => this.queryClient.GetApplicationPagedListAsync(
-                            applicationQueryDescription: query,
-                            timeout: eachApiCallTimeout,
-                            cancellationToken: cancellationToken),
-                        new[]
+                    (attempt, cancellationToken) =>
+                    {
+                        KeyValuePair<string, string>[] properties = new[]
                         {
                             KeyValuePair.Create(nameof(query.ApplicationTypeNameFilter), query.ApplicationTypeNameFilter ?? string.Empty),
                             KeyValuePair.Create(nameof(query.ApplicationNameFilter), query.ApplicationNameFilter != null ? query.ApplicationNameFilter.ToString() : string.Empty),
                             KeyValuePair.Create("page", pageIndex.ToString()),
                             KeyValuePair.Create("attempt", attempt.ToString()),
-                        }),
+                        };
+                        return this.operationLogger.ExecuteAsync(
+                                                "FabricApi.GetApplicationPagedListAsync",
+                                                () => this.queryClient.GetApplicationPagedListAsync(
+                                                    applicationQueryDescription: query,
+                                                    timeout: eachApiCallTimeout,
+                                                    cancellationToken: cancellationToken),
+                                                properties);
+                    },
                     FabricExponentialRetryPolicy.Default,
                     cancellationToken);
 
@@ -121,17 +129,21 @@ namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
         public virtual async Task<ApplicationNameKey> GetApplicationNameAsync(ServiceNameKey serviceName, TimeSpan timeout, CancellationToken cancellationToken)
         {
             var result = await FabricCallHelper.RunWithExponentialRetries(
-                (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
-                    "FabricApi.GetApplicationNameAsync",
-                    () => this.queryClient.GetApplicationNameAsync(
-                            serviceName: serviceName,
-                            timeout: timeout,
-                            cancellationToken: cancellationToken),
-                    new[]
+                (attempt, cancellationToken) =>
+                {
+                    KeyValuePair<string, string>[] properties = new[]
                     {
                         KeyValuePair.Create(nameof(serviceName), serviceName.ToString() ?? string.Empty),
                         KeyValuePair.Create("attempt", attempt.ToString()),
-                    }),
+                    };
+                    return this.operationLogger.ExecuteAsync(
+                                        "FabricApi.GetApplicationNameAsync",
+                                        () => this.queryClient.GetApplicationNameAsync(
+                                                serviceName: serviceName,
+                                                timeout: timeout,
+                                                cancellationToken: cancellationToken),
+                                        properties);
+                },
                 FabricExponentialRetryPolicy.Default,
                 cancellationToken);
 
@@ -151,20 +163,24 @@ namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
             }
 
             var results = await FabricCallHelper.RunWithExponentialRetries(
-                (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
-                    "FabricApi.GetServiceTypeListAsync",
-                    () => this.queryClient.GetServiceTypeListAsync(
-                        applicationTypeName: applicationTypeName,
-                        applicationTypeVersion: applicationTypeVersion,
-                        serviceTypeNameFilter: null,
-                        timeout: eachApiCallTimeout,
-                        cancellationToken: cancellationToken),
-                    new[]
+                (attempt, cancellationToken) =>
+                {
+                    KeyValuePair<string, string>[] properties = new[]
                     {
                         KeyValuePair.Create(nameof(applicationTypeName), applicationTypeName.ToString() ?? string.Empty),
                         KeyValuePair.Create(nameof(applicationTypeVersion), applicationTypeVersion.ToString() ?? string.Empty),
                         KeyValuePair.Create("attempt", attempt.ToString()),
-                    }),
+                    };
+                    return this.operationLogger.ExecuteAsync(
+                                        "FabricApi.GetServiceTypeListAsync",
+                                        () => this.queryClient.GetServiceTypeListAsync(
+                                            applicationTypeName: applicationTypeName,
+                                            applicationTypeVersion: applicationTypeVersion,
+                                            serviceTypeNameFilter: null,
+                                            timeout: eachApiCallTimeout,
+                                            cancellationToken: cancellationToken),
+                                        properties);
+                },
                 FabricExponentialRetryPolicy.Default,
                 cancellationToken);
 
@@ -190,19 +206,23 @@ namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
             do
             {
                 var page = await FabricCallHelper.RunWithExponentialRetries(
-                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
-                        "FabricApi.GetServicePagedListAsync",
-                        () => this.queryClient.GetServicePagedListAsync(
-                                serviceQueryDescription: query,
-                                timeout: eachApiCallTimeout,
-                                cancellationToken: cancellationToken),
-                        new[]
+                    (attempt, cancellationToken) =>
+                    {
+                        KeyValuePair<string, string>[] properties = new[]
                         {
                             KeyValuePair.Create(nameof(query.ServiceTypeNameFilter), query.ServiceTypeNameFilter ?? string.Empty),
                             KeyValuePair.Create(nameof(query.ServiceNameFilter), query.ServiceNameFilter != null ? query.ServiceNameFilter.ToString() : string.Empty),
                             KeyValuePair.Create("page", pageIndex.ToString()),
                             KeyValuePair.Create("attempt", attempt.ToString()),
-                        }),
+                        };
+                        return this.operationLogger.ExecuteAsync(
+                                                "FabricApi.GetServicePagedListAsync",
+                                                () => this.queryClient.GetServicePagedListAsync(
+                                                        serviceQueryDescription: query,
+                                                        timeout: eachApiCallTimeout,
+                                                        cancellationToken: cancellationToken),
+                                                properties);
+                    },
                     FabricExponentialRetryPolicy.Default,
                     cancellationToken);
 
@@ -234,20 +254,24 @@ namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
             do
             {
                 var page = await FabricCallHelper.RunWithExponentialRetries(
-                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
-                        "FabricApi.GetPartitionListAsync",
-                        () => this.queryClient.GetPartitionListAsync(
-                            serviceName: serviceName,
-                            partitionIdFilter: null,
-                            continuationToken: continuationToken,
-                            timeout: eachApiCallTimeout,
-                            cancellationToken: cancellationToken),
-                        new[]
+                    (attempt, cancellationToken) =>
+                    {
+                        KeyValuePair<string, string>[] properties = new[]
                         {
                             KeyValuePair.Create(nameof(serviceName), serviceName.ToString() ?? string.Empty),
                             KeyValuePair.Create("page", pageIndex.ToString()),
                             KeyValuePair.Create("attempt", attempt.ToString()),
-                        }),
+                        };
+                        return this.operationLogger.ExecuteAsync(
+                                                "FabricApi.GetPartitionListAsync",
+                                                () => this.queryClient.GetPartitionListAsync(
+                                                    serviceName: serviceName,
+                                                    partitionIdFilter: null,
+                                                    continuationToken: continuationToken,
+                                                    timeout: eachApiCallTimeout,
+                                                    cancellationToken: cancellationToken),
+                                                properties);
+                    },
                     FabricExponentialRetryPolicy.Default,
                     cancellationToken);
 
@@ -273,19 +297,23 @@ namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
             do
             {
                 var page = await FabricCallHelper.RunWithExponentialRetries(
-                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
-                        "FabricApi.GetReplicaListAsync",
-                        () => this.queryClient.GetReplicaListAsync(
-                            partitionId: partitionId,
-                            continuationToken: continuationToken,
-                            timeout: eachApiCallTimeout,
-                            cancellationToken: cancellationToken),
-                        new[]
+                    (attempt, cancellationToken) =>
+                    {
+                        KeyValuePair<string, string>[] properties = new[]
                         {
                             KeyValuePair.Create(nameof(partitionId), partitionId.ToString()),
                             KeyValuePair.Create("page", pageIndex.ToString()),
                             KeyValuePair.Create("attempt", attempt.ToString()),
-                        }),
+                        };
+                        return this.operationLogger.ExecuteAsync(
+                                                "FabricApi.GetReplicaListAsync",
+                                                () => this.queryClient.GetReplicaListAsync(
+                                                    partitionId: partitionId,
+                                                    continuationToken: continuationToken,
+                                                    timeout: eachApiCallTimeout,
+                                                    cancellationToken: cancellationToken),
+                                                properties);
+                    },
                     FabricExponentialRetryPolicy.Default,
                     cancellationToken);
 

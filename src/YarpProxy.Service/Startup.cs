@@ -14,7 +14,8 @@ using Yarp.ServiceFabric.Common.Util;
 using Yarp.ServiceFabric.Core.Abstractions;
 using Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding;
 using Yarp.ServiceFabric.Hosting.Common;
-using Yarp.ServiceFabric.InternalTelemetry;
+
+// using Yarp.ServiceFabric.InternalTelemetry;
 using Yarp.ServiceFabric.RemoteConfig;
 using Yarp.ServiceFabric.RemoteConfig.Infra;
 using YarpProxy.Service.Lifecycle;
@@ -56,7 +57,7 @@ namespace Yarp.ServiceFabric.Service
             services.AddHostedService<SniServerCertificateUpdater>();
             services.TryAddSingleton<ShutdownStateManager>();
 
-            services.AddHostedService<TelemetryManager>();
+            // services.AddHostedService<TelemetryManager>();
             services.Configure<RemoteConfigDiscoveryOptions>(this.configuration.GetSection("RemoteConfigDiscovery"));
         }
 
@@ -65,11 +66,11 @@ namespace Yarp.ServiceFabric.Service
         /// </summary>
         public void Configure(IApplicationBuilder app)
         {
-            app.UseRouting();
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapReverseProxy();
-            });
+            // app.UseRouting();
+            // app.UseEndpoints(endpoints =>
+            // {
+            //    endpoints.MapReverseProxy();
+            // });
         }
     }
 }

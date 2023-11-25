@@ -6,15 +6,20 @@ using System.Collections.Generic;
 using System.Fabric;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.ApplicationInsights;
 using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
+using Yarp.ServiceFabric.Common;
 using Yarp.ServiceFabric.Core.Abstractions;
 using Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework;
 using YarpProxy.Service.Lifecycle;
@@ -45,7 +50,7 @@ namespace Yarp.ServiceFabric.Service
             this.shutdownStateManager = new ShutdownStateManager();
         }
 
-        internal static IWebHost CreateWebHost(
+        internal static IHost CreateWebHost(
             ShutdownStateManager shutdownStateManager,
             string[] urls,
             StatelessServiceContext serviceContext,
@@ -60,37 +65,74 @@ namespace Yarp.ServiceFabric.Service
             // Once the host is ready, we will replace this with a delegate to the actual cert selector function.
             Func<ConnectionContext, string, X509Certificate2> certSelectorFunc = (connectionContext, hostName) => null;
 
-            var host = WebHost.CreateDefaultBuilder()
-                .ConfigureKestrel(
-                    kestrelOptions =>
-                    {
-                        kestrelOptions.Limits.MaxRequestBodySize = MaxRequestBodySize;
-                        kestrelOptions.ConfigureHttpsDefaults(
-                            httpsOptions =>
-                            {
-                                httpsOptions.SslProtocols = SslProtocols.Tls12;
-                                httpsOptions.ServerCertificateSelector = (connectionContext, hostName) => certSelectorFunc(connectionContext, hostName);
-                            });
-                    })
-                .ConfigureServices(services => services
-                    .AddSingleton(shutdownStateManager)
-                    .AddSingleton(serviceContext))
-                .ConfigureAppConfiguration(configureAppConfigurationAction)
-                .UseStartup<Startup>()
-                .UseUrls(urls)
-                .ConfigureLogging((hostingContext, logging) =>
+            var builder = WebApplication.CreateBuilder();
+            builder.WebHost.UseKestrel(
+                kestrelOptions =>
                 {
-                    logging.AddEventLog(configuration => configuration.SourceName = "YarpProxyLogs");
+                    kestrelOptions.Limits.MaxRequestBodySize = MaxRequestBodySize;
+                    kestrelOptions.ConfigureHttpsDefaults(
+                        httpsOptions =>
+                        {
+                            httpsOptions.SslProtocols = SslProtocols.Tls12;
+                            httpsOptions.ServerCertificateSelector = (connectionContext, hostName) => certSelectorFunc(connectionContext, hostName);
+                        });
+                });
+            builder.WebHost.ConfigureServices(services => services
+                           .AddSingleton(shutdownStateManager)
+                           .AddSingleton(serviceContext));
+            builder.WebHost.ConfigureAppConfiguration(configureAppConfigurationAction);
+            builder.WebHost.UseStartup<Startup>();
+            builder.WebHost.UseUrls(urls);
+            builder.WebHost.UseShutdownTimeout(TimeSpan.FromSeconds(DrainTimeSeconds));
 
-                    var appInsightKey = hostingContext.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
-                    logging.AddApplicationInsights(appInsightKey);
-                })
-                .UseShutdownTimeout(TimeSpan.FromSeconds(DrainTimeSeconds))
-                .Build();
+            // builder.Services.AddSingleton(shutdownStateManager);
+            // builder.Services.AddSingleton(serviceContext);
+            builder.Logging.AddApplicationInsights(
+                configureTelemetryConfiguration: (config) =>
+                config.ConnectionString = builder.Configuration.GetConnectionString("APPLICATIONINSIGHTS_CONNECTION_STRING"),
+                configureApplicationInsightsLoggerOptions: (options) => { });
 
-            var certSelector = host.Services.GetRequiredService<ISniServerCertificateSelector>();
+            builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("your-category", LogLevel.Trace);
+
+            var app = builder.Build();
+
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapReverseProxy();
+            });
+
+            // var host = WebHost.CreateDefaultBuilder()
+            //    .ConfigureKestrel(
+            //        kestrelOptions =>
+            //        {
+            //            kestrelOptions.Limits.MaxRequestBodySize = MaxRequestBodySize;
+            //            kestrelOptions.ConfigureHttpsDefaults(
+            //                httpsOptions =>
+            //                {
+            //                    httpsOptions.SslProtocols = SslProtocols.Tls12;
+            //                    httpsOptions.ServerCertificateSelector = (connectionContext, hostName) => certSelectorFunc(connectionContext, hostName);
+            //                });
+            //        })
+            //    .ConfigureServices(services => services
+            //        .AddSingleton(shutdownStateManager)
+            //        .AddSingleton(serviceContext))
+            //    .ConfigureAppConfiguration(configureAppConfigurationAction)
+            //    .UseStartup<Startup>()
+            //    .UseUrls(urls)
+            //    .ConfigureLogging((hostingContext, logging) =>
+            //    {
+            //        logging.AddEventLog(configuration => configuration.SourceName = "YarpProxyLogs");
+            //        var appInsightKey = hostingContext.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
+            //        TelemetryConfiguration telemetryConfiguration = new TelemetryConfiguration();
+            //        telemetryConfiguration.ConnectionString = $"InstrumentationKey={appInsightKey}";
+            //        logging.AddApplicationInsights(telemetryConfiguration, hostingContext.Configuration.GetValue<string>("ApplicationInsights:LogLevel:Default"));
+            //    })
+            //    .UseShutdownTimeout(TimeSpan.FromSeconds(DrainTimeSeconds))
+            //    .Build();
+            var certSelector = app.Services.GetRequiredService<ISniServerCertificateSelector>();
             certSelectorFunc = certSelector.SelectCertificate;
-            return host;
+            return app;
         }
 
         /// <inheritdoc/>

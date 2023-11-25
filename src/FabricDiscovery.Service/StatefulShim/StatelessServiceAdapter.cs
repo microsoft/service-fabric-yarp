@@ -39,13 +39,14 @@ namespace Yarp.ServiceFabric.FabricDiscovery
         /// <inheritdoc />
         protected override Task OnOpenAsync(CancellationToken cancellation)
         {
+            List<KeyValuePair<string, string>> keyValues = new ()
+            {
+                KeyValuePair.Create("open", "open"),
+            };
             return this.operationLogger.ExecuteRootAsync(
                 "FabricDiscovery.StatefulServiceAdapter.OnOpenAsync",
                 () => base.OnOpenAsync(cancellation),
-                new[]
-                {
-                    KeyValuePair.Create("open", "open"),
-                });
+                keyValues.ToArray());
         }
 
         /// <inheritdoc />

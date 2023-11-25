@@ -48,8 +48,8 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig
         private readonly ILogger<SFYarpTopologyMapperWorker> logger;
         private readonly RecurringTask recurringTask;
 
-        private readonly Dictionary<DiscoveredServiceEx, SFYarpBackendService> serviceLookup = new(ReferenceEqualityComparer<DiscoveredServiceEx>.Default);
-        private readonly Dictionary<DiscoveredServiceType, SFYarpParsedServiceType> serviceTypeLookup = new(ReferenceEqualityComparer<DiscoveredServiceType>.Default);
+        private readonly Dictionary<DiscoveredServiceEx, SFYarpBackendService> serviceLookup = new (ReferenceEqualityComparer<DiscoveredServiceEx>.Default);
+        private readonly Dictionary<DiscoveredServiceType, SFYarpParsedServiceType> serviceTypeLookup = new (ReferenceEqualityComparer<DiscoveredServiceType>.Default);
 
         private Snapshot<IReadOnlyDictionary<ApplicationNameKey, DiscoveredApp>> currentSFTopology;
 
