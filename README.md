@@ -324,6 +324,17 @@ http://<Cluster FQDN | internal IP>:8080/pinger0/PingerService/id
 #Remove-ServiceFabricApplication -ApplicationName fabric:/pinger$i -Force
 #Unregister-ServiceFabricApplicationType -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 1.0 -Force
 
+$thumbprint = '<thumbprint>'
+$clusterEndpoint = '<cluster endpoint>'
+
+Import-Module servicefabric
+Connect-ServiceFabricCluster -ConnectionEndpoint $clusterEndpoint `
+  -X509Credential `
+  -FindType FindByThumbprint `
+  -FindValue $thumbprint `
+  -StoreLocation CurrentUser `
+  -ServerCertThumbprint $thumbprint
+
 $appPath = "C:\downloads\service-fabric-yarp\windows\pinger-yarp"
 
 Copy-ServiceFabricApplicationPackage -CompressPackage -ApplicationPackagePath $appPath -ApplicationPackagePathInImageStore pinger-yarp
