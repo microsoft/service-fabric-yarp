@@ -11,6 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.ServiceFabric" Version="9.1.1851" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SFYarp.Common\SFYarp.Common.csproj" />
   </ItemGroup>
 

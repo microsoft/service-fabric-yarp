@@ -41,11 +41,15 @@
       Note: the use of `GeneratePathProperty` permits us to refer to the nuget using the `$(Pkg...)` variable instead
       of hard coding the package install path
     -->
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Fabric.MSBuild" GeneratePathProperty="true" />
+    <!-- <PackageReference Include="Microsoft.VisualStudio.Azure.Fabric.MSBuild" GeneratePathProperty="true" /> -->
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Fabric.MSBuild" version="1.7.9" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FabricDiscovery.Service\FabricDiscovery.Service.csproj" />
     <ProjectReference Include="..\YarpProxy.Service\YarpProxy.Service.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
   <PropertyGroup>

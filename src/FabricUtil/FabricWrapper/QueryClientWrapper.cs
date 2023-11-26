@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.ServiceFabric;
 using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
 using Yarp.ServiceFabric.ServiceFabricIntegration;
 
@@ -30,6 +31,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
         public QueryClientWrapper(IOperationLogger operationLogger)
         {
             this.operationLogger = operationLogger ?? throw new ArgumentNullException(nameof(operationLogger));
+            FabricClient fabricClient = new FabricClient();
             this.queryClient = new FabricClient().QueryManager;
         }
 

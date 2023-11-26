@@ -20,8 +20,16 @@ using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
 using Yarp.ServiceFabric.Common;
+using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
+using Yarp.ServiceFabric.Common.Abstractions.Time;
+using Yarp.ServiceFabric.Common.Telemetry;
+using Yarp.ServiceFabric.Common.Util;
 using Yarp.ServiceFabric.Core.Abstractions;
+using Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding;
 using Yarp.ServiceFabric.CoreServicesBorrowed.CoreFramework;
+using Yarp.ServiceFabric.Hosting.Common;
+using Yarp.ServiceFabric.RemoteConfig;
+using Yarp.ServiceFabric.RemoteConfig.Infra;
 using YarpProxy.Service.Lifecycle;
 
 namespace Yarp.ServiceFabric.Service
@@ -81,18 +89,35 @@ namespace Yarp.ServiceFabric.Service
                            .AddSingleton(shutdownStateManager)
                            .AddSingleton(serviceContext));
             builder.WebHost.ConfigureAppConfiguration(configureAppConfigurationAction);
-            builder.WebHost.UseStartup<Startup>();
+
+            // builder.WebHost.UseStartup<Startup>();
             builder.WebHost.UseUrls(urls);
             builder.WebHost.UseShutdownTimeout(TimeSpan.FromSeconds(DrainTimeSeconds));
 
+            builder.Services.AddRouting();
+
+            builder.Services.AddSingleton<IMonotonicTimer, MonotonicTimer>();
+            builder.Services.AddSingleton<IOperationLogger, TextOperationLogger>();
+            builder.Services.AddSingleton<IMetricCreator, NullMetricCreator>();
+            builder.Services.AddReverseProxy()
+                .LoadFromRemoteConfigProvider();
+            builder.Services.AddSingleton<IRemoteConfigClientFactory, RemoteConfigClientFactory>();
+
+            builder.Services.AddSingleton<ICertificateLoader, CertificateLoader>();
+            builder.Services.AddSingleton<ISniServerCertificateSelector, SniServerCertificateSelector>();
+            builder.Services.AddHostedService<SniServerCertificateUpdater>();
+            builder.Services.AddSingleton<ShutdownStateManager>();
+
+            // services.AddHostedService<TelemetryManager>();
+            builder.Services.Configure<RemoteConfigDiscoveryOptions>(builder.Configuration.GetSection("RemoteConfigDiscovery"));
+
             // builder.Services.AddSingleton(shutdownStateManager);
             // builder.Services.AddSingleton(serviceContext);
-            builder.Logging.AddApplicationInsights(
-                configureTelemetryConfiguration: (config) =>
-                config.ConnectionString = builder.Configuration.GetConnectionString("APPLICATIONINSIGHTS_CONNECTION_STRING"),
-                configureApplicationInsightsLoggerOptions: (options) => { });
-
-            builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("your-category", LogLevel.Trace);
+            // builder.Logging.AddApplicationInsights(
+            //    configureTelemetryConfiguration: (config) =>
+            //    config.ConnectionString = builder.Configuration.GetConnectionString("APPLICATIONINSIGHTS_CONNECTION_STRING"),
+            //    configureApplicationInsightsLoggerOptions: (options) => { });
+            builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("yarp-proxy", LogLevel.Trace);
 
             var app = builder.Build();
 

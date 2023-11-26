@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.ServiceFabric" Version="9.1.1851" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\RemoteConfig.Contract\RemoteConfig.Contract.csproj" />
     <ProjectReference Include="..\FabricUtil\FabricUtil.csproj" />
   </ItemGroup>
