@@ -396,7 +396,7 @@ Since YarpProxyApp is an ASP.NET Core application it comes built in with various
 
 * Windows 10 Version 1909 or later, x64
 * .NET SDK (version indicated in global.json)
-* .NET Core 5.x runtime (to run net6.0 tests)
+* .NET 6.x runtime (to run net6.0 tests)
 * [Pre-reqs](#pre-reqs) above also apply regarding tls cert for local deployment
 
 Dotnet sdks and runtimes can be downloaded from https://dotnet.microsoft.com/download .
