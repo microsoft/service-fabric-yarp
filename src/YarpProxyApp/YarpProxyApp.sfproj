@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="17.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$([MSBuild]::GetPathOfFileAbove(ServiceFabricOnDotnetSdk.props))" />
   <Import Project="$(PkgMicrosoft_VisualStudio_Azure_Fabric_MSBuild)\build\Microsoft.VisualStudio.Azure.Fabric.Application.props" Condition="Exists('$(PkgMicrosoft_VisualStudio_Azure_Fabric_MSBuild)')" />
   <PropertyGroup Label="Globals">
