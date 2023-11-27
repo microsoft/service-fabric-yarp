@@ -83,7 +83,7 @@ namespace Yarp.ServiceFabric.Service
                     kestrelOptions.ConfigureHttpsDefaults(
                         httpsOptions =>
                         {
-                            httpsOptions.SslProtocols = SslProtocols.Tls12;
+                            httpsOptions.SslProtocols = SslProtocols.None;
                             httpsOptions.ServerCertificateSelector = (connectionContext, hostName) => certSelectorFunc(connectionContext, hostName);
                         });
                 });
@@ -98,7 +98,9 @@ namespace Yarp.ServiceFabric.Service
             builder.Services.AddSingleton<IOperationLogger, TextOperationLogger>();
             builder.Services.AddSingleton<IMetricCreator, NullMetricCreator>();
             builder.Services.AddReverseProxy()
-                .LoadFromRemoteConfigProvider();
+                .LoadFromRemoteConfigProvider()
+                .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
             builder.Services.AddSingleton<IRemoteConfigClientFactory, RemoteConfigClientFactory>();
 
             builder.Services.AddSingleton<ICertificateLoader, CertificateLoader>();
@@ -112,18 +114,16 @@ namespace Yarp.ServiceFabric.Service
             builder.Services.AddSingleton(shutdownStateManager);
             builder.Services.AddSingleton(serviceContext);
 
-            // todo: add application insights connection string to appsettings.json
-            // builder.Logging.AddApplicationInsights(
-            //   configureTelemetryConfiguration: (config) =>
-            //   config.ConnectionString = builder.Configuration.GetConnectionString("APPLICATIONINSIGHTS_CONNECTION_STRING"),
-            //   configureApplicationInsightsLoggerOptions: (options) => { });
             var options = new ApplicationInsightsServiceOptions { ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights"), };
             builder.Services.AddApplicationInsightsTelemetry(options: options);
             builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("sf-yarp-proxy", LogLevel.Trace);
 
             var app = builder.Build();
 
+            app.UseHttpLogging();
             app.UseRouting();
+
+            app.UseCors();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapReverseProxy();
