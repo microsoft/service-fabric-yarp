@@ -3,7 +3,7 @@
   <Parameters>
     <Parameter Name="YarpProxy_PlacementConstraints" DefaultValue="" />
     <Parameter Name="YarpProxy_InstanceCount" DefaultValue="1" />
-    <Parameter Name="YarpProxy_HttpPort" DefaultValue="19081" />
+    <Parameter Name="YarpProxy_HttpPort" DefaultValue="19082" />
     <Parameter Name="YarpProxy_HttpsPort" DefaultValue="443" />
     <Parameter Name="FabricDiscovery_InstanceCount" DefaultValue="1" />
     <Parameter Name="FabricDiscovery_AbortAfterTimeoutInSeconds" DefaultValue="600" />
