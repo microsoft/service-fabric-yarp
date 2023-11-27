@@ -324,18 +324,18 @@ http://<Cluster FQDN | internal IP>:8080/pinger0/PingerService/id
 #Remove-ServiceFabricApplication -ApplicationName fabric:/pinger$i -Force
 #Unregister-ServiceFabricApplicationType -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 1.0 -Force
 
-$thumbprint = '<thumbprint>'
-$clusterEndpoint = '<cluster endpoint>'
+$commonName = '*.contoso.com'
+$clusterEndpoint = 'sfcluster.contoso.com:19000' # <cluster>.<region>.cloudapp.azure.com:19000
+$appPath = "$pwd\eng\SfExampleApps\pinger-yarp"
+$storeLocation = "LocalMachine" # CurrentUser or LocalMachine
 
 Import-Module servicefabric
 Connect-ServiceFabricCluster -ConnectionEndpoint $clusterEndpoint `
   -X509Credential `
-  -FindType FindByThumbprint `
-  -FindValue $thumbprint `
-  -StoreLocation CurrentUser `
-  -ServerCertThumbprint $thumbprint
-
-$appPath = "C:\downloads\service-fabric-yarp\windows\pinger-yarp"
+  -FindType FindBySubjectName `
+  -FindValue $commonName `
+  -StoreLocation $storeLocation `
+  -ServerCommonName $commonName
 
 Copy-ServiceFabricApplicationPackage -CompressPackage -ApplicationPackagePath $appPath -ApplicationPackagePathInImageStore pinger-yarp
 Register-ServiceFabricApplicationType -ApplicationPathInImageStore pinger-yarp
