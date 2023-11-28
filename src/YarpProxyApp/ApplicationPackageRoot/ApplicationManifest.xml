@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="YarpProxyAppType" ApplicationTypeVersion="1.1.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+<ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="YarpProxyAppType" ApplicationTypeVersion="1.2.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
   <Parameters>
     <Parameter Name="YarpProxy_PlacementConstraints" DefaultValue="" />
     <Parameter Name="YarpProxy_InstanceCount" DefaultValue="1" />
@@ -16,7 +16,7 @@
     <Parameter Name="YarpProxyInstrumentationKey" DefaultValue="" />
   </Parameters>
   <ServiceManifestImport>
-    <ServiceManifestRef ServiceManifestName="YarpProxyPkg" ServiceManifestVersion="1.1.0" />
+    <ServiceManifestRef ServiceManifestName="YarpProxyPkg" ServiceManifestVersion="1.2.0" />
 	  <ConfigOverrides>
 		  <ConfigOverride Name="Config">
 			  <Settings>
@@ -38,7 +38,7 @@
     </ResourceOverrides>
   </ServiceManifestImport>
   <ServiceManifestImport>
-    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="1.1.0" />
+    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="1.2.0" />
     <ConfigOverrides>
       <ConfigOverride Name="Config">
         <Settings>
