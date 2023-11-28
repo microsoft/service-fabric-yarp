@@ -40,7 +40,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.ServiceFabric" Version="9.1.1851" />
     <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" Version="6.1.1851" />
-    <!-- <PackageReference Include="System.Net.Http" Version="4.3.4" /> -->
   </ItemGroup>
 
   <ItemGroup>
