@@ -55,6 +55,7 @@ namespace Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding
             if (certificates.TryGetValue(hostName, out var certificate))
             {
                 // Exact match, return this certificate
+                this.logger.LogInformation($"Using certificate for host name '{hostName}' '{certificate.SubjectName.Name}");
                 return certificate;
             }
 
@@ -67,6 +68,7 @@ namespace Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding
                 if (wildcardCertificates.TryGetValue(withoutFirstLabel, out var wildcardCertificate))
                 {
                     // Found a matching wildcard cert
+                    this.logger.LogInformation($"Using wildcard certificate for host name '{hostName}' '{wildcardCertificate.SubjectName.Name}");
                     return wildcardCertificate;
                 }
             }
