@@ -1,4 +1,4 @@
-# ServiceFabricYarp 1.1.0
+# ServiceFabricYarp 1.2.0
 
 
 Table of Contents
@@ -84,7 +84,7 @@ Connect-ServiceFabricCluster -ConnectionEndpoint @('sf-win-cluster.westus2.cloud
 
 # Use this to remove a previous YarpProxy Application
 #Remove-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -Force
-#Unregister-ServiceFabricApplicationType -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.1.0 -Force
+#Unregister-ServiceFabricApplicationType -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.2.0 -Force
 
 #Copy and register and run the YarpProxy Application
 Copy-ServiceFabricApplicationPackage -CompressPackage -ApplicationPackagePath $appPath # -ApplicationPackagePathInImageStore YarpProxyApp
@@ -99,12 +99,12 @@ $p = @{
 }
 $p
 
-New-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.1.0 -ApplicationParameter $p
+New-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.2.0 -ApplicationParameter $p
 
 
 #OR if updating existing version:  
 
-Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:/YarpProxyApp -ApplicationTypeVersion 1.1.0 -ApplicationParameter $p -Monitored -FailureAction rollback 
+Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:/YarpProxyApp -ApplicationTypeVersion 1.2.0 -ApplicationParameter $p -Monitored -FailureAction rollback 
 ```  
 
 ## URI format for addressing services by using the reverse proxy
@@ -275,7 +275,7 @@ The following is an example of an `ApplicationManifest.xml` file with `FabricDis
 </Parameters>
 
   <ServiceManifestImport>
-    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="1.1.0" />
+    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="1.2.0" />
     <ConfigOverrides>
       <ConfigOverride Name="Config">
         <Settings>
