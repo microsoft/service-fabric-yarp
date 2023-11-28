@@ -111,6 +111,7 @@ namespace Yarp.ServiceFabric.Service
             var options = new ApplicationInsightsServiceOptions { ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights") };
             builder.Services.AddApplicationInsightsTelemetry(options: options);
 
+            builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Yarp", LogLevel.Trace);
             var app = builder.Build();
 
             app.UseHttpLogging()
