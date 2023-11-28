@@ -7,8 +7,6 @@ using System.Fabric;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Hosting;
@@ -20,7 +18,6 @@ using Microsoft.Extensions.Logging.ApplicationInsights;
 using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
-using Yarp.ServiceFabric.Common;
 using Yarp.ServiceFabric.Common.Abstractions.Telemetry;
 using Yarp.ServiceFabric.Common.Abstractions.Time;
 using Yarp.ServiceFabric.Common.Telemetry;
@@ -88,46 +85,38 @@ namespace Yarp.ServiceFabric.Service
                         });
                 });
 
-            builder.WebHost.ConfigureAppConfiguration(configureAppConfigurationAction);
-            builder.WebHost.UseUrls(urls);
-            builder.WebHost.UseShutdownTimeout(TimeSpan.FromSeconds(DrainTimeSeconds));
+            builder.WebHost.ConfigureAppConfiguration(configureAppConfigurationAction)
+                .UseUrls(urls)
+                .UseShutdownTimeout(TimeSpan.FromSeconds(DrainTimeSeconds));
 
-            builder.Services.AddRouting();
+            builder.Services.AddRouting()
+                .AddReverseProxy()
+                    .LoadFromRemoteConfigProvider()
+                    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
-            builder.Services.AddSingleton<IMonotonicTimer, MonotonicTimer>();
-            builder.Services.AddSingleton<IOperationLogger, TextOperationLogger>();
-            builder.Services.AddSingleton<IMetricCreator, NullMetricCreator>();
-            builder.Services.AddReverseProxy()
-                .LoadFromRemoteConfigProvider()
-                .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+            builder.Services.AddSingleton<IRemoteConfigClientFactory, RemoteConfigClientFactory>()
+                .Configure<RemoteConfigDiscoveryOptions>(builder.Configuration.GetSection("RemoteConfigDiscovery"))
+                .AddSingleton(shutdownStateManager)
+                .AddSingleton(serviceContext);
 
-            builder.Services.AddSingleton<IRemoteConfigClientFactory, RemoteConfigClientFactory>();
+            builder.Services.AddHostedService<TelemetryManager>()
+                .AddSingleton<IMonotonicTimer, MonotonicTimer>()
+                .AddSingleton<IOperationLogger, TextOperationLogger>()
+                .AddSingleton<IMetricCreator, NullMetricCreator>();
 
-            builder.Services.AddSingleton<ICertificateLoader, CertificateLoader>();
-            builder.Services.AddSingleton<ISniServerCertificateSelector, SniServerCertificateSelector>();
-            builder.Services.AddHostedService<SniServerCertificateUpdater>();
-            builder.Services.AddSingleton<ShutdownStateManager>();
+            builder.Services.AddSingleton<ICertificateLoader, CertificateLoader>()
+                .AddSingleton<ISniServerCertificateSelector, SniServerCertificateSelector>()
+                .AddHostedService<SniServerCertificateUpdater>();
 
-            builder.Services.AddHostedService<TelemetryManager>();
-            builder.Services.Configure<RemoteConfigDiscoveryOptions>(builder.Configuration.GetSection("RemoteConfigDiscovery"));
-
-            builder.Services.AddSingleton(shutdownStateManager);
-            builder.Services.AddSingleton(serviceContext);
-
-            var options = new ApplicationInsightsServiceOptions { ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights"), };
+            var options = new ApplicationInsightsServiceOptions { ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights") };
             builder.Services.AddApplicationInsightsTelemetry(options: options);
-            builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("sf-yarp-proxy", LogLevel.Trace);
 
             var app = builder.Build();
 
-            app.UseHttpLogging();
-            app.UseRouting();
-
-            app.UseCors();
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapReverseProxy();
-            });
+            app.UseHttpLogging()
+               .UseRouting()
+               .UseCors()
+               .UseEndpoints(endpoints => { endpoints.MapReverseProxy(); });
 
             var certSelector = app.Services.GetRequiredService<ISniServerCertificateSelector>();
             certSelectorFunc = certSelector.SelectCertificate;
