@@ -10,6 +10,7 @@ using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -106,11 +107,16 @@ namespace Yarp.ServiceFabric.Service
 
             builder.Services.AddSingleton<ICertificateLoader, CertificateLoader>()
                 .AddSingleton<ISniServerCertificateSelector, SniServerCertificateSelector>()
-                .AddHostedService<SniServerCertificateUpdater>();
+                .AddHostedService<SniServerCertificateUpdater>()
+                .AddHttpLogging(logging =>
+                {
+                    logging.LoggingFields = HttpLoggingFields.All;
+                });
 
             var options = new ApplicationInsightsServiceOptions { ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights") };
             builder.Services.AddApplicationInsightsTelemetry(options: options);
 
+            builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Microsoft.AspNetCore", LogLevel.Trace);
             builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Yarp", LogLevel.Trace);
             var app = builder.Build();
 
