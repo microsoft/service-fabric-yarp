@@ -221,7 +221,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util.Tests
                 },
                 Destinations = this.SimulateSFYarpDestinations(_partitionIds, _replicaIds),
             };
-            cluster.Should().BeEquivalentTo(expectedCluster);
+            cluster.Should().BeEquivalentTo(new List<ClusterConfig> { expectedCluster });
         }
 
         [Theory]
@@ -1300,7 +1300,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util.Tests
             int replicaIndex = 0;
             for (int i = 0; i < partitions.Count(); i++)
             {
-                for (int j = 0;  j < numReplicas && replicaIndex < replicas.Count(); j++)
+                for (int j = 0; j < numReplicas && replicaIndex < replicas.Count(); j++)
                 {
                     string partitionId = partitions[i].PartitionId.ToString();
                     string replicaId = replicas[replicaIndex].Id.ToString();
@@ -1384,12 +1384,13 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util.Tests
 
             var discoveredEchoService = new DiscoveredService(discoveredEchoServiceType, echoService);
             var discoveredEchoReplicas = echoReplicas.Select(e => new DiscoveredReplica(e)).ToList();
-            var discoveredEchoServiceEx = new DiscoveredServiceEx(
-                discoveredEchoService,
-                new[]
+            DiscoveredPartition[] partitions = new[]
                 {
                     new DiscoveredPartition(echoPartition, discoveredEchoReplicas),
-                });
+                };
+            var discoveredEchoServiceEx = new DiscoveredServiceEx(
+                discoveredEchoService,
+                partitions);
             sfService = discoveredEchoServiceEx;
             var discoveredSfyApp = new DiscoveredApp(sfyApp);
             var discoveredSfyAppEx = new DiscoveredAppEx(
@@ -1437,13 +1438,14 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util.Tests
                 });
             var discoveredService = new DiscoveredService(discoveredServiceType, service);
             var discoveredReplicas = replicas.Select(e => new DiscoveredReplica(e)).ToList();
-            var discovereServiceEx = new DiscoveredServiceEx(
-                discoveredService,
-                new[]
+            DiscoveredPartition[] partitions1 = new[]
                 {
                     new DiscoveredPartition(partitions[0], discoveredReplicas.GetRange(0, 2)),
                     new DiscoveredPartition(partitions[1], discoveredReplicas.GetRange(2, 2)),
-                });
+                };
+            var discovereServiceEx = new DiscoveredServiceEx(
+                discoveredService,
+                partitions1);
 
             var discoveredSfyApp = new DiscoveredApp(sfyApp);
             var discoveredSfyAppEx = new DiscoveredAppEx(
