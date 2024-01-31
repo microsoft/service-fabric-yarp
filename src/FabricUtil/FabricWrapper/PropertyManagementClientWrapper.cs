@@ -47,20 +47,24 @@ namespace Yarp.ServiceFabric.FabricDiscovery.FabricWrapper
                 cancellationToken.ThrowIfCancellationRequested();
 
                 previousResult = await FabricCallHelper.RunWithExponentialRetries(
-                    (attempt, cancellationToken) => this.operationLogger.ExecuteAsync(
-                        "FabricApi.EnumeratePropertiesAsync",
-                        () => this.propertyManagementClient.EnumeratePropertiesAsync(
-                            name: name,
-                            includeValues: true,
-                            previousResult: previousResult,
-                            timeout: eachApiTimeout,
-                            cancellationToken: cancellationToken),
-                        new[]
+                    (attempt, cancellationToken) =>
+                    {
+                        KeyValuePair<string, string>[] properties = new[]
                         {
                             KeyValuePair.Create(nameof(name), name.ToString()),
                             KeyValuePair.Create("page", pageIndex.ToString()),
                             KeyValuePair.Create("attempt", attempt.ToString()),
-                        }),
+                        };
+                        return this.operationLogger.ExecuteAsync(
+                                                "FabricApi.EnumeratePropertiesAsync",
+                                                () => this.propertyManagementClient.EnumeratePropertiesAsync(
+                                                    name: name,
+                                                    includeValues: true,
+                                                    previousResult: previousResult,
+                                                    timeout: eachApiTimeout,
+                                                    cancellationToken: cancellationToken),
+                                                properties);
+                    },
                     FabricExponentialRetryPolicy.Default,
                     cancellationToken);
                 foreach (NamedProperty p in previousResult)

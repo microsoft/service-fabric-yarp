@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <OutputType>Exe</OutputType>
 
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
@@ -12,7 +12,7 @@
       The following helps support self-contained .NET Core runtime publishing.
       See: https://docs.microsoft.com/en-us/dotnet/core/deploying/runtime-patch-selection
     -->
-    <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 
     <!--
       .NET Core SDK 3.1 SDK sets ServerGarbageCollection=true by default for Microsoft.NET.Sdk.Web projects,
@@ -32,11 +32,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
-    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" />
-    <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" />
-    <PackageReference Include="System.Net.Http" />
-    <PackageReference Include="Yarp.ReverseProxy" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.21.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" Version="6.0.0" />
+    <PackageReference Include="Microsoft.ServiceFabric" Version="10.1.1541" />
+    <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" Version="7.1.1541" />
+    <PackageReference Include="Yarp.ReverseProxy" Version="2.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,6 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
     <PackageReference Update="System.Text.Encodings.Web" />
   </ItemGroup>
 </Project>

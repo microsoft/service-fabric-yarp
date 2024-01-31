@@ -7,7 +7,7 @@
     ingest the security fix. Only perform a force upgrade of the transitive dependency
     if the immediate dependency refuses or is unable to improve their package.
   -->
-  <ItemGroup Condition="'@(PackageReference->AnyHaveMetadataValue('Identity', 'Microsoft.ServiceFabric.AspNetCore.Kestrel'))' == 'True'">
+  <ItemGroup Condition="'@(PackageReference->AnyHaveMetadataValue('Identity', 'Microsoft.ServiceFabric.AspNetCore.Kestrel'))' == 'True' And '$(TargetFramework)' == 'net5.0'">
     <!--
       Microsoft.ServiceFabric.AspNetCore.Abstractions/4.1.409 transitively references vuln versions of aspnetcore.
       Upgrade the transitive dependencies.

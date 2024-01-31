@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RuleSet Name="stylecop" ToolsVersion="15.0">
+<RuleSet Name="stylecop" ToolsVersion="17.0">
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1106" Action="None" /> <!-- Code should not contain empty statements -->
     <Rule Id="SA1107" Action="None" /> <!-- Code should not contain multiple statements on one line -->
@@ -12,5 +12,6 @@
     <Rule Id="SA1615" Action="None" /> <!-- Element return value should be documented -->
     <Rule Id="SA1618" Action="None" /> <!-- The documentation for type parameter '...' is missing -->
     <Rule Id="SA1623" Action="None" /> <!-- The property's documentation summary text should begin with: 'Gets or sets' -->
+    <Rule Id="SA1649" Action="None" /> <!-- File name should match first type name -->
   </Rules>
 </RuleSet>

@@ -13,7 +13,7 @@ namespace Yarp.ServiceFabric.ServiceFabricIntegration
         /// <summary>
         /// Default intance of the policy.
         /// </summary>
-        public static readonly FabricExponentialRetryPolicy Default = new()
+        public static readonly FabricExponentialRetryPolicy Default = new ()
         {
             NumAttempts = 3,
             InitialBackoffMs = 1000,

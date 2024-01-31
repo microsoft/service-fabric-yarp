@@ -39,7 +39,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
         /// we replace the contents entirely, making this point to a new root that represents another immutable snapshot.
         /// </summary>
         private IReadOnlyDictionary<ApplicationNameKey, DiscoveredApp> discoveredApps = new Dictionary<ApplicationNameKey, DiscoveredApp>();
-        private Dictionary<ServiceNameKey, DiscoveredAppEx> serviceToAppLookup = new();
+        private Dictionary<ServiceNameKey, DiscoveredAppEx> serviceToAppLookup = new ();
 
         public ServiceDiscoveryManager(
             IAppTypeDiscoveryManager appTypeDiscoveryManager,
@@ -139,6 +139,10 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
         public Task<int> RefreshDirtyServices(CancellationToken cancellation)
         {
             var dirtyServices = this.dirtyServices.GetSnapshot();
+            KeyValuePair<string, string>[] properties = new[]
+                {
+                    KeyValuePair.Create("numDirty", dirtyServices.Count.ToString()),
+                };
             return this.operationLogger.ExecuteAsync(
                 "ServiceDiscoveryManager.RefreshDirtyServices",
                 async () =>
@@ -150,14 +154,15 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 
                     return dirtyServices.Count;
                 },
-                new[]
-                {
-                    KeyValuePair.Create("numDirty", dirtyServices.Count.ToString()),
-                });
+                properties);
         }
 
         private Task RefreshService(ServiceNameKey serviceName, CancellationToken cancellation)
         {
+            KeyValuePair<string, string>[] properties = new[]
+                {
+                    KeyValuePair.Create(nameof(serviceName), serviceName.ToString()),
+                };
             return this.operationLogger.ExecuteAsync(
                 "ServiceDiscoveryManager.RefreshService",
                 async () =>
@@ -176,10 +181,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
                         throw;
                     }
                 },
-                new[]
-                {
-                    KeyValuePair.Create(nameof(serviceName), serviceName.ToString()),
-                });
+                properties);
         }
 
         private async Task RefreshServiceCore(ServiceNameKey serviceName, CancellationToken cancellation)
@@ -267,6 +269,10 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 
         private Task RefreshAppSubtree(ApplicationNameKey applicationName, CancellationToken cancellation)
         {
+            KeyValuePair<string, string>[] properties = new[]
+                {
+                    KeyValuePair.Create(nameof(applicationName), applicationName.ToString()),
+                };
             return this.operationLogger.ExecuteAsync(
                 "ServiceDiscoveryManager.RefreshAppSubtree",
                 async () =>
@@ -305,10 +311,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
                         throw;
                     }
                 },
-                new[]
-                {
-                    KeyValuePair.Create(nameof(applicationName), applicationName.ToString()),
-                });
+                properties);
         }
 
         /// <summary>
