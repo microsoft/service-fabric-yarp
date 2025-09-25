@@ -39,7 +39,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
         /// we replace the contents entirely, making this point to a new root that represents another immutable snapshot.
         /// </summary>
         private IReadOnlyDictionary<ApplicationNameKey, DiscoveredApp> discoveredApps = new Dictionary<ApplicationNameKey, DiscoveredApp>();
-        private Dictionary<ServiceNameKey, DiscoveredAppEx> serviceToAppLookup = new ();
+        private Dictionary<ServiceNameKey, DiscoveredAppEx> serviceToAppLookup = new();
 
         public ServiceDiscoveryManager(
             IAppTypeDiscoveryManager appTypeDiscoveryManager,

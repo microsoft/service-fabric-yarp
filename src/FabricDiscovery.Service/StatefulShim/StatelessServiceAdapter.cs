@@ -39,7 +39,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery
         /// <inheritdoc />
         protected override Task OnOpenAsync(CancellationToken cancellation)
         {
-            List<KeyValuePair<string, string>> keyValues = new ()
+            List<KeyValuePair<string, string>> keyValues = new()
             {
                 KeyValuePair.Create("open", "open"),
             };

@@ -43,7 +43,7 @@
   </PropertyGroup>
   <ItemGroup Condition=" '$(_EnableStyleCop)' == 'true' ">
     <AdditionalFiles Condition=" '$(AdditionalFiles)' == '' " Include="$(MSBuildThisFileDirectory)stylecop.json" />
-    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="StyleCop.Analyzers.Unstable" PrivateAssets="all" />
   </ItemGroup>
 
   <!-- 

@@ -85,8 +85,8 @@ namespace Yarp.ServiceFabric.Service
                             httpsOptions.ServerCertificateSelector = (connectionContext, hostName) => certSelectorFunc(connectionContext, hostName);
                         });
                 });
-
-            builder.WebHost.ConfigureAppConfiguration(configureAppConfigurationAction)
+            configureAppConfigurationAction(builder.Configuration);
+            builder.WebHost
                 .UseUrls(urls)
                 .UseShutdownTimeout(TimeSpan.FromSeconds(DrainTimeSeconds));
 

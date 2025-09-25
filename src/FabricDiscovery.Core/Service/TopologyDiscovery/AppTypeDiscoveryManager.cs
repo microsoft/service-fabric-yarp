@@ -22,7 +22,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
         private readonly TopologyDiscoveryFilter filter;
         private readonly ILogger<AppTypeDiscoveryManager> logger;
         private readonly IOperationLogger operationLogger;
-        private Dictionary<ApplicationTypeNameKey, Dictionary<ApplicationTypeVersionKey, DiscoveredAppType>> appTypes = new ();
+        private Dictionary<ApplicationTypeNameKey, Dictionary<ApplicationTypeVersionKey, DiscoveredAppType>> appTypes = new();
 
         public AppTypeDiscoveryManager(
             IQueryClientWrapper queryClient,
