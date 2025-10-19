@@ -3,5 +3,5 @@
 
 
   <!-- Use centrally managed package versions. See Packages.props. -->
-  <Sdk Name="Microsoft.Build.CentralPackageVersions" />
+  <!-- <Sdk Name="Microsoft.Build.CentralPackageVersions" /> -->
 </Project>

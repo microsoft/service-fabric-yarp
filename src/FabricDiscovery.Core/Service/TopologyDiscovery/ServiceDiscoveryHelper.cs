@@ -40,6 +40,12 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
         {
             _ = application ?? throw new ArgumentNullException(nameof(application));
 
+            KeyValuePair<string, string>[] properties = new[]
+                {
+                    KeyValuePair.Create(nameof(application.ApplicationName), application.ApplicationName.ToString()),
+                    KeyValuePair.Create(nameof(application.ApplicationTypeName), application.ApplicationTypeName.ToString()),
+                    KeyValuePair.Create(nameof(application.ApplicationTypeVersion), application.ApplicationTypeVersion.ToString()),
+                };
             return this.operationLogger.ExecuteAsync(
                 "ServiceDiscoveryHelper.DiscoverApp",
                 async () =>
@@ -58,12 +64,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 
                     return discoveredApp;
                 },
-                new[]
-                {
-                    KeyValuePair.Create(nameof(application.ApplicationName), application.ApplicationName.ToString()),
-                    KeyValuePair.Create(nameof(application.ApplicationTypeName), application.ApplicationTypeName.ToString()),
-                    KeyValuePair.Create(nameof(application.ApplicationTypeVersion), application.ApplicationTypeVersion.ToString()),
-                });
+                properties);
         }
 
         public Task<DiscoveredService> DiscoverService(DiscoveredApp app, DiscoveredServiceType serviceType, ServiceWrapper service, CancellationToken cancellation)
@@ -72,6 +73,14 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
             _ = serviceType ?? throw new ArgumentNullException(nameof(serviceType));
             _ = service ?? throw new ArgumentNullException(nameof(service));
 
+            KeyValuePair<string, string>[] properties = new[]
+                {
+                    KeyValuePair.Create(nameof(app.Application.ApplicationName), app.Application.ApplicationName.ToString()),
+                    KeyValuePair.Create(nameof(app.Application.ApplicationTypeName), app.Application.ApplicationTypeName.ToString()),
+                    KeyValuePair.Create(nameof(app.Application.ApplicationTypeVersion), app.Application.ApplicationTypeVersion.ToString()),
+                    KeyValuePair.Create(nameof(serviceType.ServiceType.ServiceTypeName), serviceType.ServiceType.ServiceTypeName.ToString()),
+                    KeyValuePair.Create(nameof(serviceType.ServiceType.ServiceManifestVersion), serviceType.ServiceType.ServiceManifestVersion.ToString()),
+                };
             return this.operationLogger.ExecuteAsync(
                 "ServiceDiscoveryHelper.DiscoverService",
                 async () =>
@@ -91,20 +100,19 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 
                     return discoveredService;
                 },
-                new[]
-                {
-                    KeyValuePair.Create(nameof(app.Application.ApplicationName), app.Application.ApplicationName.ToString()),
-                    KeyValuePair.Create(nameof(app.Application.ApplicationTypeName), app.Application.ApplicationTypeName.ToString()),
-                    KeyValuePair.Create(nameof(app.Application.ApplicationTypeVersion), app.Application.ApplicationTypeVersion.ToString()),
-                    KeyValuePair.Create(nameof(serviceType.ServiceType.ServiceTypeName), serviceType.ServiceType.ServiceTypeName.ToString()),
-                    KeyValuePair.Create(nameof(serviceType.ServiceType.ServiceManifestVersion), serviceType.ServiceType.ServiceManifestVersion.ToString()),
-                });
+                properties);
         }
 
         private Task<DiscoveredServiceEx> DiscoverServiceSubtree(DiscoveredService service, CancellationToken cancellation)
         {
             _ = service ?? throw new ArgumentNullException(nameof(service));
 
+            KeyValuePair<string, string>[] properties = new[]
+                {
+                    KeyValuePair.Create(nameof(service.Service.ServiceName), service.Service.ServiceName.ToString()),
+                    KeyValuePair.Create(nameof(service.Service.ServiceTypeName), service.Service.ServiceTypeName.ToString()),
+                    KeyValuePair.Create(nameof(service.Service.ServiceManifestVersion), service.Service.ServiceManifestVersion.ToString()),
+                };
             return this.operationLogger.ExecuteAsync(
                 "ServiceDiscoveryHelper.DiscoverServiceSubtree",
                 async () =>
@@ -123,12 +131,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 
                     return new DiscoveredServiceEx(service, partitions);
                 },
-                new[]
-                {
-                    KeyValuePair.Create(nameof(service.Service.ServiceName), service.Service.ServiceName.ToString()),
-                    KeyValuePair.Create(nameof(service.Service.ServiceTypeName), service.Service.ServiceTypeName.ToString()),
-                    KeyValuePair.Create(nameof(service.Service.ServiceManifestVersion), service.Service.ServiceManifestVersion.ToString()),
-                });
+                properties);
         }
 
         private async Task<DiscoveredAppEx> DiscoverAppSubtree(DiscoveredAppTypeEx appType, DiscoveredApp app, CancellationToken cancellation)

@@ -219,12 +219,13 @@ namespace Yarp.ServiceFabric.FabricDiscovery.SFYarpConfig.Tests
 
             var discoveredEchoService = new DiscoveredService(discoveredEchoServiceType, echoService);
             var discoveredEchoReplicas = echoReplicas.Select(e => new DiscoveredReplica(e)).ToList();
-            var discoveredEchoServiceEx = new DiscoveredServiceEx(
-                discoveredEchoService,
-                new[]
+            DiscoveredPartition[] partitions = new[]
                 {
                     new DiscoveredPartition(echoPartition, discoveredEchoReplicas),
-                });
+                };
+            var discoveredEchoServiceEx = new DiscoveredServiceEx(
+                discoveredEchoService,
+                partitions);
 
             var discoveredSfyApp = new DiscoveredApp(sfyApp);
             var discoveredSfyAppEx = new DiscoveredAppEx(

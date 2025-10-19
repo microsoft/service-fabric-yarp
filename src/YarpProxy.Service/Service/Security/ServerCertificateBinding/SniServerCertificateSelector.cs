@@ -55,6 +55,7 @@ namespace Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding
             if (certificates.TryGetValue(hostName, out var certificate))
             {
                 // Exact match, return this certificate
+                this.logger.LogInformation($"Using certificate for host name '{hostName}' '{certificate.SubjectName.Name}");
                 return certificate;
             }
 
@@ -67,6 +68,7 @@ namespace Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding
                 if (wildcardCertificates.TryGetValue(withoutFirstLabel, out var wildcardCertificate))
                 {
                     // Found a matching wildcard cert
+                    this.logger.LogInformation($"Using wildcard certificate for host name '{hostName}' '{wildcardCertificate.SubjectName.Name}");
                     return wildcardCertificate;
                 }
             }
@@ -216,7 +218,7 @@ namespace Yarp.ServiceFabric.Core.Service.Security.ServerCertificateBinding
                 // However based on https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.pkcs.signedcms.computesignature?view=netframework-4.6.2,
                 // it seems that this can result in pin prompt even we set silent to true for some situation.
                 // This could be a potential issue which can potentially result in outage. We choose to access PrivateKey directly for verification.
-                return certificate.PrivateKey != null;
+                return certificate.GetRSAPrivateKey() != null;
             }
             catch (Exception ex) when (ex is CryptographicException || ex is NotSupportedException)
             {

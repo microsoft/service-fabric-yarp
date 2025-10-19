@@ -124,6 +124,11 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 
         private Task<DiscoveredAppType> DiscoverAppType(ApplicationTypeWrapper appType, CancellationToken cancellation)
         {
+            KeyValuePair<string, string>[] properties = new[]
+                {
+                    KeyValuePair.Create(nameof(appType.ApplicationTypeName), appType.ApplicationTypeName.ToString()),
+                    KeyValuePair.Create(nameof(appType.ApplicationTypeVersion), appType.ApplicationTypeVersion.ToString()),
+                };
             return this.operationLogger.ExecuteAsync(
                 "AppTypeDiscoveryManager.DiscoverAppType",
                 async () =>
@@ -137,11 +142,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology
 
                     return discoveredAppType;
                 },
-                new[]
-                {
-                    KeyValuePair.Create(nameof(appType.ApplicationTypeName), appType.ApplicationTypeName.ToString()),
-                    KeyValuePair.Create(nameof(appType.ApplicationTypeVersion), appType.ApplicationTypeVersion.ToString()),
-                });
+                properties);
         }
 
         private async Task<DiscoveredAppTypeEx> DiscoverAppTypeSubtree(DiscoveredAppType appType, CancellationToken cancellation)

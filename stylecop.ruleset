@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RuleSet Name="stylecop" ToolsVersion="15.0">
+<RuleSet Name="stylecop" ToolsVersion="17.0">
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1106" Action="None" /> <!-- Code should not contain empty statements -->
     <Rule Id="SA1107" Action="None" /> <!-- Code should not contain multiple statements on one line -->

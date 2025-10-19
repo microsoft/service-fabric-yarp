@@ -1,4 +1,4 @@
-# ServiceFabricYarp 1.1.0
+# ServiceFabricYarp 1.2.0
 
 
 Table of Contents
@@ -84,7 +84,7 @@ Connect-ServiceFabricCluster -ConnectionEndpoint @('sf-win-cluster.westus2.cloud
 
 # Use this to remove a previous YarpProxy Application
 #Remove-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -Force
-#Unregister-ServiceFabricApplicationType -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.1.0 -Force
+#Unregister-ServiceFabricApplicationType -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.2.0 -Force
 
 #Copy and register and run the YarpProxy Application
 Copy-ServiceFabricApplicationPackage -CompressPackage -ApplicationPackagePath $appPath # -ApplicationPackagePathInImageStore YarpProxyApp
@@ -99,12 +99,12 @@ $p = @{
 }
 $p
 
-New-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.1.0 -ApplicationParameter $p
+New-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.2.0 -ApplicationParameter $p
 
 
 #OR if updating existing version:  
 
-Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:/YarpProxyApp -ApplicationTypeVersion 1.1.0 -ApplicationParameter $p -Monitored -FailureAction rollback 
+Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:/YarpProxyApp -ApplicationTypeVersion 1.2.0 -ApplicationParameter $p -Monitored -FailureAction rollback 
 ```  
 
 ## URI format for addressing services by using the reverse proxy
@@ -275,7 +275,7 @@ The following is an example of an `ApplicationManifest.xml` file with `FabricDis
 </Parameters>
 
   <ServiceManifestImport>
-    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="1.1.0" />
+    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="1.2.0" />
     <ConfigOverrides>
       <ConfigOverride Name="Config">
         <Settings>
@@ -324,7 +324,18 @@ http://<Cluster FQDN | internal IP>:8080/pinger0/PingerService/id
 #Remove-ServiceFabricApplication -ApplicationName fabric:/pinger$i -Force
 #Unregister-ServiceFabricApplicationType -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 1.0 -Force
 
-$appPath = "C:\downloads\service-fabric-yarp\windows\pinger-yarp"
+$commonName = '*.contoso.com'
+$clusterEndpoint = 'sfcluster.contoso.com:19000' # <cluster>.<region>.cloudapp.azure.com:19000
+$appPath = "$pwd\eng\SfExampleApps\pinger-yarp"
+$storeLocation = "LocalMachine" # CurrentUser or LocalMachine
+
+Import-Module servicefabric
+Connect-ServiceFabricCluster -ConnectionEndpoint $clusterEndpoint `
+  -X509Credential `
+  -FindType FindBySubjectName `
+  -FindValue $commonName `
+  -StoreLocation $storeLocation `
+  -ServerCommonName $commonName
 
 Copy-ServiceFabricApplicationPackage -CompressPackage -ApplicationPackagePath $appPath -ApplicationPackagePathInImageStore pinger-yarp
 Register-ServiceFabricApplicationType -ApplicationPathInImageStore pinger-yarp
@@ -395,8 +406,8 @@ Since YarpProxyApp is an ASP.NET Core application it comes built in with various
 ## Pre-reqs for development machine
 
 * Windows 10 Version 1909 or later, x64
-* .NET SDK (version indicated in global.json)
-* .NET Core 5.x runtime (to run net5.0 tests)
+* .NET SDK 8.0.100 (version indicated in global.json)
+* .NET 8.x runtime
 * [Pre-reqs](#pre-reqs) above also apply regarding tls cert for local deployment
 
 Dotnet sdks and runtimes can be downloaded from https://dotnet.microsoft.com/download .

@@ -64,13 +64,13 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology.Tests
             // Assert
             actual0.Should().BeEmpty();
             actual1.Should().Equal(svc1);
-            actual2.Should().BeEquivalentTo(svc1, svc2);
+            actual2.Should().BeEquivalentTo(new List<ServiceNameKey> { svc1, svc2 });
             actual3.Should().Equal(svc2);
-            actual4.Should().BeEquivalentTo(svc2, svc3);
-            actual5.Should().BeEquivalentTo(svc1, svc2, svc3);
+            actual4.Should().BeEquivalentTo(new List<ServiceNameKey> { svc2, svc3 });
+            actual5.Should().BeEquivalentTo(new List<ServiceNameKey> { svc1, svc2, svc3 });
             actual6.Should().BeEmpty();
             actual7.Should().Equal(svc1);
-            actual8.Should().BeEquivalentTo(svc1, svc2, svc3);
+            actual8.Should().BeEquivalentTo(new List<ServiceNameKey> { svc1, svc2, svc3 });
         }
     }
 }

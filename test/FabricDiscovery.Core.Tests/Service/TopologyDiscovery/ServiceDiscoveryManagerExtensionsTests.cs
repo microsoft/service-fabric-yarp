@@ -72,19 +72,21 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Topology.Tests
             var discoveredServiceType1 = new DiscoveredServiceType(serviceType1);
 
             var discoveredService1 = new DiscoveredService(discoveredServiceType1, service1);
-            var discoveredServiceEx1 = new DiscoveredServiceEx(
-                discoveredService1,
-                new[]
-                {
-                    new DiscoveredPartition(
-                        new PartitionWrapper { PartitionId = Guid.NewGuid() },
-                        new[]
+            DiscoveredReplica[] replicas = new[]
                         {
                             new DiscoveredReplica(new ReplicaWrapper { Id = 1 }),
                             new DiscoveredReplica(new ReplicaWrapper { Id = 2 }),
                             new DiscoveredReplica(new ReplicaWrapper { Id = 3 }),
-                        }),
-                });
+                        };
+            DiscoveredPartition[] partitions = new[]
+                {
+                    new DiscoveredPartition(
+                        new PartitionWrapper { PartitionId = Guid.NewGuid() },
+                        replicas),
+                };
+            var discoveredServiceEx1 = new DiscoveredServiceEx(
+                discoveredService1,
+                partitions);
             var discoveredApp1 = new DiscoveredAppEx(
                         new DiscoveredApp(app1),
                         discoveredAppType1,

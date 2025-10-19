@@ -69,12 +69,12 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Controllers
             var payload = snapshot.Value;
 
             this.Response.StatusCode = StatusCodes.Status200OK;
-            this.Response.Headers.Add(RemoteConfigConsts.ETagHeader, payload.ETag);
+            this.Response.Headers.Append(RemoteConfigConsts.ETagHeader, payload.ETag);
             this.Response.ContentType = payload.ContentType;
             this.Response.ContentLength = payload.Bytes.Length;
             if (!string.IsNullOrEmpty(payload.ContentEncoding))
             {
-                this.Response.Headers.Add("Content-Encoding", payload.ContentEncoding);
+                this.Response.Headers.Append("Content-Encoding", payload.ContentEncoding);
             }
 
             await this.Response.Body.WriteAsync(payload.Bytes, 0, payload.Bytes.Length);

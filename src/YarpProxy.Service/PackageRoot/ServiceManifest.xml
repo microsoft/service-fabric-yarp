@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ServiceManifest Name="YarpProxyPkg"
-                 Version="1.1.0"
+                 Version="1.2.0"
                  xmlns="http://schemas.microsoft.com/2011/01/fabric"
                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ServiceTypes>
     <StatelessServiceType ServiceTypeName="YarpProxyType" />
   </ServiceTypes>
-  <CodePackage Name="Code" Version="1.1.0">
+  <CodePackage Name="Code" Version="1.2.0">
     <EntryPoint>
       <ExeHost>
         <Program>YarpProxy.Service.exe</Program>
@@ -16,7 +16,7 @@
       </ExeHost>
     </EntryPoint>
   </CodePackage>
-  <ConfigPackage Name="Config" Version="1.1.0" />
+  <ConfigPackage Name="Config" Version="1.2.0" />
   <Resources>
     <Endpoints>
       <!--
