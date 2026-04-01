@@ -12,7 +12,6 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.ServiceFabric" />
     <PackageReference Include="Microsoft.ServiceFabric.Services" />
-    <PackageReference Include="System.Text.RegularExpressions" />
   </ItemGroup>
 
   <ItemGroup>

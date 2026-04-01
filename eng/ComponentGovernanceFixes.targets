@@ -9,14 +9,6 @@
   -->
   <ItemGroup Condition="'@(PackageReference->AnyHaveMetadataValue('Identity', 'Microsoft.ServiceFabric.AspNetCore.Kestrel'))' == 'True'">
     <!--
-      Microsoft.ServiceFabric.AspNetCore.Abstractions/4.1.409 transitively references vuln versions of aspnetcore.
-      Upgrade the transitive dependencies.
-      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-1045
-      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-0808 
-    -->
-    <PackageReference Include="Microsoft.AspNetCore.Http" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting" />
-    <!--
       Microsoft.ServiceFabric.AspNetCore.Abstractions/4.1.409 transitively references
       vuln System.Text.Encodings.Web/4.5.0. Update the transitive dependency. 
       Reference task 9596100.

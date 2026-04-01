@@ -29,7 +29,8 @@ namespace Yarp.ServiceFabric.FabricDiscovery.Util.Tests
             using (var sut = new WriteLengthStream(ms))
             {
                 var buf = new byte[3];
-                sut.Read(buf, 1, 2);
+                var bytesRead = sut.Read(buf, 1, 2);
+                bytesRead.Should().Be(2);
                 buf.Should().Equal(new byte[] { 0, 1, 2 });
                 sut.BytesWritten.Should().Be(0);
             }

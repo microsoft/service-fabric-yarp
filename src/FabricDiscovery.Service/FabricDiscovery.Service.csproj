@@ -33,7 +33,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" />
-    <PackageReference Include="System.Net.Http" />
   </ItemGroup>
 
   <ItemGroup>
