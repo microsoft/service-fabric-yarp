@@ -24,7 +24,6 @@
     <PackageReference Update="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.556" />
     <PackageReference Update="System.Fabric" Version="5.0.1-preview-01" />
-    <PackageReference Update="System.Linq.Async" Version="7.0.0" />
     <PackageReference Update="System.Text.Encodings.Web" Version="10.0.5" />
     <PackageReference Update="xunit" Version="2.9.3" />
     <PackageReference Update="xunit.runner.visualstudio" Version="3.1.5" />
