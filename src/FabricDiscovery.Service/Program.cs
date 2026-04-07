@@ -4,7 +4,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.ServiceFabric.Services.Runtime;
 using Yarp.ServiceFabric.Common.Telemetry;
@@ -78,11 +78,11 @@ namespace Yarp.ServiceFabric.FabricDiscovery
                     loggingBuilder.ClearProviders();
                     loggingBuilder.AddConsole();
                 });
-            var webHost = serviceWrapper.CreateWebHostBuilder().Build();
+            var host = serviceWrapper.CreateWebHost();
 
             try
             {
-                await webHost.RunAsync();
+                await host.RunAsync();
             }
             catch (Exception ex)
             {

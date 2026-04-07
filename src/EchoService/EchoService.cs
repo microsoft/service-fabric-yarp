@@ -7,6 +7,7 @@ using System.IO;
 using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
@@ -34,19 +35,23 @@ namespace EchoService
                 new ServiceInstanceListener(serviceContext =>
                     new KestrelCommunicationListener(serviceContext, "ServiceEndpoint", (url, listener) =>
                     {
-                        return new WebHostBuilder()
-                            .UseKestrel(opt =>
+                        return new HostBuilder()
+                            .ConfigureWebHost(webHostBuilder =>
                             {
-                                int port = serviceContext.CodePackageActivationContext.GetEndpoint("ServiceEndpoint").Port;
-                                opt.Listen(IPAddress.IPv6Any, port);
+                                webHostBuilder
+                                    .UseKestrel(opt =>
+                                    {
+                                        int port = serviceContext.CodePackageActivationContext.GetEndpoint("ServiceEndpoint").Port;
+                                        opt.Listen(IPAddress.IPv6Any, port);
+                                    })
+                                    .ConfigureServices(
+                                        services => services
+                                            .AddSingleton<StatelessServiceContext>(serviceContext))
+                                    .UseContentRoot(Directory.GetCurrentDirectory())
+                                    .UseStartup<Startup>()
+                                    .UseServiceFabricIntegration(listener, ServiceFabricIntegrationOptions.None)
+                                    .UseUrls(url);
                             })
-                            .ConfigureServices(
-                                services => services
-                                    .AddSingleton<StatelessServiceContext>(serviceContext))
-                            .UseContentRoot(Directory.GetCurrentDirectory())
-                            .UseStartup<Startup>()
-                            .UseServiceFabricIntegration(listener, ServiceFabricIntegrationOptions.None)
-                            .UseUrls(url)
                             .Build();
                     })),
             };

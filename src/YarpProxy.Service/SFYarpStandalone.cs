@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Hosting;
-using Yarp.ServiceFabric.CoreServicesBorrowed;
+using Microsoft.Extensions.Hosting;
 using YarpProxy.Service.Lifecycle;
 
 namespace Yarp.ServiceFabric.Service

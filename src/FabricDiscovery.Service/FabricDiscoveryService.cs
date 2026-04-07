@@ -5,7 +5,6 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -66,20 +65,27 @@ namespace Yarp.ServiceFabric.FabricDiscovery
         }
 
         /// <inheritdoc/>
-        public IWebHostBuilder CreateWebHostBuilder()
+        public IHost CreateWebHost(string url = null)
         {
-            return WebHost.CreateDefaultBuilder()
-                ////.UseKestrelWithIntraCommCertificate()
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                ////.UseCoreServicesConfiguration(this.entrypointLogger, new string[0])
-                .ConfigureLogging(this.configureLogging)
-                .ConfigureServices((context, services) =>
+            return Host.CreateDefaultBuilder()
+                .ConfigureWebHostDefaults(webHostBuilder =>
                 {
-                    services.AddSingleton<IOperationLogger, TextOperationLogger>();
-                    services.Configure<FabricDiscoveryOptions>(context.Configuration.GetSection("FabricDiscovery"));
-                    services.AddFabricDiscovery();
+                    webHostBuilder
+                        .UseContentRoot(Directory.GetCurrentDirectory())
+                        .ConfigureLogging(this.configureLogging)
+                        .ConfigureServices((context, services) =>
+                        {
+                            services.AddSingleton<IOperationLogger, TextOperationLogger>();
+                            services.Configure<FabricDiscoveryOptions>(context.Configuration.GetSection("FabricDiscovery"));
+                            services.AddFabricDiscovery();
+                        })
+                        .UseStartup<Startup>();
+                    if (url != null)
+                    {
+                        webHostBuilder.UseUrls(url);
+                    }
                 })
-                .UseStartup<Startup>();
+                .Build();
         }
 
         /// <inheritdoc/>

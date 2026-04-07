@@ -34,6 +34,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
     <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" />
+    <PackageReference Include="Microsoft.Extensions.Logging.EventLog" />
     <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" />
     <PackageReference Include="Yarp.ReverseProxy" />
   </ItemGroup>
