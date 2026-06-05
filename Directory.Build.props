@@ -26,6 +26,13 @@
       just like we do with 'restore', 'build', and 'test'.
     -->
     <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
+    <!--
+      The .NET 10 SDK enables NuGet package pruning, which requires bundled "prune package data"
+      describing which packages ship in each shared framework. Some 10.0.x SDKs are missing this
+      data for .NETCoreApp 10.0, producing build error NETSDK1226. Allow the build to proceed
+      (pruning is simply skipped) until the SDK ships the data.
+    -->
+    <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
   </PropertyGroup>
 
   <!-- StyleCop -->
