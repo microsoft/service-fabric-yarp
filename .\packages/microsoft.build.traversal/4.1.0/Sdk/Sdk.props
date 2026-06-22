@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (c) Microsoft Corporation. All rights reserved.
+  
+  Licensed under the MIT license.
+-->
+<Project InitialTargets="SkipProjects" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <UsingMicrosoftTraversalSdk>true</UsingMicrosoftTraversalSdk>
+    
+    <!-- Don't automatically reference assembly packages since NoTargets don't need reference assemblies -->
+    <AutomaticallyUseReferenceAssemblyPackages Condition="'$(AutomaticallyUseReferenceAssemblyPackages)' == ''">false</AutomaticallyUseReferenceAssemblyPackages>
+
+    <MSBuildAllProjects Condition="'$(MSBuildToolsVersion)' != 'Current'">$(MSBuildAllProjects);$(MsBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
+  <Import Project="$(CustomBeforeTraversalProps)" Condition=" '$(CustomBeforeTraversalProps)' != '' And Exists('$(CustomBeforeTraversalProps)') " />
+
+  <Target Name="ShouldSkipProject" Returns="@(ProjectToSkip)" />
+  
+  <!-- When building a solution file, import Solution.props, otherwise Traversal.props -->
+  <Import Project="Solution.props" Condition="'$(DirectorySolutionPropsPath)' != ''" />
+  <Import Project="Traversal.props" Condition="'$(DirectorySolutionPropsPath)' == ''" />
+
+  <Import Project="$(CustomAfterTraversalProps)" Condition=" '$(CustomAfterTraversalProps)' != '' And Exists('$(CustomAfterTraversalProps)') " />
+</Project>
