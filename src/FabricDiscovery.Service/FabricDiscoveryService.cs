@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -67,25 +68,30 @@ namespace Yarp.ServiceFabric.FabricDiscovery
         /// <inheritdoc/>
         public IHost CreateWebHost(string url = null)
         {
-            return Host.CreateDefaultBuilder()
-                .ConfigureWebHostDefaults(webHostBuilder =>
-                {
-                    webHostBuilder
-                        .UseContentRoot(Directory.GetCurrentDirectory())
-                        .ConfigureLogging(this.configureLogging)
-                        .ConfigureServices((context, services) =>
-                        {
-                            services.AddSingleton<IOperationLogger, TextOperationLogger>();
-                            services.Configure<FabricDiscoveryOptions>(context.Configuration.GetSection("FabricDiscovery"));
-                            services.AddFabricDiscovery();
-                        })
-                        .UseStartup<Startup>();
-                    if (url != null)
-                    {
-                        webHostBuilder.UseUrls(url);
-                    }
-                })
-                .Build();
+            var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+            {
+                ContentRootPath = Directory.GetCurrentDirectory(),
+            });
+
+            this.configureLogging(builder.Logging);
+
+            builder.Services.AddSingleton<IOperationLogger, TextOperationLogger>();
+            builder.Services.Configure<FabricDiscoveryOptions>(builder.Configuration.GetSection("FabricDiscovery"));
+            builder.Services.AddFabricDiscovery();
+            builder.Services.AddControllers();
+
+            if (url != null)
+            {
+                builder.WebHost.UseUrls(url);
+            }
+
+            var app = builder.Build();
+
+            app.UseRouting();
+            app.UseAuthorization();
+            app.MapControllers();
+
+            return app;
         }
 
         /// <inheritdoc/>
