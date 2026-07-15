@@ -107,8 +107,7 @@ namespace Yarp.ServiceFabric.Service
                 .AddSingleton<ISniServerCertificateSelector, SniServerCertificateSelector>()
                 .AddHostedService<SniServerCertificateUpdater>();
 
-            var options = new ApplicationInsightsServiceOptions { ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights") };
-            builder.Services.AddApplicationInsightsTelemetry(options: options);
+            builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
 
             builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Microsoft.AspNetCore", LogLevel.Trace);
             builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Yarp", LogLevel.Trace);
