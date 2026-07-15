@@ -109,7 +109,7 @@ namespace Yarp.ServiceFabric.Service
 
             builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
 
-            builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Microsoft.AspNetCore", LogLevel.Trace);
+            builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Microsoft.AspNetCore", LogLevel.Warning);
             builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Yarp", LogLevel.Trace);
             if (OperatingSystem.IsWindows())
             {
