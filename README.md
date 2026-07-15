@@ -323,7 +323,7 @@ http://<Cluster FQDN | internal IP>:8080/pinger0/PingerService/id
 
 # Sample pinger app for validating (navigate to /pinger0/PingerService/id on https)
 #Remove-ServiceFabricApplication -ApplicationName fabric:/pinger$i -Force
-#Unregister-ServiceFabricApplicationType -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 1.0 -Force
+#Unregister-ServiceFabricApplicationType -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 2.0 -Force
 
 $appPath = "C:\downloads\service-fabric-yarp\windows\pinger-yarp"
 
@@ -336,7 +336,7 @@ $p = @{
     #"Pinger_PlacementConstraints"= "NodeType == NT2"
 }
 
-New-ServiceFabricApplication -ApplicationName fabric:/pinger0 -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 1.0 -ApplicationParameter $p
+New-ServiceFabricApplication -ApplicationName fabric:/pinger0 -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 2.0 -ApplicationParameter $p
 
 ```
 
