@@ -115,7 +115,7 @@ namespace Yarp.ServiceFabric.Service
             {
 #pragma warning disable CA1416 // Validate platform compatibility
                 builder.Logging.AddEventLog(config => config.SourceName = "YarpProxyLogs");
-                builder.Logging.AddFilter<Microsoft.Extensions.Logging.EventLog.EventLogLoggerProvider>("", LogLevel.Warning);
+                builder.Logging.AddFilter<Microsoft.Extensions.Logging.EventLog.EventLogLoggerProvider>("YarpProxyLogs", LogLevel.Warning);
 #pragma warning restore CA1416
             }
             var app = builder.Build();
