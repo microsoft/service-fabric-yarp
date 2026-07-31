@@ -4,6 +4,7 @@
 Table of Contents
 =================
   * [Background](#background)
+  * [Service Fabric compatibility](#service-fabric-compatibility)
   * [Limitations](#limitations)
   * [How it works](#how-it-works)
   * [Using SF YarpProxy Application](#using-sf-yarpproxy-application)
@@ -33,6 +34,9 @@ The reverse proxy is an application, supplied out of band from the service fabri
 Using a reverse proxy allows the client service to use any client-side HTTP communication libraries and does not require special resolution and retry logic in the service. The reverse proxy is mostly a terminating endpoint for the TLS connections
 
 > Note that, at this time, this is a reverse proxy built-in replacement and not a generic service fabric “gateway” able to handle partition queries, but that might be added (via customer written plugins or similar) in the future.
+
+## Service Fabric compatibility
+Existing deployments must upgrade their Service Fabric cluster to version 11.0 or later before upgrading SF Yarp to 2.x. New deployments of SF Yarp 2.x are supported on Service Fabric version 11.0 or later.
 
 ## Limitations
 * YarpProxy app is only supported on Windows
