@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,27 +27,17 @@ namespace Yarp.ServiceFabric.RemoteConfig.Infra.Tests
             var sut = new RoundRobinConfigFetcher(new[] { fetcher1, fetcher2 });
 
             // Act & Assert
-            (await FirstOrDefaultAsync(sut.GetConfigurationStream("\"etag1\"", CancellationToken.None))).Should().Be(response1);
+            (await sut.GetConfigurationStream("\"etag1\"", CancellationToken.None).FirstOrDefaultAsync()).Should().Be(response1);
             fetcher1.LastProvdedEtag.Should().Be("\"etag1\"");
 
-            (await FirstOrDefaultAsync(sut.GetConfigurationStream("\"etag2\"", CancellationToken.None))).Should().Be(response2);
+            (await sut.GetConfigurationStream("\"etag2\"", CancellationToken.None).FirstOrDefaultAsync()).Should().Be(response2);
             fetcher2.LastProvdedEtag.Should().Be("\"etag2\"");
 
-            (await FirstOrDefaultAsync(sut.GetConfigurationStream("\"etag3\"", CancellationToken.None))).Should().Be(response1);
+            (await sut.GetConfigurationStream("\"etag3\"", CancellationToken.None).FirstOrDefaultAsync()).Should().Be(response1);
             fetcher1.LastProvdedEtag.Should().Be("\"etag3\"");
 
-            (await FirstOrDefaultAsync(sut.GetConfigurationStream("\"etag4\"", CancellationToken.None))).Should().Be(response2);
+            (await sut.GetConfigurationStream("\"etag4\"", CancellationToken.None).FirstOrDefaultAsync()).Should().Be(response2);
             fetcher2.LastProvdedEtag.Should().Be("\"etag4\"");
-        }
-
-        private static async Task<T> FirstOrDefaultAsync<T>(IAsyncEnumerable<T> enumerable)
-        {
-            await foreach (var item in enumerable)
-            {
-                return item;
-            }
-
-            return default;
         }
 
         private class DummyFetcher : IRemoteConfigFetcher

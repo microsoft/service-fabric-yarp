@@ -4,7 +4,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.ServiceFabric.Services.Runtime;
 using Yarp.ServiceFabric.Common.Telemetry;
@@ -35,11 +35,9 @@ namespace Yarp.ServiceFabric.FabricDiscovery
             ILogger entrypointLogger = null;
             try
             {
-                // NOTE: `TraceSourceMeta.LoggerFactory` is set to its correct value in `Startup.Configure`.
-                // but since CoreFramework may want to log something before we get that far,
-                // set up an interim logger factory, which will later be replaced. We use the same underlying LoggingProvider
-                // in both cases, so the only difference between this and the one we will configure later
-                // is that the one in `Startup.Configure` will be wired up with the rest of ASP .NET Core (e.g. log filtering etc.).
+                // Service Fabric creates the adapter before the ASP.NET Core host, so use a separate logger factory
+                // for entry-point and adapter lifecycle logging. The communication listener configures the web host's
+                // logging pipeline when it opens.
                 var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
 
                 entrypointLogger = loggerFactory.CreateLogger("FabricDiscoveryService.EntryPoint");
@@ -78,11 +76,11 @@ namespace Yarp.ServiceFabric.FabricDiscovery
                     loggingBuilder.ClearProviders();
                     loggingBuilder.AddConsole();
                 });
-            var webHost = serviceWrapper.CreateWebHostBuilder().Build();
+            var host = serviceWrapper.CreateWebHost();
 
             try
             {
-                await webHost.RunAsync();
+                await host.RunAsync();
             }
             catch (Exception ex)
             {

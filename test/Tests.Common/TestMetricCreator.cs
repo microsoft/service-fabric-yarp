@@ -73,7 +73,7 @@ namespace Tests.Common
             // "metricName=value;dim1=dimValue1"
             // "metricName=value;dim1=dimValue1;dim2=dimValue2"
             // ...
-            return (long value, string[] dimensions) => this.MetricsLogged.Add($"{metricName}={value};{string.Join(";", dimensionNames.Zip(dimensions).Select((ValueTuple<string, string> pair) => $"{pair.Item1}={pair.Item2}"))}");
+            return (long value, string[] dimensions) => this.MetricsLogged.Add($"{metricName}={value};{string.Join(";", dimensionNames.Zip(dimensions).Select(((string Name, string Value) pair) => $"{pair.Name}={pair.Value}"))}");
         }
     }
 }

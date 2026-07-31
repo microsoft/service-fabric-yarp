@@ -36,7 +36,14 @@
       the PackageReference mechanism expects the project to have a target framework
       for resolving package versions.
     -->
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
+    <!--
+      The legacy Service Fabric application targets import Microsoft.Common.targets,
+      which does not interpret the SDK-style TargetFramework property. Set its
+      corresponding framework version explicitly to avoid its .NET Framework 4.0
+      default.
+    -->
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
 
     <!--
       Instruct Service Fabric vs extension to _not_ edit our sfproj without our permission.
@@ -56,9 +63,9 @@
 
       Note that this does not appear to interfere with restore of nuget packages.
 
-      Also note that nuget package restore is VS is busted still, even with this change. However,
-      package restore from console (either `msbuild /t:Restore` or `dotnet restore`) works fine.
-      Just make sure to restore before opening the solution.
+      Visual Studio's solution restore does not restore PackageReference dependencies for .sfproj
+      projects. Run `dotnet restore <application>.sfproj` from a console after package changes and
+      before opening the solution.
     -->
     <ResolveNuGetPackages>false</ResolveNuGetPackages>
   </PropertyGroup>

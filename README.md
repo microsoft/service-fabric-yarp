@@ -1,9 +1,10 @@
-# ServiceFabricYarp 1.1.0
+# ServiceFabricYarp
 
 
 Table of Contents
 =================
   * [Background](#background)
+  * [Service Fabric compatibility](#service-fabric-compatibility)
   * [Limitations](#limitations)
   * [How it works](#how-it-works)
   * [Using SF YarpProxy Application](#using-sf-yarpproxy-application)
@@ -33,6 +34,9 @@ The reverse proxy is an application, supplied out of band from the service fabri
 Using a reverse proxy allows the client service to use any client-side HTTP communication libraries and does not require special resolution and retry logic in the service. The reverse proxy is mostly a terminating endpoint for the TLS connections
 
 > Note that, at this time, this is a reverse proxy built-in replacement and not a generic service fabric “gateway” able to handle partition queries, but that might be added (via customer written plugins or similar) in the future.
+
+## Service Fabric compatibility
+Existing deployments must upgrade their Service Fabric cluster to version 11.0 or later before upgrading SF Yarp to 2.x. New deployments of SF Yarp 2.x are supported on Service Fabric version 11.0 or later.
 
 ## Limitations
 * YarpProxy app is only supported on Windows
@@ -84,7 +88,7 @@ Connect-ServiceFabricCluster -ConnectionEndpoint @('sf-win-cluster.westus2.cloud
 
 # Use this to remove a previous YarpProxy Application
 #Remove-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -Force
-#Unregister-ServiceFabricApplicationType -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.1.0 -Force
+#Unregister-ServiceFabricApplicationType -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion <CurrentVersion> -Force
 
 #Copy and register and run the YarpProxy Application
 Copy-ServiceFabricApplicationPackage -CompressPackage -ApplicationPackagePath $appPath # -ApplicationPackagePathInImageStore YarpProxyApp
@@ -99,12 +103,12 @@ $p = @{
 }
 $p
 
-New-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion 1.1.0 -ApplicationParameter $p
+New-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp -ApplicationTypeName YarpProxyAppType -ApplicationTypeVersion <CurrentVersion> -ApplicationParameter $p
 
 
 #OR if updating existing version:  
 
-Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:/YarpProxyApp -ApplicationTypeVersion 1.1.0 -ApplicationParameter $p -Monitored -FailureAction rollback 
+Start-ServiceFabricApplicationUpgrade -ApplicationName fabric:/YarpProxyApp -ApplicationTypeVersion <CurrentVersion> -ApplicationParameter $p -Monitored -FailureAction rollback 
 ```  
 
 ## URI format for addressing services by using the reverse proxy
@@ -125,6 +129,7 @@ http(s)://<Cluster FQDN | internal IP>:Port/<ServiceInstanceName>/<Suffix path>?
 
 ## HTTPS (TLS)
 SF YARP reverse proxy listens on https port (443) by default and can be configured in ApplicationManifest.xml. SF YARP takes care of TLS certificate binding on its own. For HTTPS the required certificates should be already deployed to the nodes where the reverse proxy is running as is the case with any other SF application.
+The reverse proxy supports both TLS 1.2 and TLS 1.3.
 
 The certificates need to be created with the CN and DNS Names configured with the SF cluster's FQDN (i.e "sf-win-cluster.westus2.cloudapp.azure.com", "localhost", etc.) and added in the following certificate store cert:\LocalMachine\My for each node were YarpProxy service is running. When a connection request is sent over HTTPS to YarpProxy it  will select a TLS server authentication certificate (if available) for the specified inbound TLS SNI host name.
 
@@ -275,7 +280,7 @@ The following is an example of an `ApplicationManifest.xml` file with `FabricDis
 </Parameters>
 
   <ServiceManifestImport>
-    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="1.1.0" />
+    <ServiceManifestRef ServiceManifestName="FabricDiscoveryServicePkg" ServiceManifestVersion="<CurrentVersion>" />
     <ConfigOverrides>
       <ConfigOverride Name="Config">
         <Settings>
@@ -322,7 +327,7 @@ http://<Cluster FQDN | internal IP>:8080/pinger0/PingerService/id
 
 # Sample pinger app for validating (navigate to /pinger0/PingerService/id on https)
 #Remove-ServiceFabricApplication -ApplicationName fabric:/pinger$i -Force
-#Unregister-ServiceFabricApplicationType -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 1.0 -Force
+#Unregister-ServiceFabricApplicationType -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 2.0 -Force
 
 $appPath = "C:\downloads\service-fabric-yarp\windows\pinger-yarp"
 
@@ -335,7 +340,7 @@ $p = @{
     #"Pinger_PlacementConstraints"= "NodeType == NT2"
 }
 
-New-ServiceFabricApplication -ApplicationName fabric:/pinger0 -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 1.0 -ApplicationParameter $p
+New-ServiceFabricApplication -ApplicationName fabric:/pinger0 -ApplicationTypeName PingerApplicationType -ApplicationTypeVersion 2.0 -ApplicationParameter $p
 
 ```
 
@@ -385,7 +390,7 @@ Logs can be locally collected on every node that the app is running on. This is 
 > WARNING: Never use the console redirection policy in an application that is deployed in production because this can affect the application failover. Only use this for local development and debugging purposes.
 
 
-Since YarpProxyApp is an ASP.NET Core application it comes built in with various [logging capabilities](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-6.0). By default the logging providers that are supported included console, debug, eventsource and eventlog. We have also added the application insight logging provider so that logs can be collected outside the cluster. Just provide the application insight resource instrumentation key in the ApplicationManifest.xml.
+Since YarpProxyApp is an ASP.NET Core application it comes built in with various [logging capabilities](https://learn.microsoft.com/aspnet/core/fundamentals/logging/?view=aspnetcore-10.0). By default the logging providers that are supported included console, debug, eventsource and eventlog. We have also added the application insight logging provider so that logs can be collected outside the cluster. Just provide the application insight resource connection string in the ApplicationManifest.xml.
 
 
 
@@ -396,7 +401,8 @@ Since YarpProxyApp is an ASP.NET Core application it comes built in with various
 
 * Windows 10 Version 1909 or later, x64
 * .NET SDK (version indicated in global.json)
-* .NET Core 5.x runtime (to run net5.0 tests)
+* .NET 10 runtime (to run net10.0 tests)
+* Runtime identifier used by this repo is `win-x64`
 * [Pre-reqs](#pre-reqs) above also apply regarding tls cert for local deployment
 
 Dotnet sdks and runtimes can be downloaded from https://dotnet.microsoft.com/download .
@@ -407,14 +413,14 @@ Dotnet sdks and runtimes can be downloaded from https://dotnet.microsoft.com/dow
 2. dotnet test dirs.proj
 3. dotnet pack dirs.proj
 
-For unit tests, you may want to filter out some tests. Refer to [the docs](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-vstest?tabs=netcore21) for information on how to use them. Example:
+For unit tests, you may want to filter out some tests. Refer to [the docs](https://learn.microsoft.com/dotnet/core/tools/dotnet-vstest?tabs=dotnet) for information on how to use them. Example:
 
 ```cmd
 dotnet test dirs.proj --filter HttpProxyTest
 ```
 
-Alternatively, you can also open `YarpSF.sln` at the root of the repo with Visual Studio 2019.
-Running builds and unit tests from VS2019 is supported (verified with Visual Studio 2019 16.10.2+ .NET 5 SDK version 5.0.201).
+Alternatively, you can also open `YarpSF.sln` at the root of the repo with Visual Studio 2022.
+Running builds and unit tests from Visual Studio is supported with Visual Studio 2022 17.13+ (or Visual Studio 2026) and the .NET 10 SDK version from global.json.
 
 ## Project Structure
 

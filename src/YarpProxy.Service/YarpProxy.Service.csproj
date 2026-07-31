@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
 
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
@@ -12,7 +12,7 @@
       The following helps support self-contained .NET Core runtime publishing.
       See: https://docs.microsoft.com/en-us/dotnet/core/deploying/runtime-patch-selection
     -->
-    <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 
     <!--
       .NET Core SDK 3.1 SDK sets ServerGarbageCollection=true by default for Microsoft.NET.Sdk.Web projects,
@@ -34,8 +34,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
     <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" />
+    <PackageReference Include="Microsoft.Extensions.Logging.EventLog" />
     <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" />
-    <PackageReference Include="System.Net.Http" />
     <PackageReference Include="Yarp.ReverseProxy" />
   </ItemGroup>
 
@@ -43,9 +43,5 @@
     <ProjectReference Include="..\SFYarp.CoreServicesBorrowed\SFYarp.CoreServicesBorrowed.csproj" />
     <ProjectReference Include="..\RemoteConfig.Client\RemoteConfig.Client.csproj" />
     <ProjectReference Include="..\SFYarp.InternalTelemetry\SFYarp.InternalTelemetry.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="System.Text.Encodings.Web" />
   </ItemGroup>
 </Project>

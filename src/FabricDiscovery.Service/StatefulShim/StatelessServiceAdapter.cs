@@ -91,9 +91,7 @@ namespace Yarp.ServiceFabric.FabricDiscovery
                                 {
                                     this.logger.LogInformation($"Opening listener on {url}");
 
-                                    return this.wrapped.CreateWebHostBuilder()
-                                        .UseUrls(url) // TODO: Use SF integration middlewares to include partition id/replica id in url.
-                                        .Build();
+                                    return this.wrapped.CreateWebHost(url);
                                 }),
                             name: EndpointName),
                     });

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
 
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
@@ -8,17 +8,11 @@
 
     <IsServiceFabricServiceProject>True</IsServiceFabricServiceProject>
 
-    <!-- 
-      Use C# 9. See https://btburnett.com/csharp/2020/12/11/csharp-9-records-and-init-only-setters-without-dotnet5.html
-      for considerations of using this while targetting .NET runtimes older than .NET 5.
-    -->
-    <LangVersion>9</LangVersion>
-
     <!--
       The following helps support self-contained .NET Core runtime publishing.
       See: https://docs.microsoft.com/en-us/dotnet/core/deploying/runtime-patch-selection
     -->
-    <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 
     <!--
       .NET Core SDK 3.1 SDK sets ServerGarbageCollection=true by default for Microsoft.NET.Sdk.Web projects,
@@ -39,7 +33,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" />
-    <PackageReference Include="System.Net.Http" />
   </ItemGroup>
 
   <ItemGroup>
