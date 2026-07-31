@@ -121,7 +121,7 @@ namespace Yarp.ServiceFabric.Service
             var app = builder.Build();
 
             app.UseRouting()
-               .UseEndpoints(endpoints => { endpoints.MapReverseProxy(); });
+            app.MapReverseProxy();
 
             var certSelector = app.Services.GetRequiredService<ISniServerCertificateSelector>();
             certSelectorFunc = certSelector.SelectCertificate;
