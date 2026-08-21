@@ -4,6 +4,7 @@
 Table of Contents
 =================
   * [Background](#background)
+  * [Migrating from the built-in Service Fabric reverse proxy](#migrating-from-the-built-in-service-fabric-reverse-proxy)
   * [Service Fabric compatibility](#service-fabric-compatibility)
   * [Limitations](#limitations)
   * [How it works](#how-it-works)
@@ -35,6 +36,22 @@ Using a reverse proxy allows the client service to use any client-side HTTP comm
 
 > Note that, at this time, this is a reverse proxy built-in replacement and not a generic service fabric “gateway” able to handle partition queries, but that might be added (via customer written plugins or similar) in the future.
 
+## Migrating from the built-in Service Fabric reverse proxy
+
+If you're moving off the Service Fabric built-in reverse proxy (the
+HTTP App Gateway on port 19081 that ships with the SF runtime) onto
+SFYarp, see the end-to-end migration guide:
+
+- [Migrating from the Service Fabric Reverse Proxy to SFYarp](docs/migrate-from-sf-reverse-proxy-to-sfyarp.md)
+
+It covers the recommended coexistence-then-cutover path, service
+opt-in via labels, client URL translation, TLS / certificate
+deployment on SFMC, network lockdown, rollback, and troubleshooting.
+
+A starter ARM template for a fresh SFMC deployment lives under
+[docs/samples/sfmc-arm/](docs/samples/sfmc-arm/) — companion to
+§5.1a of the migration guide.
+
 ## Service Fabric compatibility
 Existing deployments must upgrade their Service Fabric cluster to version 11.0 or later before upgrading SF Yarp to 2.x. New deployments of SF Yarp 2.x are supported on Service Fabric version 11.0 or later.
 
@@ -52,9 +69,9 @@ As of this release, the services need to be explicitly exposed via [service exte
 
 You can clone the repo, build, and deploy or simply grab the latest [ZIP/SFPKG application](https://github.com/microsoft/service-fabric-yarp/releases/latest) from Releases section, modify configs, and deploy.
 
-![alt text](/docs/yarp-cluster-view.png "Cluster View UI")
+![alt text](/docs/images/yarp-cluster-view.png "Cluster View UI")
 
-![alt text](/docs/yarp-service-view.png "Cluster Service View UI")
+![alt text](/docs/images/yarp-service-view.png "Cluster Service View UI")
 
 ## Deploy it using PowerShell  
 
@@ -436,7 +453,7 @@ This repo includes:
 * Deploy `YarpProxyApp` to the local cluster
 * Observe in Service Fabric Explorer that the application starts and all services are running without errors:
 
-  ![Service Fabric Explorer](docs/sfx.png)
+  ![Service Fabric Explorer](docs/images/sfx.png)
 
 * Deploy the pinger test application mentioned in [Sample-Test-Application](#sample-test-application). Using a browser, access `http://localhost:8080/pinger0/PingerService`. If all works, you should get a `200 OK` response with contents resembling the following:
 
