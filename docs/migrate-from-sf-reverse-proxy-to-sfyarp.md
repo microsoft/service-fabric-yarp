@@ -35,7 +35,7 @@ SFYarp [README](https://github.com/microsoft/service-fabric-yarp#readme).
 
 It applies if you run one or more Service Fabric
 applications behind the built-in reverse proxy — the Service Fabric
-HTTP App Gateway that listens on the "reverse proxy endpoint",
+HTTP reverse-proxy component that listens on the "reverse proxy endpoint",
 commonly port 19081 — and need a replacement. Two situations
 typically drive this migration:
 
@@ -61,9 +61,10 @@ HTTP/HTTPS traffic to your Service Fabric services:
   `YarpProxy.Service`.
 
 Because SFYarp is packaged as an ordinary SF application, the same
-package runs on classic SFRP and on SFMC. This guide targets
-**SFYarp 2.0.0 or later**. It requires Service Fabric **11.5 or later** and is
-**Windows-only** today (no TCP proxying, no Linux support).
+package runs on classic Service Fabric Resource Provider (SFRP)
+clusters and on SFMC. This guide targets **SFYarp 2.0.0 or later**.
+It requires Service Fabric **11.5 or later** and is **Windows-only**
+today (no TCP proxying, no Linux support).
 
 **Deployment scope.** SFYarp deploys as a single SF application per
 cluster, running one instance on each node of your ingress node type
@@ -593,8 +594,8 @@ behind your existing ingress in this order to avoid dropped traffic:
    `/proxy-health` (or whichever route you've reserved for the L7
    probe — see [§9.1](#91-health-probes)) before touching any
    ingress config.
-2. **Add SFYarp to the L7 backend pool** (App Gateway, Front Door, or
-   whatever sits in front) as a *second* backend alongside the
+2. **Add SFYarp to the L7 backend pool** (Application Gateway, Front
+   Door, or whatever sits in front) as a *second* backend alongside the
    built-in reverse proxy. Both proxies receive traffic — SFYarp
    handles whatever it has labels for, and the built-in proxy handles
    the rest.
@@ -659,7 +660,7 @@ is already validated on SFRP:
   the same template shape.
 - Labels travel with the application package — no re-labeling needed
   on SFMC.
-- Cut traffic the same way as [§5.3](#53-cut-over-client-traffic-to-sfyarp). See [§9](#9-l7-gateway-in-front-of-sfyarp) if App Gateway or Front Door sits in front.
+- Cut traffic the same way as [§5.3](#53-cut-over-client-traffic-to-sfyarp). See [§9](#9-l7-gateway-in-front-of-sfyarp) if Application Gateway or Front Door sits in front.
 
 ---
 
@@ -889,9 +890,9 @@ the hostname your callers use. Concretely:
 - SFMC ships a default cluster certificate whose subject does **not**
   match your DNS name. **Don't rely on it for SFYarp.** Provision your
   own certificate.
-- OneCert / your own CA / Key Vault-generated certificates all work. Public
-  callers need a publicly-trusted issuer. In-cluster callers can
-  accept a private CA.
+- Certificates from a public CA, your organization's private CA, or
+  Key Vault-generated certificates all work. Public callers need a
+  publicly-trusted issuer. In-cluster callers can accept a private CA.
 
 > **If your certificate is not from a publicly-trusted CA.** SFYarp filters
 > out any certificate from `LocalMachine\My` that fails chain validation
@@ -899,8 +900,8 @@ the hostname your callers use. Concretely:
 > issuer the machine doesn't already trust must be present in
 > `LocalMachine\Root`:
 >
-> - **Publicly-trusted CA** (DigiCert, Let's Encrypt, OneCert public
->   chain, etc.): nothing extra — the roots ship with Windows.
+> - **Publicly-trusted CA** (DigiCert, Let's Encrypt, GlobalSign,
+>   etc.): nothing extra — the roots ship with Windows.
 > - **Private CA / internal CA:** deploy the CA's root certificate (and any
 >   intermediates) to `LocalMachine\Root` on every node.
 > - **Self-signed** (dev / test only): the leaf is its own root, so
@@ -1362,9 +1363,9 @@ caller's identity in a signed header via a transform.
 
 ## 9. L7 gateway in front of SFYarp
 
-Common topology: `Client → App Gateway (or Front Door) → SFYarp → SF service`.
-When SFYarp sits behind an L7 like App Gateway or Front Door, two
-things in the L7 configuration are worth getting right up front —
+Common topology: `Client → Application Gateway (or Front Door) → SFYarp → SF service`.
+When SFYarp sits behind an L7 like Application Gateway or Front Door,
+two things in the L7 configuration are worth getting right up front —
 everything else follows the L7's normal setup.
 
 ### 9.1 Health probes
@@ -1389,14 +1390,15 @@ traffic goes down with it.
 
 ### 9.2 Preserving the client's Host header
 
-Both App Gateway and Front Door rewrite the `Host` header on the
-backend hop by default, which breaks any SFYarp route matched on
+Both Application Gateway and Front Door rewrite the `Host` header on
+the backend hop by default, which breaks any SFYarp route matched on
 `Host`. Configure the L7 to preserve the client's Host:
 
-- **App Gateway**: on the backend HTTP settings, leave *Pick host
-  name from backend address* off (`pickHostNameFromBackendAddress=false`)
-  and don't set *Host name override* (`hostName`). Both live on the
-  same backend HTTP settings blade / ARM object.
+- **Application Gateway**: on the backend HTTP settings, leave *Pick
+  host name from backend address* off
+  (`pickHostNameFromBackendAddress=false`) and don't set *Host name
+  override* (`hostName`). Both live on the same backend HTTP settings
+  blade / ARM object.
 - **Front Door**: on the origin group, leave *Origin host header*
   blank.
 
@@ -1418,11 +1420,12 @@ ingress node type's public IP(s) to just the L7 in front of it.
 Standard Azure networking applies, with two things worth calling out
 for SFYarp on SFMC:
 
-- **Source-address prefix depends on the L7.** For **App Gateway**,
-  allow the **App Gateway subnet's CIDR** (or `VirtualNetwork` when
-  AGW and the cluster share a vnet) — there is no service tag for
-  AGW-to-backend traffic. `GatewayManager` is the Azure control-plane
-  tag for AGW's *own* subnet, not for backends behind AGW. For
+- **Source-address prefix depends on the L7.** For **Application
+  Gateway**, allow the Application Gateway subnet's CIDR (or
+  `VirtualNetwork` when the Application Gateway and the cluster share
+  a vnet) — there is no service tag for Application-Gateway-to-backend
+  traffic. `GatewayManager` is the Azure control-plane tag for
+  Application Gateway's *own* subnet, not for backends behind it. For
   **Front Door**, allow the `AzureFrontDoor.Backend` service tag on
   the HTTPS port. In both cases, deny the rest of `Internet`. Do
   **not** use the `ServiceFabric` service tag — it targets the SF
@@ -1437,8 +1440,8 @@ for SFYarp on SFMC:
   SFMC's accepted priority range of **1000–3000**. See
   [SFMC networking](https://learn.microsoft.com/azure/service-fabric/how-to-managed-cluster-networking).
 
-Concrete SFMC example — allow App Gateway on port 443 and deny
-everything else from the internet on that port (merge under the
+Concrete SFMC example — allow Application Gateway on port 443 and
+deny everything else from the internet on that port (merge under the
 `Microsoft.ServiceFabric/managedclusters` resource):
 
 ```json
@@ -1487,7 +1490,7 @@ If your L7 terminates TLS and forwards plain HTTP to SFYarp (see the
 callout at the top of [§8](#8-tls-and-certificate-management)), use
 `destinationPortRange: "80"` instead.
 
-For **Front Door** as the edge instead of App Gateway, use
+For **Front Door** as the edge instead of Application Gateway, use
 `sourceAddressPrefix: AzureFrontDoor.Backend` in the allow rule.
 Front Door reuses the backend port for its health probes (probes
 cannot be configured to use a separate port), so no additional NSG
@@ -1646,7 +1649,7 @@ pipeline.
 
 | Symptom | Likely cause | Where to look |
 |---|---|---|
-| SFMC nodetype deploy fails with `LinkedAuthorizationFailed` naming `Microsoft.ManagedIdentity/userAssignedIdentities/assign/action` on your UAMI | The Service Fabric RP hasn't been granted `Managed Identity Operator` on the UAMI, so it can't attach the identity to the managed VMSS | Grant the SFMC RP the `Managed Identity Operator` role on the UAMI per the [SFMC managed-identity guide](https://learn.microsoft.com/en-us/azure/service-fabric/how-to-managed-identity-managed-cluster-virtual-machine-scale-sets), then retry |
+| SFMC nodetype deploy fails with `LinkedAuthorizationFailed` naming `Microsoft.ManagedIdentity/userAssignedIdentities/assign/action` on your user-assigned managed identity (UAMI) | The Service Fabric RP hasn't been granted `Managed Identity Operator` on the UAMI, so it can't attach the identity to the managed VMSS | Grant the SFMC RP the `Managed Identity Operator` role on the UAMI per the [SFMC managed-identity guide](https://learn.microsoft.com/en-us/azure/service-fabric/how-to-managed-identity-managed-cluster-virtual-machine-scale-sets), then retry |
 | 404 from SFYarp for a service that used to work through the built-in reverse proxy | Service was not opted in | Target service's `ServiceManifest.xml` `<Extensions>` block; [§5.2](#52-opt-in-a-service-with-labels) |
 | SFYarp returns 404 for every path against a known-good backend | Client URL is missing the `/{AppName}/{ServiceName}/` prefix, or uses the built-in reverse proxy's `?PartitionKey=&PartitionKind=` query params which SFYarp doesn't honor | Rewrite the URL per [§6](#6-client-url-translation); for stateful backends use `?PartitionID=<guid>` per [§6.2](#62-stateful-int64-or-named) |
 | 502 Bad Gateway right after deploy | `AllowInsecureHttp=false` set on the route while the backend publishes an HTTP-only endpoint | Move the backend to HTTPS, or (dev/test only) drop the explicit `false` — SFYarp 2.x defaults to `true` |
@@ -1657,7 +1660,7 @@ pipeline.
 | `FabricDiscovery.Service` restarts repeatedly | `AbortAfterConsecutiveFailures` reached | Check Naming Service health; raise `AbortAfterTimeoutInSeconds` |
 | Requests to a stateful service occasionally hit the wrong partition | Client isn't passing `PartitionID` | Client must pass `?PartitionID=<guid>`; [§6](#6-client-url-translation) |
 | Requests to a stateful service go to secondaries when you wanted primaries | Missing `StatefulReplicaSelectionMode=PrimaryOnly` label | Add the label; [§5.2](#52-opt-in-a-service-with-labels) |
-| Post-upgrade 502s from the L7 in front / App Gateway marks the ingress backend pool unhealthy | L7 probe points at a business path that's now cold | Point the probe at a dedicated `/proxy-health` route; [§9.1](#91-health-probes) |
+| Post-upgrade 502s from the L7 in front / Application Gateway marks the ingress backend pool unhealthy | L7 probe points at a business path that's now cold | Point the probe at a dedicated `/proxy-health` route; [§9.1](#91-health-probes) |
 | A label appears to be ignored | Typo or case inconsistency (`Healthcheck` vs `HealthCheck`) | Prefer camel-case `HealthCheck`; cross-check against [Appendix](#appendix--sfyarp-labels-reference) |
 | Newly-added nodes serve TLS errors for a few minutes after scale-out (SFMC) | KV VM extension hasn't finished installing certificates yet | Application must retry on cold start; [§8.5](#85-extension-ordering-race-on-sfmc-scale-out) |
 | SFYarp still serves the old certificate after a Key Vault rotation | The new certificate version hasn't propagated to the nodes yet, or SFYarp hasn't rescanned `LocalMachine\My` yet | [§8.7](#87-certificate-rotation) |
