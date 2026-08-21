@@ -49,8 +49,7 @@ opt-in via labels, client URL translation, TLS / certificate
 deployment on SFMC, network lockdown, rollback, and troubleshooting.
 
 A starter ARM template for a fresh SFMC deployment lives under
-[docs/samples/sfmc-arm/](docs/samples/sfmc-arm/) — companion to
-§5.1a of the migration guide.
+[docs/samples/sfmc-arm/](docs/samples/sfmc-arm/).
 
 ## Service Fabric compatibility
 Existing deployments must upgrade their Service Fabric cluster to version 11.0 or later before upgrading SF Yarp to 2.x. New deployments of SF Yarp 2.x are supported on Service Fabric version 11.0 or later.

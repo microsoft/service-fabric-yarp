@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "metadata": {
         "_generator": {
-            "purpose": "Starter template for deploying SFYarp 2.0.0 onto a fresh Service Fabric managed cluster (SFMC). Bundles the managed cluster, a primary node type, the Key Vault VM extension for endpoint TLS certificates, and the SFYarp application (type + version + application). Companion to docs/migrate-from-sf-reverse-proxy-to-sfyarp.md.",
+            "purpose": "Starter template for deploying SFYarp 2.0.0 onto a fresh Service Fabric managed cluster (SFMC).",
             "notes": [
                 "SFYarp 2.0.0 is self-contained on .NET 10 - no runtime install or CustomScriptExtension is required.",
                 "KVVMExtension is ordered with setupOrder=BeforeSFRuntime and requireInitialSync=true so the endpoint TLS cert is installed on every node before SFYarp starts.",
