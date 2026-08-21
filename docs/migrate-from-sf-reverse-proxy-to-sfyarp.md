@@ -24,14 +24,21 @@
 
 ## 1. Overview
 
+> **New SFMC customer?** If you're setting up SFYarp for the first
+> time on a fresh Service Fabric managed cluster, start with the
+> [README](../README.md) — it covers the product from a green-field
+> onboarding angle. This guide is specifically for existing customers
+> **migrating off the built-in reverse proxy**.
+
 This migration guide walks you through replacing the built-in Service
 Fabric Reverse Proxy with Service Fabric Yarp (SFYarp) — prerequisites,
 how the two solutions compare, the recommended path, and the
-operational concerns you may hit along the way.
-
-This guide is migration-focused. For product docs (full label
-catalog, deployment reference, sample apps, dev setup), see the
-SFYarp [README](https://github.com/microsoft/service-fabric-yarp#readme).
+migration-specific concerns you may hit along the way. For general
+SFYarp product topics referenced from this guide — full TLS/cert
+setup, ARM deployment shape, L7 gateway configuration, NSG rules,
+placement/sizing, log collection, and the full label catalog — the
+[README](../README.md) is the canonical source; this guide points at
+it rather than duplicating.
 
 It applies if you run one or more Service Fabric
 applications behind the built-in reverse proxy — the Service Fabric
@@ -205,7 +212,7 @@ Before you deploy SFYarp anywhere:
       [§9](#9-l7-gateway-in-front-of-sfyarp).
 - [ ] **Capacity baseline:** plan a load test against SFYarp on your
       target VM SKU before cutting traffic — see
-      [§7.1](#71-cpu-and-memory-sizing).
+      [§7](#7-placement-and-sizing).
 - [ ] **Ports:** which ports SFYarp will bind. Shipped defaults are
       `8080` (HTTP) and `443` (HTTPS). Keep SFYarp's ports **distinct
       from the built-in reverse proxy's port** (typically `19081`) so
@@ -356,9 +363,9 @@ extension:
 
 > **Edit `ApplicationManifest.xml` before you zip.** If you need to
 > declare an `<EndpointCertificate>` for HTTPS (see
-> [§8.4](#84-private-key-acls-for-sfyarp)), add a
-> `<ServicePackageResourceGovernancePolicy>` for CPU/memory limits
-> (see [§7.1](#71-cpu-and-memory-sizing)), tune placement via the
+> [README §Private key ACLs](../README.md#private-key-acls-endpointcertificate-declaration)),
+> add a `<ServicePackageResourceGovernancePolicy>` for CPU/memory limits
+> (see [§7](#7-placement-and-sizing)), tune placement via the
 > shipped `YarpProxy_PlacementConstraints` parameter (see
 > [§7](#7-placement-and-sizing)), add extra `<Parameters>` you plan
 > to override from ARM, or apply any `<ConfigOverride>` blocks, do
@@ -382,7 +389,7 @@ versions remain available for rollback.
 > name to discover `FabricDiscovery.Service` in the cluster and it
 > can't be overridden through configuration. Any other name causes
 > `YarpProxy.Service` to crash-loop shortly after activation (see
-> [§13.2](#132-common-symptoms-and-fixes)).
+> [§13.2](#132-common-migration-symptoms-and-fixes)).
 
 **3. Reference the SFPKG from ARM.** Add two resources under
 `Microsoft.ServiceFabric/managedclusters`:
@@ -443,7 +450,8 @@ Notes:
   HTTPS cert-selector parameters, see
   [§8](#8-tls-and-certificate-management).
 - If your cluster template already provisions the node type with the
-  KV VM extension ([§8.3](#83-deploying-certificates-to-nodes) Option 1),
+  KV VM extension (see
+  [README §Deploying certificates to nodes](../README.md#deploying-certificates-to-nodes)),
   no additional certificate plumbing is needed here — the SFYarp application
   will find the certificate in `LocalMachine\My` at activation time.
 
@@ -570,7 +578,8 @@ Common recipes:
   <Label Key="Yarp.Backend.ServiceFabric.ListenerName">MyAltListener</Label>
   ```
 - **Preserve the original `Host` header** to the backend (needed for
-  backend SNI validation. See [§8.6](#86-in-cluster-service-to-service-traffic)):
+  backend SNI validation — see
+  [README §In-cluster service-to-service traffic](../README.md#in-cluster-service-to-service-traffic)):
   ```xml
   <Label Key="Yarp.Routes.defaultRoute.Transforms.[0].RequestHeaderOriginalHost">true</Label>
   ```
@@ -592,7 +601,7 @@ behind your existing ingress in this order to avoid dropped traffic:
 
 1. **Verify SFYarp is healthy** from a node-local `curl` against
    `/proxy-health` (or whichever route you've reserved for the L7
-   probe — see [§9.1](#91-health-probes)) before touching any
+   probe — see [README §L7 gateway integration](../README.md#l7-gateway-integration)) before touching any
    ingress config.
 2. **Add SFYarp to the L7 backend pool** (Application Gateway, Front
    Door, or whatever sits in front) as a *second* backend alongside the
@@ -671,7 +680,7 @@ is already validated on SFRP:
 > in the tables below). Only the query-string contract changes. Calls
 > to bare backend paths — for example `/hello` instead of
 > `/PingerApp/PingerService/hello` — return 404. See
-> [§13.2](#132-common-symptoms-and-fixes).
+> [§13.2](#132-common-migration-symptoms-and-fixes).
 
 > The built-in reverse proxy's URL contract is documented on
 > [Microsoft Learn](https://learn.microsoft.com/en-us/azure/service-fabric/service-fabric-reverseproxy#uri-format-for-addressing-services-by-using-the-reverse-proxy).
@@ -784,67 +793,37 @@ on these must be updated to look at HTTP status code and body only.
 
 ## 7. Placement and sizing
 
-**Recommended defaults:**
+Position SFYarp on the same node type(s) that already carry your
+ingress-facing services on the SFRP cluster today — same fault
+domain, upgrade domain, and public load balancer backend pool as the
+built-in reverse proxy. This preserves the traffic shape during
+coexistence in [§5.3](#53-cut-over-client-traffic-to-sfyarp).
 
-- **Do not** run SFYarp on the system / primary node type. That node
-  type is reserved for fabric services and isn't typically in the public
-  LB probe path.
-- **Do** run SFYarp on the same node type(s) that already carry your
-  ingress-facing services — same fault domain, same upgrade domain,
-  same LB backend pool. This matches how the built-in reverse proxy is
-  positioned on your SFRP cluster today.
-- **Use `InstanceCount = -1`** for both `YarpProxy.Service` and
-  `FabricDiscovery.Service`. This asks Service Fabric to place one
-  instance per eligible node. As the node type scales in or out, SFYarp
-  scales with it automatically. Do not hard-code a fixed number.
-- **Constrain placement to the ingress node type** with
-  `YarpProxy_PlacementConstraints`. Example:
-  ```text
-  YarpProxy_PlacementConstraints = "NodeType==FrontEnd"
-  ```
-  The shipped manifest wires the same constraint into
-  `FabricDiscovery.Service` — no separate parameter is exposed.
-  On SFMC the constraint uses whatever node-type name your managed
-  cluster resource exposes.
+Use `InstanceCount = -1` on both `YarpProxy.Service` and
+`FabricDiscovery.Service`, and constrain placement to the ingress
+node type with `YarpProxy_PlacementConstraints` (e.g.
+`"NodeType==FrontEnd"`).
 
-The SFYarp application manifest sets `DefaultMoveCost="High"` on
-`YarpProxyType` so the Service Fabric Cluster Resource Manager
-won't move the proxy during normal balancing.
-
-### 7.1 CPU and memory sizing
-
-The SFYarp package does **not** include a
-[`<ServicePackageResourceGovernance>`](https://learn.microsoft.com/azure/service-fabric/service-fabric-resource-governance)
-limit by default. The following conservative values are a safe starting
-point for initial deployment — they give SFYarp headroom for spikes
-without starving co-located services on the node. Baseline against
-representative traffic and tighten once you have steady-state
-working-set and CPU numbers from your target VM SKU.
-
-| Package | CpuCores | MemoryInMB |
-|---|---|---|
-| `YarpProxy.Service` | 1 | 1024 |
-| `FabricDiscovery.Service` | 0.5 | 512 |
-
-Apply the limit in `ApplicationManifest.xml`:
-
-```xml
-<ServiceManifestImport>
-  <ServiceManifestRef ServiceManifestName="YarpProxy.ServicePkg" ServiceManifestVersion="..."/>
-  <Policies>
-    <ServicePackageResourceGovernancePolicy CpuCores="1" MemoryInMB="1024"/>
-  </Policies>
-</ServiceManifestImport>
-```
+For the general placement guidance, `DefaultMoveCost` behavior,
+resource governance policy syntax, and starting-point CPU/memory
+values, see [README §Placement, sizing, and resource
+governance](../README.md#placement-sizing-and-resource-governance).
 
 ---
 
 ## 8. TLS and certificate management
 
-TLS setup is the most common source of migration surprises. Read this
-section end-to-end before provisioning.
+TLS setup is the most common source of migration surprises. For the
+full green-field TLS setup — SNI mechanics, certificate SAN/CN
+naming, deploying certs to nodes via the Azure Key Vault VM extension
+or `vmSecrets`, private-key ACLs via `<EndpointCertificate>`, the
+extension-ordering race on SFMC scale-out, certificate rotation,
+in-cluster service-to-service patterns, and SFYarp-to-backend TLS —
+see [README §TLS and certificates](../README.md#tls-and-certificates).
+That is the canonical source. This section calls out
+**migration-specific considerations** on top of it.
 
-**HTTPS-first defaults.** In production:
+**HTTPS-first defaults during migration.**
 
 - Terminate TLS on port 443 (or your chosen HTTPS port). Do not
   expose the HTTP port publicly — see
@@ -854,661 +833,103 @@ section end-to-end before provisioning.
   [§5.2](#52-opt-in-a-service-with-labels).
 - Require modern TLS versions on backend calls with
   `Yarp.Backend.HttpClient.SslProtocols=Tls12,Tls13` when backends
-  need it — see [§8.8](#88-sfyarp-to-backend-tls).
-
-> **Does this section apply to you?** This section assumes SFYarp
-> terminates TLS on port 443. If your L7 in front terminates TLS and
-> forwards plain HTTP to SFYarp, you can skip §8 (no server certificate
-> needed on SFYarp) — but you must lock down the L7-to-SFYarp path
-> via NSG (see [§10](#10-network-lockdown-nsg-and-service-tags)).
-
-### 8.1 SNI certificate selection
-
-Kestrel binds with **SNI** — during the TLS handshake, the client's
-ClientHello `server_name` (SNI) extension selects the matching certificate
-by SAN. This happens **before** any HTTP request is parsed, so the
-HTTP `Host` header is not what drives certificate selection. TLS **1.2 and
-1.3** are on by default.
-
-`YarpProxy.Service` enumerates certificates in `LocalMachine\My` at
-startup and keeps the ones that:
-
-- are currently valid
-- have a private key
-- chain-validate
-- carry the Server Authentication EKU
-
-### 8.2 Certificate naming (SAN/CN)
-
-The certificate must have a **SAN** (or CN, for legacy clients) that matches
-the hostname your callers use. Concretely:
-
-- If callers use a DNS name like `https://api.contoso.com`, the certificate
-  must have `api.contoso.com` in its SAN.
-- If callers use the cluster FQDN `https://<cluster-fqdn>`, the certificate
-  must have the cluster FQDN in its SAN.
-- SFMC ships a default cluster certificate whose subject does **not**
-  match your DNS name. **Don't rely on it for SFYarp.** Provision your
-  own certificate.
-- Certificates from a public CA, your organization's private CA, or
-  Key Vault-generated certificates all work. Public callers need a
-  publicly-trusted issuer. In-cluster callers can accept a private CA.
-
-> **If your certificate is not from a publicly-trusted CA.** SFYarp filters
-> out any certificate from `LocalMachine\My` that fails chain validation
-> ([§8.1](#81-sni-certificate-selection)), so any
-> issuer the machine doesn't already trust must be present in
-> `LocalMachine\Root`:
->
-> - **Publicly-trusted CA** (DigiCert, Let's Encrypt, GlobalSign,
->   etc.): nothing extra — the roots ship with Windows.
-> - **Private CA / internal CA:** deploy the CA's root certificate (and any
->   intermediates) to `LocalMachine\Root` on every node.
-> - **Self-signed** (dev / test only): the leaf is its own root, so
->   the same certificate lands in both `LocalMachine\My` and
->   `LocalMachine\Root`.
-
-### 8.3 Deploying certificates to nodes
-
-Store the certificate (with private key) in Azure Key Vault as a
-**Certificate** (not a Secret) — a PFX-backed KV certificate is
-required either way. From there you have two supported paths to land
-it in `LocalMachine\My` on the ingress node type. Pick one based on
-your rotation model.
-
-**Option 1 (recommended default): Azure Key Vault VM extension (polling-based auto-rotation).**
-
-The Key Vault VM extension polls Key Vault on a configurable interval
-and installs new versions into `LocalMachine\My` on the running node.
-Rotate certificates by publishing a new version to Key Vault — no ARM update,
-no node-type redeploy. This is the recommended default for teams
-whose recovery playbook is "issue a new certificate in KV" rather than
-"redeploy infrastructure."
-
-The cost is that the extension participates in extension ordering. On
-SFRP you own the VMSS and can order it with `provisionAfterExtensions`
-directly. On SFMC, use `setupOrder: ["BeforeSFRuntime"]` on the
-extension — requires API version `2023-09-01-preview` or later. See
-[§8.5](#85-extension-ordering-race-on-sfmc-scale-out) if you're on an
-older SFMC API version.
-
-> **Managed-identity prerequisites (Option 1 only).** `KVVMExtension`
-> uses a managed identity attached to the SFYarp nodetype to fetch
-> KV secrets at runtime. Before deploying the extension:
->
-> - Attach a user-assigned or system-assigned identity to the SFYarp
->   nodetype and grant it read on the KV: `Key Vault Secrets User`
->   (RBAC), or `Get + List` on a legacy access policy.
-> - For user-assigned identities on SFMC, grant the **Service Fabric
->   managed cluster resource provider** the `Managed Identity
->   Operator` role on the identity so it can attach the identity to
->   the underlying VMSS. Missing this grant fails deploy with
->   `LinkedAuthorizationFailed` (see
->   [§13.2](#132-common-symptoms-and-fixes)).
->
-> Full RBAC and template shape:
-> [Add a managed identity to a Service Fabric managed cluster node type](https://learn.microsoft.com/en-us/azure/service-fabric/how-to-managed-identity-managed-cluster-virtual-machine-scale-sets).
-
-On SFMC, add the KV VM extension to the node type resource under
-`vmExtensions[]`:
-
-```json
-{
-  "type": "Microsoft.ServiceFabric/managedclusters/nodetypes",
-  "apiVersion": "2023-09-01-preview",
-  "properties": {
-    "vmExtensions": [
-      {
-        "name": "KVVMExtension",
-        "properties": {
-          "publisher":              "Microsoft.Azure.KeyVault",
-          "type":                   "KeyVaultForWindows",
-          "typeHandlerVersion":     "3.0",
-          "autoUpgradeMinorVersion": true,
-          "setupOrder":             [ "BeforeSFRuntime" ],
-          "settings": {
-            "secretsManagementSettings": {
-              "pollingIntervalInS":         "3600",
-              "observedCertificates": [
-                "https://<your-kv>.vault.azure.net/secrets/YarpProxySslCert"
-              ],
-              "certificateStoreName":       "My",
-              "certificateStoreLocation":   "LocalMachine",
-              "linkOnRenewal":              true,
-              "requireInitialSync":         true
-            }
-          }
-        }
-      }
-    ]
-  }
-}
-```
-
-The `setupOrder: ["BeforeSFRuntime"]` field forces the extension to
-run to completion before the SF node extension starts, so
-cert-consuming services always see the certificates at activation time. See
-[Provision extensions before Service Fabric runtime](https://learn.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-vmss-extension#how-to-provision-before-service-fabric-runtime).
-
-- **Keep both `setupOrder: ["BeforeSFRuntime"]` and
-  `requireInitialSync: true`** on `KVVMExtension` (both shown in the
-  sample above). They gate different things: `setupOrder` schedules
-  the extension before the SF runtime; `requireInitialSync` makes the
-  extension report success only after the first certificate fetch completes.
-  Dropping either leaves a window where SFYarp activation can race
-  the initial certificate import — see
-  [§8.5](#85-extension-ordering-race-on-sfmc-scale-out).
-
-On classic SFRP, put the extension on the VMSS resource and use
-`provisionAfterExtensions` on the SF node extension to chain it
-behind KV — see [§8.5](#85-extension-ordering-race-on-sfmc-scale-out).
-
-**Option 2: `vmSecrets` on the node type.**
-
-`vmSecrets` uses Azure VMSS's native `osProfile.secrets` plumbing —
-certificates are injected during VM provisioning, **before any VM extension
-runs**. This sidesteps the extension-ordering race in
-[§8.5](#85-extension-ordering-race-on-sfmc-scale-out) entirely and
-does not depend on any SFMC API-version feature.
-
-Rotation is done by updating the ARM template with the new versioned
-certificate URL and re-deploying the node type.
-
-**Choose Option 2 if any of these apply:**
-
-- You can't set `setupOrder: ["BeforeSFRuntime"]` (SFMC API older than
-  `2023-09-01-preview`. See [§8.5](#85-extension-ordering-race-on-sfmc-scale-out)).
-- You want certificate rotation to go through your ARM/CI pipeline — not a
-  background poll from Key Vault.
-- Your nodes can't reach Key Vault at runtime.
-- You want certificates present before any VM extension runs, structurally.
-
-On SFMC, add `vmSecrets` to the node type resource:
-
-```json
-{
-  "type": "Microsoft.ServiceFabric/managedclusters/nodetypes",
-  "properties": {
-    "vmSecrets": [
-      {
-        "sourceVault": { "id": "<KV resource ID>" },
-        "vaultCertificates": [
-          {
-            "certificateUrl": "https://<kv>.vault.azure.net/secrets/YarpProxySslCert/<version>",
-            "certificateStore": "My"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-On classic SFRP, put the same `secrets` block on the VMSS resource
-under `osProfile.windowsConfiguration.secrets`.
-
-**KV VM extension configuration — SFYarp-specific bits.**
-
-The KV VM extension has a generic configuration surface
-(`typeHandlerVersion`, `pollingIntervalInS`, `linkOnRenewal`,
-`requireInitialSync`, etc.) that is independent of SF. Pick those per
-the [Key Vault VM extension docs](https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/key-vault-windows).
-For SFYarp there are two extras beyond the SFMC snippet above:
-
-- `certificateStoreLocation: LocalMachine` and
-  `certificateStoreName: My` are required — SFYarp enumerates
-  `LocalMachine\My` for SNI selection. Any other store is invisible
-  to Kestrel. List every certificate SFYarp needs (SSL cert plus any
-  cluster or application-secret certs) in `observedCertificates`.
-- On classic SFRP, add `provisionAfterExtensions` on the SF node
-  extension so it runs after the KV extension. On SFMC, use
-  `setupOrder: ["BeforeSFRuntime"]` on the KV extension itself as
-  shown above. See [§8.5](#85-extension-ordering-race-on-sfmc-scale-out)
-  for the ordering race this addresses.
-
-**Verify certificates on each node (both options).**
-
-After deployment, run this on any ingress node to confirm the certificate(s)
-are present with the expected SAN:
-
-```powershell
-Get-ChildItem cert:\LocalMachine\My |
-  Where-Object { $_.HasPrivateKey } |
-  Select-Object Thumbprint, Subject,
-    @{n='SAN';e={($_.Extensions |
-      Where-Object { $_.Oid.FriendlyName -eq 'Subject Alternative Name' }).Format(1)}},
-    NotAfter
-```
-
-### 8.4 Private key ACLs for SFYarp
-
-Declare the certificate in the SFYarp `ApplicationManifest.xml` as an
-`EndpointCertificate`. When Service Fabric activates the application,
-it ACLs the certificate's private key for the account that hosts the endpoint
-(Network Service by default).
-
-Add an `<EndpointCertificate>` entry to the SFYarp
-`ApplicationManifest.xml` pointing at the certificate:
-
-```xml
-<ServiceManifestImport>
-  <ServiceManifestRef ServiceManifestName="YarpProxyPkg" ServiceManifestVersion="..."/>
-</ServiceManifestImport>
-
-<Certificates>
-  <EndpointCertificate Name="YarpProxyCert" X509FindType="FindBySubjectName" X509FindValue="[ServiceSslCertificateCommonName]" X509StoreName="My"/>
-</Certificates>
-```
-
-> **No `<Policies>` block required.** Service Fabric grants Network
-> Service read access on the private key from the
-> `<EndpointCertificate>` declaration alone. To avoid first-boot
-> activation retries, ensure `KVVMExtension` has both
-> `setupOrder: ["BeforeSFRuntime"]` and `requireInitialSync: true`
-> (see [§8.3](#83-deploying-certificates-to-nodes) Option 1) so the
-> certificate is imported before SFYarp activates.
-
-> **Prefer `FindBySubjectName` over `FindByThumbprint`.** Thumbprint
-> changes on every renewal, forcing an application upgrade each time.
-> `FindBySubjectName` is stable across renewals — pair it with a
-> parameterized common name so the same package works across
-> environments. The shipped SFYarp manifest doesn't expose this
-> parameter by default. Add it to `<Parameters>`:
-
-```xml
-<Parameters>
-  <Parameter Name="ServiceSslCertificateCommonName" DefaultValue="" />
-</Parameters>
-```
-
-> **`SecretsCertificate` vs `EndpointCertificate` — an important
-> asymmetry at activation time.** When Service Fabric activates a code
-> package, these two manifest declarations behave differently if the
-> referenced certificate is not yet present in `LocalMachine\My`:
->
-> - **`SecretsCertificate` (with `SecurityAccessPolicy`)** — SF does
->   **not** gate activation on the certificate existing. The code package
->   starts successfully and only fails later when it tries to use the
->   certificate (for TLS, for decrypting protected settings, etc.). This is
->   the silent-broken-state pattern that makes scale-out fragile.
-> - **`EndpointCertificate`** — SF gates the HTTPS endpoint binding
->   on the certificate being present. If the certificate isn't there, endpoint
->   binding fails and Service Fabric restarts the code package under
->   the standard health-monitored retry policy, so the service
->   naturally waits for the certificate to arrive.
->
-> This asymmetry is why declaring a protected-settings certificate as an
-> `EndpointCertificate` — even when it isn't strictly used for an
-> endpoint — turns "silently broken" into "fail-fast, retry,
-> self-heal." See [§8.5](#85-extension-ordering-race-on-sfmc-scale-out)
-> for when this workaround applies.
-
-### 8.5 Extension ordering race on SFMC scale-out
-
-> **Skip this section if any of the following applies:**
-> - You chose Option 2 (`vmSecrets`) in [§8.3](#83-deploying-certificates-to-nodes) —
->   `vmSecrets`-installed certificates are present in `LocalMachine\My` before
->   any extension runs, so the race below cannot occur.
-> - You chose Option 1 (KV VM extension) on SFMC API
->   `2023-09-01-preview` or later and set `setupOrder: ["BeforeSFRuntime"]`
->   on the extension — this is the first-class ordering knob and
->   defeats the race for cert-consuming SF services.
->
-> Read on if you chose Option 1 on an older SFMC API version, if you
-> have other cert-consuming code paths that depend on
-> extension-installed certificates, or if you want to understand the failure
-> mode before making a platform choice.
-
-This is the most important thing to plan for on SFMC when you use the
-Key Vault VM extension. There is no equivalent problem on classic SFRP
-because you own the VMSS and can order extensions there.
-
-**Classic SFRP.** You own the VMSS, so you can chain the SF node
-extension behind the KV VM extension with `provisionAfterExtensions`.
-The SF node extension will not run until the KV extension has synced
-certificates. Example:
-
-```json
-{
-  "name": "ServiceFabricNodeExtension",
-  "properties": {
-    "type": "ServiceFabricNode",
-    "autoUpgradeMinorVersion": true,
-    "protectedSettings": {
-      "StorageAccountKey1": "...",
-      "StorageAccountKey2": "..."
-    },
-    "provisionAfterExtensions": [
-      "DSCExtension",
-      "KVVMExtension"
-    ]
-  }
-}
-```
-
-The key line is `"KVVMExtension"` inside `provisionAfterExtensions`
-on the SF node extension — without it, the SF node extension and the
-KV extension race, exactly like they do on SFMC.
-
-**SFMC.** SFMC owns the VMSS, so `provisionAfterExtensions` on the
-underlying VMSS is not settable. But on SFMC API `2023-09-01-preview`
-or later, `vmExtensions[]` items on
-`Microsoft.ServiceFabric/managedclusters/nodetypes` accept
-`setupOrder: ["BeforeSFRuntime"]` — set this on the KV VM extension
-and it will install to completion before the SF node extension
-starts, which is exactly the ordering guarantee the SFRP
-`provisionAfterExtensions` pattern gives you. See
-[Provision extensions before Service Fabric runtime](https://learn.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-vmss-extension#how-to-provision-before-service-fabric-runtime).
-
-On older SFMC API versions the ordering knob is not available, and on
-scale-out events this manifests as:
-
-- SF starts placing applications on a new node.
-- SFYarp (and any other cert-consuming service) starts before the KV
-  extension finishes installing certificates.
-- SFYarp binds Kestrel, then fails HTTPS handshakes because the SNI
-  callback finds no matching certificate (or, worse, finds a certificate whose
-  private key it can't read).
-- Any application that decrypts protected settings from certificates may fail
-  during startup.
-
-**Primary mitigation.** On SFMC, set `setupOrder: ["BeforeSFRuntime"]`
-on the KV VM extension. Requires SFMC API version
-`2023-09-01-preview` or later. This is the first-class ordering knob
-— the KV VM extension runs to completion before the SF node
-extension starts, so cert-consuming services always see their certificates
-at activation time. See
-[Provision extensions before Service Fabric runtime](https://learn.microsoft.com/en-us/azure/service-fabric/how-to-managed-cluster-vmss-extension#how-to-provision-before-service-fabric-runtime).
-If your SFMC template is already on `2023-09-01-preview`+, this alone
-eliminates the race — the items below become optional hardening.
-
-**Additional hardening** (apply when the primary mitigation isn't
-available, or for cert-consuming code paths outside SF's activation
-gate):
-
-- **Retry in the application.** Cert-consuming code paths tolerate
-  "certificate not present yet" for the first few minutes after a node comes
-  up. Cheap and centralizable via a startup script that waits for
-  expected thumbprints.
-- **Use KV VM extension 4.0 (or 3.0 with `requireInitialSync: true`).**
-  The extension reports success only after every configured certificate is
-  installed — closes the "extension green but certificates not yet there"
-  window. Does **not** fix ordering with respect to the SF node
-  extension.
-- **Declare protected-settings certificates as `EndpointCertificate`.** Gates
-  activation on the certificate's presence so SF's standard retry policy
-  papers over the extension race — see the `SecretsCertificate` vs
-  `EndpointCertificate` callout in
-  [§8.4](#84-private-key-acls-for-sfyarp). Trade-off: the certificate must
-  chain-validate at activation time, so self-signed / private-CA
-  certificates need supporting root-store deployment.
-
-Symptom on scale-out: freshly added nodes serve TLS errors for the
-first few minutes after joining the cluster, then recover on their own.
-
-### 8.6 In-cluster service-to-service traffic
-
-If your services call each other through the built-in reverse proxy
-today (that is: they hit `http://localhost:19081/...` on the same
-node), the same pattern works with SFYarp. The recommended approach is a dedicated
-`CN=localhost` certificate. The hosts-file pattern below is a fallback for
-cases where you must preserve the cluster's public hostname on the
-backend request.
-
-> **Both patterns below assume SFYarp is co-located with the caller.**
-> A `localhost` call only reaches SFYarp if the SFYarp service is
-> running on the same node as the caller — for example, an
-> `InstanceCount=-1` stateless deployment on every node the callers
-> run on. If SFYarp is only on a dedicated ingress node type,
-> in-cluster callers on other node types cannot use `localhost` and
-> must call SFYarp by its cluster-internal hostname / port instead.
-
-**Recommended: `CN=localhost` certificate.**
-
-1. Provision a second certificate with `CN=localhost` (from your private CA,
-   or self-signed for dev / test) and land it in `LocalMachine\My`
-   alongside your public-hostname certificate. Both paths in
-   [§8.3](#83-deploying-certificates-to-nodes) support multiple certificates.
-2. In-cluster clients call
-   `https://localhost:<yarp-https-port>/<App>/<Service>/...`. Kestrel
-   SNI picks the `localhost` certificate.
-3. The calling service must trust the issuer — if the certificate is
-   privately issued, deploy the CA's root certificate to `LocalMachine\Root`
-   on the caller's node.
-
-**Fallback: hosts-file pattern.**
-
-Use this only if in-cluster callers need to preserve the cluster's
-public hostname (`something.contoso.com`) on the backend request —
-for example, because the backend does SSL server-name validation on
-the `Host` header.
-
-1. Give SFYarp a certificate with the cluster's public hostname in its SAN.
-2. On each node, add a hosts-file entry pointing that hostname to
-   `127.0.0.1` — for example via the VMSS DSC extension or a startup
-   custom script:
-   ```
-   127.0.0.1  something.contoso.com
-   ```
-3. Have in-cluster clients call
-   `https://something.contoso.com:<yarp-https-port>/<App>/<Service>/...`.
-4. On the target route, set the label
-   `Yarp.Routes.<r>.Transforms.[0].RequestHeaderOriginalHost=true`
-   so the original `Host` header is preserved when SFYarp forwards to
-   the backend.
-
-### 8.7 Certificate rotation
-
-Push a new version to Key Vault. The KV VM extension imports it into
-`LocalMachine\My` at its next poll (`pollingIntervalInS`) and SFYarp
-picks up the new certificate on subsequent TLS handshakes. With the
-`<EndpointCertificate>` declaration from
-[§8.4](#84-private-key-acls-for-sfyarp), Service Fabric grants
-`NT AUTHORITY\NETWORK SERVICE` (the identity SFYarp runs under by
-default) read access on the newly imported private key automatically.
-No ARM update, cluster upgrade, or node restart is required.
-
-Existing TLS connections continue on the previous certificate until they
-close naturally. New handshakes use the new certificate. Expect propagation
-within a few polling intervals.
-
-Verify propagation on any node with `certutil -store My` — both the
-previous and the new thumbprint should be listed after the extension
-polls. Do not remove the previous certificate from `LocalMachine\My` until
-the new certificate has been confirmed present on every node. SNI needs a
-matching certificate in the store to serve any TLS handshake.
-
-If you deployed via [§8.3 Option 2 (`vmSecrets`)](#83-deploying-certificates-to-nodes),
-rotation is a standard VMSS `osProfile.secrets` redeploy of the node
-type — no SFYarp-specific step is required.
-
-### 8.8 SFYarp-to-backend TLS
-
-When a backend service publishes an HTTPS endpoint, SFYarp acts as a
-TLS client to that endpoint. Behavior follows standard .NET
-`HttpClient` defaults — the backend certificate must chain-validate and its
-subject must match the target name. Three common gotchas during
-migration:
-
-- **Private-CA backends.** If backends use a private / internal CA, the
-  CA's root certificate must be present in `LocalMachine\Root` on every SFYarp
-  node, same as the inbound-cert rule in
-  [§8.2](#82-certificate-naming-sancn). Without it, every
-  backend handshake fails chain validation.
-- **Backend certificate SAN.** SFYarp resolves the backend's IP:port from
-  Naming Service and then handshakes. The backend certificate must have a
-  SAN (or CN) that matches the hostname SFYarp uses on the handshake
-  — commonly the cluster's node DNS suffix. A wildcard SAN like
-  `*.<cluster>.<region>.cloudapp.azure.com` covers this cleanly.
-- **Pinned TLS version.** If the backend requires TLS 1.2 or 1.3
-  specifically, set it explicitly on the route:
-  ```xml
-  <Label Key="Yarp.Backend.HttpClient.SslProtocols">Tls12,Tls13</Label>
-  ```
-
-**Escape hatch (dev / test only).**
-
-```xml
-<Label Key="Yarp.Backend.HttpClient.DangerousAcceptAnyServerCertificate">true</Label>
-```
-
-Disables chain and hostname validation on backend calls. Do not ship
-this to production — it silently accepts any certificate the backend presents.
-
-**Backend mTLS.** SFYarp does not currently support attaching a client
-certificate on outbound calls. Terminate mTLS at SFYarp and forward the
-caller's identity in a signed header via a transform.
-
----
+  need it.
+
+**Migration-specific considerations:**
+
+- **Reuse or replace the existing cluster certificate.** If your
+  cluster today uses a wildcard or SAN certificate that already
+  covers SFYarp's hostname, reuse it — no new cert needed. If it
+  does not, provision a new one (public CA, private CA, or Azure
+  Key Vault-generated cert all work; see
+  [README §TLS and certificates](../README.md#tls-and-certificates)).
+- **Deploy the SFYarp certificate before you label any service.**
+  The cert must be present in `LocalMachine\My` on ingress nodes
+  *before* the first service you opt in via
+  [§5.2](#52-opt-in-a-service-with-labels) starts receiving traffic.
+  Otherwise SFYarp activates without a cert and clients see TLS
+  handshake failures during your first cutover attempt.
+- **`SecretsCertificate` vs `EndpointCertificate` asymmetry.** If any
+  cert-consuming code paths in the SFYarp app package need Service
+  Fabric-managed private-key ACLs, declare the cert as
+  `<EndpointCertificate>` in `ApplicationManifest.xml`, **not** as
+  `<SecretsCertificate>`. SF gates service activation on
+  `EndpointCertificate` presence — which prevents the SFMC
+  extension-ordering race from silently starting SFYarp without a
+  cert on scale-out. See [README §Private key ACLs
+  (`<EndpointCertificate>` declaration)](../README.md#private-key-acls-endpointcertificate-declaration).
+- **Coexistence period.** During
+  [§5.3](#53-cut-over-client-traffic-to-sfyarp) the built-in reverse
+  proxy still fronts port 19081 with the cluster cert. SFYarp uses
+  its own cert on 443. The two certs can be identical or different —
+  independent code paths, no interaction.
+
+> **Does this section apply to you?** If your L7 gateway in front
+> terminates TLS and forwards plain HTTP to SFYarp, you can skip
+> most of §8 — no server certificate needed on SFYarp — but you
+> must lock down the L7-to-SFYarp path via NSG. See
+> [§10](#10-network-lockdown-nsg-and-service-tags).
 
 ## 9. L7 gateway in front of SFYarp
 
-Common topology: `Client → Application Gateway (or Front Door) → SFYarp → SF service`.
-When SFYarp sits behind an L7 like Application Gateway or Front Door,
-two things in the L7 configuration are worth getting right up front —
-everything else follows the L7's normal setup.
+If your migration includes swapping backend pools on an existing L7
+gateway (Application Gateway or Front Door) from the built-in
+reverse proxy to SFYarp, the migration-specific concern is the
+**backend pool swap sequence**:
 
-### 9.1 Health probes
+1. Deploy SFYarp as a *new* backend pool alongside the existing
+   built-in reverse proxy pool. Do not modify the existing pool.
+2. Add SFYarp to the L7 routing rules with a small traffic weight
+   (or a shadow path) so you can measure real traffic before
+   switching.
+3. Shift traffic weight from the built-in reverse proxy pool to
+   SFYarp per [§5.3](#53-cut-over-client-traffic-to-sfyarp).
+4. Once cut over is complete and stable, remove the built-in reverse
+   proxy pool.
 
-Point the L7 probe at a dedicated `/proxy-health` route on the SFYarp
-backend pool. Any lightweight SF service that returns `200 OK` on a
-known path will do — an existing infra "ping" service, or a minimal
-ASP.NET Core stateless service added to the cluster. On that service,
-add the standard SFYarp labels plus the `/proxy-health` route:
-
-```xml
-<Label Key="Yarp.Enable">true</Label>
-<Label Key="Yarp.Routes.proxy-health.Path">/proxy-health</Label>
-```
-
-The endpoint should return `200 OK` with no DB call and no downstream
-hop, so that when a business backend goes unhealthy the probe still
-returns 200 and the L7 keeps SFYarp in rotation. **Do not** point the
-L7 probe at a business path like `/PaymentApi/status` — if Payment
-goes down, every SFYarp instance gets marked dead and `/OrderApi`
-traffic goes down with it.
-
-### 9.2 Preserving the client's Host header
-
-Both Application Gateway and Front Door rewrite the `Host` header on
-the backend hop by default, which breaks any SFYarp route matched on
-`Host`. Configure the L7 to preserve the client's Host:
-
-- **Application Gateway**: on the backend HTTP settings, leave *Pick
-  host name from backend address* off
-  (`pickHostNameFromBackendAddress=false`) and don't set *Host name
-  override* (`hostName`). Both live on the same backend HTTP settings
-  blade / ARM object.
-- **Front Door**: on the origin group, leave *Origin host header*
-  blank.
-
-If none of your SFYarp routes match on `Host`, this doesn't matter —
-otherwise those routes never fire.
-
-**`X-Forwarded-*` headers.** Both the L7 in front and SFYarp emit
-`X-Forwarded-For` / `X-Forwarded-Proto` / etc. Decide who is
-authoritative — typically the L7 sets them at the edge and SFYarp
-forwards them unchanged — and configure the other side not to
-overwrite them.
+For **all other L7 configuration** — dedicated `/proxy-health` probe
+routes, preserving the client `Host` header on the backend hop
+(Application Gateway `pickHostNameFromBackendAddress`, Front Door
+*Origin host header*), and `X-Forwarded-*` header ownership — see
+[README §L7 gateway integration](../README.md#l7-gateway-integration).
+That configuration is the same on SFRP and SFMC and is not migration-
+specific.
 
 ---
 
 ## 10. Network lockdown (NSG and Service Tags)
 
-When SFYarp is publicly reachable, restrict inbound traffic on the
-ingress node type's public IP(s) to just the L7 in front of it.
-Standard Azure networking applies, with two things worth calling out
-for SFYarp on SFMC:
+The NSG shape for locking SFYarp down behind an L7 gateway is not
+migration-specific. For the full walkthrough — source-address prefix
+choice per L7 type, `AzureFrontDoor.Backend` service tag, SFMC's
+`networkSecurityRules` mechanism vs. direct VMSS NSG edits, SFMC's
+1000–3000 priority window, and internal-only patterns — see
+[README §Network lockdown](../README.md#network-lockdown-nsg-and-service-tags).
 
-- **Source-address prefix depends on the L7.** For **Application
-  Gateway**, allow the Application Gateway subnet's CIDR (or
-  `VirtualNetwork` when the Application Gateway and the cluster share
-  a vnet) — there is no service tag for Application-Gateway-to-backend
-  traffic. `GatewayManager` is the Azure control-plane tag for
-  Application Gateway's *own* subnet, not for backends behind it. For
-  **Front Door**, allow the `AzureFrontDoor.Backend` service tag on
-  the HTTPS port. In both cases, deny the rest of `Internet`. Do
-  **not** use the `ServiceFabric` service tag — it targets the SF
-  management port (~19080), not the reverse-proxy port.
-- **On SFMC, edit the NSG through the managed cluster resource**
-  (`networkSecurityRules` on the managed cluster ARM resource).
-  Rules added directly to the underlying VMSS will be reverted by
-  SFMC reconciliation. See
-  [SFMC network security rules](https://learn.microsoft.com/azure/service-fabric/how-to-managed-cluster-networking#network-security-rules).
-- SFMC's default `SF-NSG` denies Internet at priority 2900. Your
-  allow rule for the SFYarp port must sit below 2900 and within
-  SFMC's accepted priority range of **1000–3000**. See
-  [SFMC networking](https://learn.microsoft.com/azure/service-fabric/how-to-managed-cluster-networking).
+**Migration-specific considerations:**
 
-Concrete SFMC example — allow Application Gateway on port 443 and
-deny everything else from the internet on that port (merge under the
-`Microsoft.ServiceFabric/managedclusters` resource):
-
-```json
-{
-  "type":       "Microsoft.ServiceFabric/managedclusters",
-  "apiVersion": "2024-04-01",
-  "name":       "[parameters('clusterName')]",
-  "properties": {
-    "networkSecurityRules": [
-      {
-        "name": "AllowAppGatewayToSfYarp",
-        "protocol": "tcp",
-        "sourcePortRange": "*",
-        "sourceAddressPrefix": "10.0.1.0/24",
-        "destinationAddressPrefix": "*",
-        "destinationPortRange": "443",
-        "access": "Allow",
-        "priority": 2001,
-        "direction": "Inbound"
-      },
-      {
-        "name": "DenyInternetToSfYarp",
-        "protocol": "tcp",
-        "sourcePortRange": "*",
-        "sourceAddressPrefix": "Internet",
-        "destinationAddressPrefix": "*",
-        "destinationPortRange": "443",
-        "access": "Deny",
-        "priority": 2100,
-        "direction": "Inbound"
-      }
-    ]
-  }
-}
-```
-
-Replace `10.0.1.0/24` with your Application Gateway subnet's CIDR.
-
-The rules above target the post-cutover state where SFYarp listens on
-`443`. During coexistence with the built-in proxy (see
-[§5.1](#51-deploy-sfyarp-on-your-sfrp-cluster) step 2), substitute
-your chosen HTTPS port (for example `8443`) for both
-`destinationPortRange` values.
-
-If your L7 terminates TLS and forwards plain HTTP to SFYarp (see the
-callout at the top of [§8](#8-tls-and-certificate-management)), use
-`destinationPortRange: "80"` instead.
-
-For **Front Door** as the edge instead of Application Gateway, use
-`sourceAddressPrefix: AzureFrontDoor.Backend` in the allow rule.
-Front Door reuses the backend port for its health probes (probes
-cannot be configured to use a separate port), so no additional NSG
-rule is needed.
-
-For **internal-only** ingress (no public IP), keep SFYarp behind an
-internal Azure Load Balancer and use `sourceAddressPrefix:
-VirtualNetwork` (or specific VNet CIDRs) — service tags aren't
-required and the deny-Internet rule is unnecessary.
-
----
+- **Coexistence port.** Until you complete
+  [§5.4](#54-turn-off-the-built-in-reverse-proxy), SFYarp listens on
+  your chosen coexistence port (typically `8443`), not `443`. Your
+  NSG allow rules must target the coexistence port during
+  cutover — swap `destinationPortRange` to `443` in the same edit
+  where you disable the built-in reverse proxy.
+- **Existing NSG rules for the built-in reverse proxy.** If today
+  you allow the L7 to reach the reverse proxy on `19081`, leave
+  that rule in place until [§5.4](#54-turn-off-the-built-in-reverse-proxy)
+  removes the built-in reverse proxy. Only then delete it — otherwise
+  a partial cutover leaves the built-in reverse proxy unreachable
+  while some traffic is still routed at it.
+- **Don't use the `ServiceFabric` service tag.** It targets the SF
+  management port (~19080), not the reverse-proxy port. Called out
+  again here because customers migrating off the built-in reverse
+  proxy often reach for that tag by name.
 
 ## 11. Limitations and behavior changes
 
-**Platform limits** — check these first:
-
-- **Windows-only.** No Linux support.
-- **HTTP/HTTPS only.** No TCP proxying.
+For SFYarp platform limits (Windows-only, HTTP/HTTPS only, SF 11.5+),
+see [README §Compatibility and
+limitations](../README.md#compatibility-and-limitations).
 
 **Caller-visible behavior changes** — existing clients will notice:
 
@@ -1585,89 +1006,53 @@ SFPKG blob for at least one rollback window matters.
 ## 13. Troubleshooting
 
 Start every SFYarp investigation by collecting logs. The symptom table
-in [§13.2](#132-common-symptoms-and-fixes) assumes you can see what SFYarp is
+in [§13.2](#132-common-migration-symptoms-and-fixes) assumes you can see what SFYarp is
 actually doing on the node.
 
 ### 13.1 Collecting SFYarp logs
 
-There are two complementary ways to get diagnostics out of SFYarp,
-in roughly the order you should reach for them:
+For general SFYarp log sources — the Windows Event Log source
+`YarpProxyLogs`, `ConsoleRedirection` for raw stdout/stderr during
+development, and centralized forwarding via the SF diagnostic
+extension — see [README §Collecting SFYarp
+logs](../README.md#collecting-sfyarp-logs).
 
-**1. Windows Event Viewer (quick per-node check).**
-SFYarp writes structured events to the Windows Event Log under the
-event source **`YarpProxyLogs`**. On any node running the proxy:
+**Migration-specific tip.** During
+[§5.3](#53-cut-over-client-traffic-to-sfyarp) coexistence, both the
+built-in reverse proxy and SFYarp are handling traffic. Correlate
+which one served a given request by the port (`19081` for built-in
+vs your chosen coexistence HTTPS port for SFYarp) — and, when a
+request was proxied by SFYarp, correlate the client-visible
+request-id header against `YarpProxyLogs` events on the node that
+answered.
 
-- Open Event Viewer → *Applications and Services Logs* → *YarpProxyLogs*
-  (or run `Get-WinEvent -LogName 'YarpProxyLogs'` from an elevated
-  PowerShell prompt).
-- Filter by time and severity to spot startup errors, cert-load
-  failures, and route-config problems.
-- **If `YarpProxyLogs` has nothing yet** (SFYarp failed before its
-  own logging came up), check the SF Hosting log
-  **`Microsoft-ServiceFabric/Admin`** for `ApplicationProcessExited`
-  events, which record the process `ExitCode`.
-  See [§13.2](#132-common-symptoms-and-fixes) for common
-  startup-failure signatures.
+If `YarpProxyLogs` has nothing yet on a given node (SFYarp failed
+before its own logging came up), check the SF Hosting log
+`Microsoft-ServiceFabric/Admin` for `ApplicationProcessExited`
+events. During Step 1 that's the fastest signal that the
+`fabric:/YarpProxyApp` deploy landed on some nodes but not others.
 
-This is useful when you're already RDP'd or live-siting a node and
-just need to know "did this instance come up cleanly?"
+### 13.2 Common migration symptoms and fixes
 
-**2. Console redirection to per-node log files.**
-If you need the raw stdout / stderr from `YarpProxy.Service` (for
-example, when reproducing a crash locally), enable **console
-redirection** in the SFYarp service manifest. Service Fabric will write the process's console output to a
-file under the application's work directory on each node — see
-[Set up logging: existing app](https://learn.microsoft.com/azure/service-fabric/service-fabric-deploy-existing-app#set-up-logging).
-
-Edit `YarpProxy.Service`'s `ServiceManifest.xml` and wrap the
-`ExeHost` code package with a `ConsoleRedirection` policy — for
-example:
-
-```xml
-<CodePackage Name="Code" Version="...">
-  <EntryPoint>
-    <ExeHost>
-      <Program>YarpProxy.Service.exe</Program>
-      <ConsoleRedirection FileRetentionCount="5" FileMaxSizeInKb="2048"/>
-    </ExeHost>
-  </EntryPoint>
-</CodePackage>
-```
-
-Then upgrade the SFYarp application. Log files land under the
-node's SFYarp application work directory (see the link above for the
-exact path). **Console redirection is a development / diagnostic
-tool, not a production setting.**
-
-**For centralized logging across a fleet**, treat SFYarp like any
-other Service Fabric service: forward the `YarpProxyLogs` event
-source (and the SF Hosting log) through the SF diagnostic extension
-to Azure Monitor / Log Analytics, or your existing telemetry
-pipeline.
-
-### 13.2 Common symptoms and fixes
+Migration-specific issues — the "used to work through the built-in
+reverse proxy, now broken" family:
 
 | Symptom | Likely cause | Where to look |
 |---|---|---|
-| SFMC nodetype deploy fails with `LinkedAuthorizationFailed` naming `Microsoft.ManagedIdentity/userAssignedIdentities/assign/action` on your user-assigned managed identity (UAMI) | The Service Fabric RP hasn't been granted `Managed Identity Operator` on the UAMI, so it can't attach the identity to the managed VMSS | Grant the SFMC RP the `Managed Identity Operator` role on the UAMI per the [SFMC managed-identity guide](https://learn.microsoft.com/en-us/azure/service-fabric/how-to-managed-identity-managed-cluster-virtual-machine-scale-sets), then retry |
-| 404 from SFYarp for a service that used to work through the built-in reverse proxy | Service was not opted in | Target service's `ServiceManifest.xml` `<Extensions>` block; [§5.2](#52-opt-in-a-service-with-labels) |
+| 404 from SFYarp for a service that used to work through the built-in reverse proxy | Service was not opted in with SFYarp labels | Target service's `ServiceManifest.xml` `<Extensions>` block; [§5.2](#52-opt-in-a-service-with-labels) |
 | SFYarp returns 404 for every path against a known-good backend | Client URL is missing the `/{AppName}/{ServiceName}/` prefix, or uses the built-in reverse proxy's `?PartitionKey=&PartitionKind=` query params which SFYarp doesn't honor | Rewrite the URL per [§6](#6-client-url-translation); for stateful backends use `?PartitionID=<guid>` per [§6.2](#62-stateful-int64-or-named) |
-| 502 Bad Gateway right after deploy | `AllowInsecureHttp=false` set on the route while the backend publishes an HTTP-only endpoint | Move the backend to HTTPS, or (dev/test only) drop the explicit `false` — SFYarp 2.x defaults to `true` |
-| TLS handshake fails on the HTTPS port; Windows System event log shows `Schannel` **Event 36870** with `0x8009030D` naming `YarpProxy.Service`, and `YarpProxyLogs` shows an `AuthenticationException` referencing the certificate thumbprint (with a matching private-key-resolution error in the Windows Application log) | Private-key ACL isn't set — Service Fabric grants private-key access only when the certificate is declared as `<EndpointCertificate>` in `ApplicationManifest.xml` | Add `<EndpointCertificate FindBySubjectName>` per [§8.4](#84-private-key-acls-for-sfyarp); confirm `KVVMExtension` has `setupOrder: ["BeforeSFRuntime"]` + `requireInitialSync: true` per [§8.3](#83-deploying-certificates-to-nodes). Manual `Set-Acl` against `%ProgramData%\Microsoft\Crypto\Keys` is a last resort and does not survive rotation |
-| TLS handshake succeeds but wrong certificate is served | Multiple certificates in `LocalMachine\My` — SNI picks by SAN | Ensure only the intended certificate has a matching SAN; [§8.2](#82-certificate-naming-sancn) |
-| `YarpProxy.Service` won't start; port bind fails | Port already in use (built-in reverse proxy still on the same port) | Move SFYarp to a coexistence port during Step 1 |
+| `YarpProxy.Service` won't start; port bind fails | Port already in use (built-in reverse proxy still on the same port during coexistence) | Move SFYarp to a coexistence port during [§5.1](#51-deploy-sfyarp-on-your-sfrp-cluster) step 2 |
 | `YarpProxy.Service` crash-loops with `RemoteConfigWorker … abort timeout` in `YarpProxyLogs`, or a `.NET Runtime` crash referencing `RemoteConfigWorker` in the Application event log | Application URI doesn't match `fabric:/YarpProxyApp`, which SFYarp uses to discover `FabricDiscovery.Service` | Redeploy the application as `fabric:/YarpProxyApp` (see [§5.1a](#51a-deploy-sfyarp-via-arm-recommended)) |
-| `FabricDiscovery.Service` restarts repeatedly | `AbortAfterConsecutiveFailures` reached | Check Naming Service health; raise `AbortAfterTimeoutInSeconds` |
-| Requests to a stateful service occasionally hit the wrong partition | Client isn't passing `PartitionID` | Client must pass `?PartitionID=<guid>`; [§6](#6-client-url-translation) |
-| Requests to a stateful service go to secondaries when you wanted primaries | Missing `StatefulReplicaSelectionMode=PrimaryOnly` label | Add the label; [§5.2](#52-opt-in-a-service-with-labels) |
-| Post-upgrade 502s from the L7 in front / Application Gateway marks the ingress backend pool unhealthy | L7 probe points at a business path that's now cold | Point the probe at a dedicated `/proxy-health` route; [§9.1](#91-health-probes) |
-| A label appears to be ignored | Typo or case inconsistency (`Healthcheck` vs `HealthCheck`) | Prefer camel-case `HealthCheck`; cross-check against [Appendix](#appendix--sfyarp-labels-reference) |
-| Newly-added nodes serve TLS errors for a few minutes after scale-out (SFMC) | KV VM extension hasn't finished installing certificates yet | Application must retry on cold start; [§8.5](#85-extension-ordering-race-on-sfmc-scale-out) |
-| SFYarp still serves the old certificate after a Key Vault rotation | The new certificate version hasn't propagated to the nodes yet, or SFYarp hasn't rescanned `LocalMachine\My` yet | [§8.7](#87-certificate-rotation) |
-| Backend rejects requests because `Host` header is the cluster FQDN, not the app hostname | SFYarp is not preserving original `Host` | Add `RequestHeaderOriginalHost=true` transform; [§8.6](#86-in-cluster-service-to-service-traffic) |
-| Client relied on `X-ServiceFabric` header | SFYarp doesn't emit it | Update client to switch on HTTP status code / body |
+| Client relied on the `X-ServiceFabric` response header (`NoRetry`, `ResourceNotFound`) | SFYarp doesn't emit that header | Update client to switch on HTTP status code / body; see [§6.5](#65-response-headers) and [§11](#11-limitations-and-behavior-changes) |
 
----
+For non-migration-specific symptoms — TLS handshake failures on the
+HTTPS port, wrong certificate served via SNI, Key Vault rotation
+lag, `Host` header rewrite by L7, SFMC scale-out extension-ordering
+race, `LinkedAuthorizationFailed` on managed identity assignment,
+generic label typos, L7 health-probe misconfiguration, stateful
+primary/secondary selection, and `AllowInsecureHttp` 502s — see
+[README §Troubleshooting](../README.md#troubleshooting).
+
 
 ## 14. FAQ
 
@@ -1685,7 +1070,7 @@ not run them on the same port.
 **Do I need to re-issue certificates?**
 Only if your current certificate doesn't have SANs for the hostnames SFYarp
 will serve. Existing wildcards work fine — SNI just needs a SAN match.
-See [§8.2](#82-certificate-naming-sancn) for cert-naming details.
+See [README §Certificate naming (SAN/CN)](../README.md#certificate-naming-sancn) for cert-naming details.
 
 **Can I convert built-in reverse-proxy config into SFYarp labels
 mechanically?**
@@ -1726,11 +1111,10 @@ The labels you'll typically add during a migration:
 
 **For the complete label catalog** — route matching, backend behavior,
 session affinity, load balancing, metadata, and every optional
-parameter — see the SFYarp repo's
-[Supported Labels](https://github.com/microsoft/service-fabric-yarp#supported-labels)
-section. That page is the source of truth and is updated with each
-release. This appendix intentionally covers only the migration
-essentials to avoid drift.
+parameter — see [README §Supported labels](../README.md#supported-labels).
+That page is the source of truth and is updated with each release.
+This appendix intentionally covers only the migration essentials to
+avoid drift.
 
 For the underlying YARP concepts (transforms, session affinity,
 health-check policies), see the
