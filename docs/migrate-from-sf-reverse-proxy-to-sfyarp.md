@@ -555,6 +555,12 @@ enables active health checks against `/`:
 </StatelessServiceType>
 ```
 
+> If your service publishes more than one listener (for example, both
+> HTTP and HTTPS endpoints declared, or an alternate named listener),
+> also set `Yarp.Backend.HealthCheck.Active.ServiceFabric.ListenerName`
+> so the probe hits the same endpoint the proxy routes to. See the
+> **Alternate listener** example below for the label pairing.
+
 Common recipes:
 
 - **Match by hostname:**
@@ -590,6 +596,13 @@ Common recipes:
   endpoints):
   ```xml
   <Label Key="Yarp.Backend.ServiceFabric.ListenerName">MyAltListener</Label>
+  ```
+  If active health checks are enabled and the service publishes more
+  than one listener, pin the probe target too — otherwise the
+  probe's endpoint selection is unpinned and may land on the wrong
+  (or an uninstantiated) endpoint:
+  ```xml
+  <Label Key="Yarp.Backend.HealthCheck.Active.ServiceFabric.ListenerName">MyAltListener</Label>
   ```
 - **Preserve the original `Host` header** to the backend (needed for
   backend SNI validation — see
@@ -1121,6 +1134,7 @@ The labels you'll typically add during a migration:
 | `Yarp.Routes.<name>.Hosts` | Comma-separated hostnames to match (multi-tenant) |
 | `Yarp.Backend.ServiceFabric.StatefulReplicaSelectionMode` | Replaces `?TargetReplicaSelector=`. Values: `PrimaryOnly` / `SecondaryOnly` / `All` |
 | `Yarp.Backend.ServiceFabric.ListenerName` | Replaces `?ListenerName=`. Picks a named endpoint when the service exposes several |
+| `Yarp.Backend.HealthCheck.Active.ServiceFabric.ListenerName` | Pins the active health-probe target when the service publishes multiple listeners |
 | `Yarp.Backend.HttpRequest.ActivityTimeout` | Replaces `?Timeout=`. Per-service request timeout, e.g. `00:00:30` |
 | `Yarp.Backend.HealthCheck.Active.Enabled` / `.Path` / `.Interval` / `.Timeout` | Proxy → backend active health checks (see [§5.3](#53-opt-in-a-service-with-labels)) |
 | `Yarp.Backend.HttpClient.SslProtocols` | e.g. `Tls12,Tls13` when the backend requires it |
