@@ -37,13 +37,12 @@ migration-specific concerns you may hit along the way. For general
 SFYarp product topics referenced from this guide — full TLS/cert
 setup, ARM deployment shape, L7 gateway configuration, NSG rules,
 placement/sizing, log collection, and the full label catalog — the
-[README](../README.md) is the canonical source; this guide points at
-it rather than duplicating.
+[README](../README.md) is the canonical source.
 
 It applies if you run one or more Service Fabric
-applications behind the built-in reverse proxy — the Service Fabric
+applications behind the built-in reverse proxy (the Service Fabric
 HTTP reverse-proxy component that listens on the "reverse proxy endpoint",
-commonly port 19081 — and need a replacement. Two situations
+commonly port `19081`) and need a replacement. Two situations
 typically drive this migration:
 
 - **You are moving to a Service Fabric managed cluster (SFMC).** The
@@ -84,7 +83,7 @@ same SFYarp application fronts every labeled service in the cluster.
    SFYarp to expose, add `Yarp.Enable=true` — plus any additional
    `Yarp.*` labels for routing, health checks, transforms, or load
    balancing — in its `ServiceManifest.xml`. See
-   [§5.2](#52-opt-in-a-service-with-labels).
+   [§5.3](#53-opt-in-a-service-with-labels).
 2. **Partition addressing changes.** `PartitionKind=` + `PartitionKey=`
    becomes `PartitionID=<guid>`. Replica-role and named-listener move
    from per-request query params to per-service labels — see
@@ -98,7 +97,7 @@ same SFYarp application fronts every labeled service in the cluster.
    ports and cut traffic to it while the built-in reverse proxy stays
    on as a safety net.
 2. Turn off the built-in reverse proxy in the cluster manifest.
-3. If moving to SFMC, migrate the cluster — the same SFYarp package
+3. If moving to SFMC, migrate the cluster. The same SFYarp package
    you validated on SFRP redeploys unchanged.
 
 ---
@@ -122,7 +121,7 @@ SFYarp [README](https://github.com/microsoft/service-fabric-yarp#readme).
 | TLS termination | http.sys, single cluster certificate | Kestrel + SNI, multiple certificates |
 | Config-change model | Cluster-manifest upgrade (cluster-wide) | Per-application upgrade |
 | Failure blast radius | Cluster-wide | Application-scoped |
-| Rollback | Cluster-manifest revert | `Start-ServiceFabricApplicationUpgradeRollback` |
+| Rollback | Cluster-manifest revert | ARM `version` flip to the previous `applicationTypes/versions` (or `Start-ServiceFabricApplicationUpgradeRollback` for an in-flight rollout) |
 
 **Client action items before you start.** Grep client code and SDK
 usage for the strings `PartitionKind`, `PartitionKey`,
@@ -138,32 +137,32 @@ Run this in three separate change windows so each step makes exactly
 one change and is independently reversible.
 
 ```
-    +---------------------------+
-    |  SFRP + built-in proxy    |
-    |  (baseline you have now)  |
-    +---------------------------+
+    +----------------------------------+
+    |  SFRP + built-in reverse proxy   |
+    |  (baseline you have now)         |
+    +----------------------------------+
                  |
                  |  Step 1: Deploy SFYarp on non-conflicting ports.
-                 |          Keep the built-in on; cut client traffic gradually.
+                 |          Keep the built-in reverse proxy on and cut client traffic gradually.
                  v
-    +---------------------------+
-    |  SFRP + SFYarp            |
-    |  built-in proxy still on  |
-    +---------------------------+
+    +----------------------------------+
+    |  SFRP + SFYarp                   |
+    |  built-in reverse proxy still on |
+    +----------------------------------+
                  |
-                 |  Step 2: Disable the built-in in the cluster manifest.
+                 |  Step 2: Disable the built-in reverse proxy in the cluster manifest.
                  |          Cluster is otherwise unchanged.
                  v
-    +---------------------------+
-    |  SFRP + SFYarp only       |
-    +---------------------------+
+    +----------------------------------+
+    |  SFRP + SFYarp only              |
+    +----------------------------------+
                  |
                  |  Step 3: Migrate the cluster to SFMC.
                  |          The SFYarp package redeploys unchanged.
                  v
-    +---------------------------+
-    |  SFMC + SFYarp            |
-    +---------------------------+
+    +----------------------------------+
+    |  SFMC + SFYarp                   |
+    +----------------------------------+
 ```
 
 Why this ordering matters:
@@ -175,7 +174,7 @@ Why this ordering matters:
   with a DNS or load-balancer flip.
 - **Step 2** removes the built-in reverse proxy from the cluster, but the
   cluster itself is unchanged. Any client regression here is easy to
-  correlate ("the built-in proxy went away") without mixing it with the
+  correlate ("the built-in reverse proxy went away") without mixing it with the
   SFMC move.
 - **Step 3** is the ARM-level cluster migration to SFMC. Because the
   reverse proxy is already the same package you validated in Steps 1
@@ -207,9 +206,9 @@ Before you deploy SFYarp anywhere:
       `PartitionKey`, `TargetReplicaSelector`, `ListenerName`,
       `X-ServiceFabric`, and `Timeout=` — see
       [§6](#6-client-url-translation).
-- [ ] **Ingress topology:** whether Application Gateway or Front Door
-      will sit in front of SFYarp — see
-      [§9](#9-l7-gateway-in-front-of-sfyarp).
+- [ ] **Ingress topology:** whether an L7 gateway (Azure Application
+      Gateway, Azure Front Door, NGINX, etc.) will sit in front of
+      SFYarp — see [§9](#9-l7-gateway-in-front-of-sfyarp).
 - [ ] **Capacity baseline:** plan a load test against SFYarp on your
       target VM SKU before cutting traffic — see
       [§7](#7-placement-and-sizing).
@@ -221,11 +220,11 @@ Before you deploy SFYarp anywhere:
       HTTPS port (for example `8443`) until cutover — see
       [§5.1](#51-deploy-sfyarp-on-your-sfrp-cluster).
 - [ ] **Rollback path:** confirm the L7 backend-pool edit that reverts
-      traffic to the built-in proxy — see [§12](#12-rollback-plan).
+      traffic to the built-in reverse proxy — see [§12](#12-rollback-plan).
 
 > **Ownership shifts to your team.** The built-in reverse proxy was a
 > platform component maintained by the SF runtime. SFYarp is an SF
-> application your team owns — upgrade cadence, alerts, capacity, and
+> application your team owns: upgrade cadence, alerts, capacity, and
 > rollouts are yours to run.
 
 ### 4.1 Inventory current services
@@ -255,7 +254,7 @@ Get-ServiceFabricApplication | ForEach-Object {
 
 Treat this CSV as your migration tracker — add `YarpLabels` (planned)
 and `MigratedOn` columns as you work through
-[§5.2](#52-opt-in-a-service-with-labels).
+[§5.3](#53-opt-in-a-service-with-labels).
 
 For every row, decide:
 
@@ -266,7 +265,7 @@ For every row, decide:
   `PartitionID=<guid>` — see [§6](#6-client-url-translation).
 - **Does it need a specific listener or replica role?** Check
   `ServiceManifest.xml` `<Endpoints>` for named listeners. Those
-  become per-service labels — see [§5.2](#52-opt-in-a-service-with-labels).
+  become per-service labels — see [§5.3](#53-opt-in-a-service-with-labels).
 - **What labels will it need?** Beyond `Yarp.Enable=true`, plan the
   routes, active health checks, and any request/response transforms
   the service needs. See the
@@ -283,37 +282,41 @@ For every row, decide:
    package. Download `service-fabric-yarp.zip` from the
    [GitHub Releases page](https://github.com/microsoft/service-fabric-yarp/releases)
    and extract it. You end up with a `YarpProxyApp` folder
-   containing the ApplicationPackageRoot layout — the rest of this
+   containing the ApplicationPackageRoot layout. The rest of this
    guide operates on that folder.
-2. **Decide the ports.** Pick ports that don't collide with the
-   built-in proxy's port (commonly 19081) or with anything else
-   already bound to 443 on the ingress node type. The shipped
-   defaults are `YarpProxy_HttpPort=8080` and
-   `YarpProxy_HttpsPort=443`. For coexistence with the built-in
-   proxy or other 443 ingress, override `YarpProxy_HttpsPort` to a
-   non-conflicting value (e.g., 8443) while cutting over. Switch
-   back to 443 after
-   [§5.4](#54-turn-off-the-built-in-reverse-proxy) turns off the
-   built-in proxy.
+2. **Decide the ports.** SFYarp's shipped defaults are
+   `YarpProxy_HttpPort=8080` and `YarpProxy_HttpsPort=443`. Two
+   constraints during migration:
+
+   - Don't collide with the built-in reverse proxy's port (commonly
+     `19081`).
+   - Don't collide with anything else already bound to `443` on the
+     ingress node type.
+
+   For coexistence with the built-in reverse proxy or other `443`
+   ingress, override `YarpProxy_HttpsPort` to a non-conflicting value
+   (for example `8443`) while cutting over. Switch back to `443`
+   after [§5.5](#55-turn-off-the-built-in-reverse-proxy) turns off
+   the built-in reverse proxy.
 
    > **In production, prefer HTTPS only.** Omit the HTTP port from the
    > LB/NSG in step 4.
 3. **Deploy the SFYarp application via ARM.** Author the SFYarp
    application in the same ARM / Bicep template that provisions the
-   cluster — see [§5.1a](#51a-deploy-sfyarp-via-arm-recommended) for
+   cluster — see [§5.2](#52-deploy-sfyarp-via-arm-recommended) for
    the resource shape and rotation flow. A PowerShell publish path
    for dev/test iteration on an already-running cluster is available
-   at the end of §5.1a.
+   at the end of §5.2.
 
 4. **Open the SFYarp port on the load balancer and NSG.** Open the
-   port on **both** the load balancer and the NSG — callers cannot
+   port on **both** the load balancer and the NSG: callers cannot
    reach SFYarp until both are in place.
 
-   - **Classic SFRP** — add a `loadBalancingRules` entry (frontend port
+   - **Classic SFRP.** Add a `loadBalancingRules` entry (frontend port
      → VMSS backend pool → TCP probe) to your public load balancer,
      add the port to the node type's `frontendPorts`, and add an
      inbound `Allow` rule to the VMSS's NSG.
-   - **SFMC** — add the rule to the `Microsoft.ServiceFabric/managedclusters`
+   - **SFMC.** Add the rule to the `Microsoft.ServiceFabric/managedclusters`
      resource, **not** the underlying VMSS (rules added at the VMSS
      level get reverted by SFMC reconciliation). Both
      `loadBalancingRules` and `networkSecurityRules` live under the
@@ -344,11 +347,14 @@ For every row, decide:
    See [§10](#10-network-lockdown-nsg-and-service-tags) for the
    NSG rule that restricts the source.
 
-5. **Label your first target service** (see [§5.2](#52-opt-in-a-service-with-labels)),
-   then send a request to SFYarp from a test machine and confirm it
-   lands on the intended backend.
+5. **Smoke test.** Label one non-critical service (see
+   [§5.3](#53-opt-in-a-service-with-labels)) and send a request to
+   SFYarp's port from a test machine. Confirm it lands on the
+   intended backend. This validates the end-to-end deployment before
+   the gradual production cutover in
+   [§5.4](#54-cut-over-client-traffic-to-sfyarp).
 
-### 5.1a Deploy SFYarp via ARM (recommended)
+### 5.2 Deploy SFYarp via ARM (recommended)
 
 Author the SFYarp application in the same ARM / Bicep template that
 provisions the cluster so app rollouts happen through the standard
@@ -385,14 +391,15 @@ path** (e.g. `sfyarp-packages/2.0.0/YarpProxyApp.sfpkg`) so previous
 versions remain available for rollback.
 
 > **Application name is fixed.** Deploy the application as
-> `fabric:/YarpProxyApp` exactly — `YarpProxy.Service` uses this
+> `fabric:/YarpProxyApp` exactly. `YarpProxy.Service` uses this
 > name to discover `FabricDiscovery.Service` in the cluster and it
 > can't be overridden through configuration. Any other name causes
 > `YarpProxy.Service` to crash-loop shortly after activation (see
 > [§13.2](#132-common-migration-symptoms-and-fixes)).
 
 **3. Reference the SFPKG from ARM.** Add two resources under
-`Microsoft.ServiceFabric/managedclusters`:
+`Microsoft.ServiceFabric/managedclusters` (a complete working
+example lives at [`docs/samples/sfmc-arm/cluster.json`](samples/sfmc-arm/cluster.json)):
 
 ```json
 [
@@ -400,12 +407,17 @@ versions remain available for rollback.
     "type":       "Microsoft.ServiceFabric/managedclusters/applicationTypes",
     "apiVersion": "2024-04-01",
     "name":       "[concat(parameters('clusterName'), '/YarpProxyAppType')]",
+    "location":   "[parameters('location')]",
+    "dependsOn":  [
+      "[resourceId('Microsoft.ServiceFabric/managedclusters', parameters('clusterName'))]"
+    ],
     "properties": {}
   },
   {
     "type":       "Microsoft.ServiceFabric/managedclusters/applicationTypes/versions",
     "apiVersion": "2024-04-01",
     "name":       "[concat(parameters('clusterName'), '/YarpProxyAppType/2.0.0')]",
+    "location":   "[parameters('location')]",
     "dependsOn":  [
       "[resourceId('Microsoft.ServiceFabric/managedclusters/applicationTypes', parameters('clusterName'), 'YarpProxyAppType')]"
     ],
@@ -417,6 +429,7 @@ versions remain available for rollback.
     "type":       "Microsoft.ServiceFabric/managedclusters/applications",
     "apiVersion": "2024-04-01",
     "name":       "[concat(parameters('clusterName'), '/YarpProxyApp')]",
+    "location":   "[parameters('location')]",
     "dependsOn":  [
       "[resourceId('Microsoft.ServiceFabric/managedclusters/applicationTypes/versions', parameters('clusterName'), 'YarpProxyAppType', '2.0.0')]"
     ],
@@ -438,27 +451,28 @@ versions remain available for rollback.
 Notes:
 
 - The application-type **name** (`YarpProxyAppType`) matches the type
-  name in the shipped `ApplicationManifest.xml` — do **not** rename it.
+  name in the shipped `ApplicationManifest.xml`. Do **not** rename it.
 - The version segment (`2.0.0`) matches the manifest version the
   release pipeline stamped in the shipped package.
 - `YarpProxy_InstanceCount = "-1"` means "one instance per eligible
   node". `YarpProxy_PlacementConstraints` limits eligibility to the
-  node types that should carry ingress — replace `FrontEnd` with your
+  node types that should carry ingress. Replace `FrontEnd` with your
   ingress node type. See [§7](#7-placement-and-sizing).
   `FabricDiscovery.Service` reuses `YarpProxy_PlacementConstraints`
-  from the shipped manifest — no separate parameter is exposed. For
+  from the shipped manifest. No separate parameter is exposed. For
   HTTPS cert-selector parameters, see
   [§8](#8-tls-and-certificate-management).
 - If your cluster template already provisions the node type with the
   KV VM extension (see
   [README §Deploying certificates to nodes](../README.md#deploying-certificates-to-nodes)),
-  no additional certificate plumbing is needed here — the SFYarp application
-  will find the certificate in `LocalMachine\My` at activation time.
+  no additional certificate plumbing is needed here. The SFYarp
+  application will find the certificate in `LocalMachine\My` at
+  activation time.
 
 **4. Upgrade to a new SFYarp version.** Fetch the new package version
 per [§5.1](#51-deploy-sfyarp-on-your-sfrp-cluster) step 1, then
-repeat steps 1–3 above — upload the new SFPKG to a **new**
-version-in-path blob (don't overwrite; SFMC rejects in-place
+repeat steps 1–3 above: upload the new SFPKG to a **new**
+version-in-path blob (don't overwrite, because SFMC rejects in-place
 `appPackageUrl` changes on an active version resource). Add a new
 `applicationTypes/versions` resource pointing at it, then flip the
 `applications` resource's `version` property to the new resource ID.
@@ -468,7 +482,7 @@ SFMC performs a monitored rolling upgrade honoring the cluster's
 and
 [Application upgrade parameters](https://learn.microsoft.com/azure/service-fabric/service-fabric-application-upgrade-parameters)
 for the full parameter surface. Rollback is the same `version` flip
-back to the previous resource ID — which is why version-in-path
+back to the previous resource ID, which is why version-in-path
 storage matters. Keep the previous SFPKG and its
 `applicationTypes/versions` resource around for at least one
 rollback window.
@@ -478,7 +492,7 @@ rollback window.
 
 For dev/test iteration on an already-running cluster you can publish
 the application from PowerShell instead of ARM. Do **not** use this
-for production — production rollouts should go through the ARM path
+for production. Production rollouts should go through the ARM path
 above so the deployment matches the rest of your infrastructure.
 
 ```powershell
@@ -499,7 +513,7 @@ New-ServiceFabricApplication `
         YarpProxy_InstanceCount        = "-1"
         YarpProxy_PlacementConstraints = "NodeType==FrontEnd"
         YarpProxy_HttpPort             = "8080"
-        YarpProxy_HttpsPort            = "8443"   # coexistence port; switch to 443 after §5.4
+        YarpProxy_HttpsPort            = "8443"   # coexistence port. Switch to 443 after §5.5
         FabricDiscovery_InstanceCount  = "-1"
         YarpProxyEnableTelemetry       = "true"
     }
@@ -516,7 +530,7 @@ Get-ServiceFabricApplication -ApplicationName fabric:/YarpProxyApp |
 
 </details>
 
-### 5.2 Opt in a service with labels
+### 5.3 Opt in a service with labels
 
 This is the biggest behavioral change from the built-in reverse proxy.
 **Every** service you want SFYarp to expose must add an `<Extensions>`
@@ -585,16 +599,16 @@ Common recipes:
   ```
 
 > **Containers.** Containerized SF services need no SFYarp-specific
-> configuration — opt them in with the same `ServiceManifest.xml`
+> configuration. Opt them in with the same `ServiceManifest.xml`
 > labels as any other service. SFYarp routes to whichever endpoint
 > SF publishes in the Naming Service.
 
-### 5.3 Cut over client traffic to SFYarp
+### 5.4 Cut over client traffic to SFYarp
 
 > **`Yarp.Enable=true` is additive.** Opting a service in makes it
 > reachable via SFYarp but does not remove it from the built-in
-> reverse proxy — both paths serve the service until you turn off the
-> built-in reverse proxy cluster-wide in [§5.4](#54-turn-off-the-built-in-reverse-proxy).
+> reverse proxy. Both paths serve the service until you turn off the
+> built-in reverse proxy cluster-wide in [§5.5](#55-turn-off-the-built-in-reverse-proxy).
 
 Once SFYarp is running and at least one service is labeled, roll it in
 behind your existing ingress in this order to avoid dropped traffic:
@@ -603,36 +617,36 @@ behind your existing ingress in this order to avoid dropped traffic:
    `/proxy-health` (or whichever route you've reserved for the L7
    probe — see [README §L7 gateway integration](../README.md#l7-gateway-integration)) before touching any
    ingress config.
-2. **Add SFYarp to the L7 backend pool** (Application Gateway, Front
-   Door, or whatever sits in front) as a *second* backend alongside the
-   built-in reverse proxy. Both proxies receive traffic — SFYarp
-   handles whatever it has labels for, and the built-in proxy handles
-   the rest.
-3. **Opt in services one at a time** (see [§5.2](#52-opt-in-a-service-with-labels)).
+2. **Add SFYarp to the L7 backend pool** (Azure Application Gateway,
+   Azure Front Door, NGINX, or any other L7 sitting in front) as a
+   *second* backend alongside the built-in reverse proxy. Both proxies
+   receive traffic: SFYarp handles whatever it has labels for, and the
+   built-in reverse proxy handles the rest.
+3. **Opt in services one at a time** (see [§5.3](#53-opt-in-a-service-with-labels)).
    Verify each service works through SFYarp before opting in the
    next. This is the point where you catch label misconfigurations,
    HTTPS-vs-HTTP mismatches, and route conflicts.
 4. **Drain the built-in reverse proxy** by removing it from the L7
    backend pool once all opted-in services are stable. Keep it
    running on the cluster for a rollback window.
-5. **Turn off the built-in reverse proxy** ([§5.4](#54-turn-off-the-built-in-reverse-proxy))
+5. **Turn off the built-in reverse proxy** ([§5.5](#55-turn-off-the-built-in-reverse-proxy))
    only after the rollback window passes with no incidents.
 
 Do **not** put both proxies behind the same LB pool without an L7 in
 front doing path-based selection. Clients will hit either proxy at
-random, and response semantics differ — behavior will be inconsistent.
+random, and response semantics differ. Behavior will be inconsistent.
 
 > **No L7 in front?** If clients hit the LB directly, cut over by
 > pointing the LB frontend port at SFYarp's backend port instead of
-> the built-in proxy's — a single LB rule swap. Rollback is the
+> the built-in reverse proxy's: a single LB rule swap. Rollback is the
 > reverse swap. Both proxies keep running on their own ports during
 > the transition.
 
-### 5.4 Turn off the built-in reverse proxy
+### 5.5 Turn off the built-in reverse proxy
 
 > **SFMC skip.** This section only applies on SFRP. SFMC never shipped
 > the built-in reverse proxy — there is nothing to turn off. If you
-> are on SFMC, continue to [§5.5](#55-move-the-cluster-to-sfmc).
+> are on SFMC, continue to [§5.6](#56-move-the-cluster-to-sfmc).
 
 After a full soak with SFYarp handling 100% of traffic:
 
@@ -654,32 +668,39 @@ After a full soak with SFYarp handling 100% of traffic:
 4. Update NSG rules and LB rules so the old port is no longer routed.
 5. Apply the cluster-manifest upgrade (SFRP: ARM template update).
 6. If you had been running SFYarp on non-standard ports (e.g. 8443 for
-   coexistence), you can now switch it to 443 via
-   `Start-ServiceFabricApplicationUpgrade` with new port parameters.
+   coexistence), you can now switch it to 443 by updating the
+   `applications` resource in ARM with `YarpProxy_HttpsPort="443"`
+   and redeploying (see [§5.2](#52-deploy-sfyarp-via-arm-recommended)
+   step 4).
 
-### 5.5 Move the cluster to SFMC
+### 5.6 Move the cluster to SFMC
 
 Perform your normal SFRP → SFMC migration. Because the SFYarp package
 is already validated on SFRP:
 
 - Author the SFYarp application in the same ARM / Bicep template that
   provisions the managed cluster — see
-  [§5.1a](#51a-deploy-sfyarp-via-arm-recommended). Since §5.1a is
+  [§5.2](#52-deploy-sfyarp-via-arm-recommended). Since §5.2 is
   already how you deployed SFYarp on SFRP, the SFMC deployment shares
   the same template shape.
-- Labels travel with the application package — no re-labeling needed
+- Labels travel with the application package. No re-labeling needed
   on SFMC.
-- Cut traffic the same way as [§5.3](#53-cut-over-client-traffic-to-sfyarp). See [§9](#9-l7-gateway-in-front-of-sfyarp) if Application Gateway or Front Door sits in front.
+- **Cut traffic from the SFRP cluster to the SFMC cluster** at your
+  DNS or global load balancer. This is a cluster-level ingress swap,
+  not the proxy-level swap covered in
+  [§5.4](#54-cut-over-client-traffic-to-sfyarp) — SFYarp is already
+  the reverse proxy on both clusters. Shift traffic gradually and
+  keep the SFRP cluster running for a rollback window.
 
 ---
 
 ## 6. Client URL translation
 
-> **Path-prefix note.** SFYarp preserves the built-in proxy's
+> **Path-prefix note.** SFYarp preserves the built-in reverse proxy's
 > `/{AppName}/{ServiceName}/…` path prefix (see the base-URL columns
 > in the tables below). Only the query-string contract changes. Calls
-> to bare backend paths — for example `/hello` instead of
-> `/PingerApp/PingerService/hello` — return 404. See
+> to bare backend paths (for example `/hello` instead of
+> `/PingerApp/PingerService/hello`) return 404. See
 > [§13.2](#132-common-migration-symptoms-and-fixes).
 
 > The built-in reverse proxy's URL contract is documented on
@@ -699,7 +720,7 @@ is already validated on SFRP:
 |---|---|---|
 | Base URL | `https://cluster:19081/App1/Api/orders?PartitionKind=Int64Range&PartitionKey=5` | `https://cluster:8443/App1/Api/orders?PartitionID=<guid-of-partition-5>` |
 | Partition GUID discovery | Not needed — the proxy resolves it | Client resolves once with `Get-ServiceFabricPartition` (or the equivalent SDK call) and caches the GUID per key |
-| Target replica role | Per-request `&TargetReplicaSelector=`; default is `PrimaryReplica` | Per-service label `Yarp.Backend.ServiceFabric.StatefulReplicaSelectionMode`; default is `PrimaryOnly` |
+| Target replica role | Per-request `&TargetReplicaSelector=`. Default is `PrimaryReplica` | Per-service label `Yarp.Backend.ServiceFabric.StatefulReplicaSelectionMode`. Default is `PrimaryOnly` |
 
 **Resolving the partition GUID from client code.** For most stateful
 callers this is the largest client-side change of the migration. Do it
@@ -775,16 +796,16 @@ or accept default primary routing.
 
 | Aspect | Built-in | SFYarp |
 |---|---|---|
-| Per-request override | `?Timeout=30` (seconds); default is 120 seconds | Not per request; set the label `Yarp.Backend.HttpRequest.ActivityTimeout=00:00:30` on the target service |
+| Per-request override | `?Timeout=30` (seconds). Default is 120 seconds | Not per request. Set the label `Yarp.Backend.HttpRequest.ActivityTimeout=00:00:30` on the target service |
 
-Callers that never set `Timeout=` explicitly relied on the built-in's
-120-second default. Set an explicit `ActivityTimeout` label on migrated
-services if that timeout mattered to your workload — the YARP
-default is shorter (100 seconds).
+Callers that never set `Timeout=` explicitly relied on the built-in
+reverse proxy's 120-second default. Set an explicit `ActivityTimeout`
+label on migrated services if that timeout mattered to your workload.
+The YARP default is shorter (100 seconds).
 
 ### 6.5 Response headers
 
-The built-in proxy emits `X-ServiceFabric: NoRetry` on failures the
+The built-in reverse proxy emits `X-ServiceFabric: NoRetry` on failures the
 gateway won't retry, and `X-ServiceFabric: ResourceNotFound` on
 name-resolution misses. SFYarp emits **neither**. Clients that switch
 on these must be updated to look at HTTP status code and body only.
@@ -794,10 +815,10 @@ on these must be updated to look at HTTP status code and body only.
 ## 7. Placement and sizing
 
 Position SFYarp on the same node type(s) that already carry your
-ingress-facing services on the SFRP cluster today — same fault
+ingress-facing services on the SFRP cluster today (same fault
 domain, upgrade domain, and public load balancer backend pool as the
-built-in reverse proxy. This preserves the traffic shape during
-coexistence in [§5.3](#53-cut-over-client-traffic-to-sfyarp).
+built-in reverse proxy). This preserves the traffic shape during
+coexistence in [§5.4](#54-cut-over-client-traffic-to-sfyarp).
 
 Use `InstanceCount = -1` on both `YarpProxy.Service` and
 `FabricDiscovery.Service`, and constrain placement to the ingress
@@ -813,24 +834,26 @@ governance](../README.md#placement-sizing-and-resource-governance).
 
 ## 8. TLS and certificate management
 
+> **Does this section apply to you?** If your L7 gateway in front
+> terminates TLS and forwards plain HTTP to SFYarp, you can skip
+> most of this section (no server certificate needed on SFYarp),
+> but you must lock down the L7-to-SFYarp path via NSG. See
+> [§10](#10-network-lockdown-nsg-and-service-tags).
+
 TLS setup is the most common source of migration surprises. For the
-full green-field TLS setup — SNI mechanics, certificate SAN/CN
-naming, deploying certs to nodes via the Azure Key Vault VM extension
-or `vmSecrets`, private-key ACLs via `<EndpointCertificate>`, the
-extension-ordering race on SFMC scale-out, certificate rotation,
-in-cluster service-to-service patterns, and SFYarp-to-backend TLS —
-see [README §TLS and certificates](../README.md#tls-and-certificates).
-That is the canonical source. This section calls out
-**migration-specific considerations** on top of it.
+full green-field TLS setup, see [README §TLS and
+certificates](../README.md#tls-and-certificates). That is the
+canonical source. This section calls out **migration-specific
+considerations** on top of it.
 
 **HTTPS-first defaults during migration.**
 
-- Terminate TLS on port 443 (or your chosen HTTPS port). Do not
+- Terminate TLS on port `443` (or your chosen HTTPS port). Do not
   expose the HTTP port publicly — see
   [§5.1](#51-deploy-sfyarp-on-your-sfrp-cluster) step 2.
 - Reject HTTP-only backend endpoints per route with
   `Yarp.Backend.AllowInsecureHttp=false` — see
-  [§5.2](#52-opt-in-a-service-with-labels).
+  [§5.3](#53-opt-in-a-service-with-labels).
 - Require modern TLS versions on backend calls with
   `Yarp.Backend.HttpClient.SslProtocols=Tls12,Tls13` when backends
   need it.
@@ -839,61 +862,59 @@ That is the canonical source. This section calls out
 
 - **Reuse or replace the existing cluster certificate.** If your
   cluster today uses a wildcard or SAN certificate that already
-  covers SFYarp's hostname, reuse it — no new cert needed. If it
+  covers SFYarp's hostname, reuse it. No new cert needed. If it
   does not, provision a new one (public CA, private CA, or Azure
-  Key Vault-generated cert all work; see
-  [README §TLS and certificates](../README.md#tls-and-certificates)).
+  Key Vault-generated cert all work). See
+  [README §TLS and certificates](../README.md#tls-and-certificates).
 - **Deploy the SFYarp certificate before you label any service.**
   The cert must be present in `LocalMachine\My` on ingress nodes
   *before* the first service you opt in via
-  [§5.2](#52-opt-in-a-service-with-labels) starts receiving traffic.
+  [§5.3](#53-opt-in-a-service-with-labels) starts receiving traffic.
   Otherwise SFYarp activates without a cert and clients see TLS
   handshake failures during your first cutover attempt.
-- **`SecretsCertificate` vs `EndpointCertificate` asymmetry.** If any
+- **`SecretsCertificate` vs `EndpointCertificate`.** If any
   cert-consuming code paths in the SFYarp app package need Service
   Fabric-managed private-key ACLs, declare the cert as
   `<EndpointCertificate>` in `ApplicationManifest.xml`, **not** as
   `<SecretsCertificate>`. SF gates service activation on
-  `EndpointCertificate` presence — which prevents the SFMC
-  extension-ordering race from silently starting SFYarp without a
-  cert on scale-out. See [README §Private key ACLs
-  (`<EndpointCertificate>` declaration)](../README.md#private-key-acls-endpointcertificate-declaration).
+  `<EndpointCertificate>` presence, which also acts as a safety net
+  against the SFMC extension-ordering race on scale-out. On newer
+  SFMC API versions (`2023-09-01-preview` or later) the primary fix
+  is `setupOrder: ["BeforeSFRuntime"]` + `requireInitialSync: true`
+  on the KV VM extension. This gating matters most on older API
+  versions where `setupOrder` isn't available. See [README §Private
+  key ACLs (`<EndpointCertificate>` declaration)](../README.md#private-key-acls-endpointcertificate-declaration)
+  and [README §Extension ordering race on SFMC scale-out](../README.md#extension-ordering-race-on-sfmc-scale-out).
 - **Coexistence period.** During
-  [§5.3](#53-cut-over-client-traffic-to-sfyarp) the built-in reverse
-  proxy still fronts port 19081 with the cluster cert. SFYarp uses
+  [§5.4](#54-cut-over-client-traffic-to-sfyarp) the built-in reverse
+  proxy still fronts port `19081` with the cluster cert. SFYarp uses
   its own cert on 443. The two certs can be identical or different —
   independent code paths, no interaction.
 
-> **Does this section apply to you?** If your L7 gateway in front
-> terminates TLS and forwards plain HTTP to SFYarp, you can skip
-> most of §8 — no server certificate needed on SFYarp — but you
-> must lock down the L7-to-SFYarp path via NSG. See
-> [§10](#10-network-lockdown-nsg-and-service-tags).
-
 ## 9. L7 gateway in front of SFYarp
 
-If your migration includes swapping backend pools on an existing L7
-gateway (Application Gateway or Front Door) from the built-in
-reverse proxy to SFYarp, the migration-specific concern is the
-**backend pool swap sequence**:
+SFYarp doesn't care what L7 gateway sits in front of it (Azure
+Application Gateway, Azure Front Door, NGINX, etc. all work the same
+way). If your migration includes swapping backend pools on an existing
+L7 gateway from the built-in reverse proxy to SFYarp, the
+migration-specific concern is the **backend pool swap sequence**:
 
 1. Deploy SFYarp as a *new* backend pool alongside the existing
    built-in reverse proxy pool. Do not modify the existing pool.
-2. Add SFYarp to the L7 routing rules with a small traffic weight
-   (or a shadow path) so you can measure real traffic before
-   switching.
+2. Add SFYarp to the L7 routing rules with a small traffic share so
+   you can measure real traffic before switching.
 3. Shift traffic weight from the built-in reverse proxy pool to
-   SFYarp per [§5.3](#53-cut-over-client-traffic-to-sfyarp).
+   SFYarp per [§5.4](#54-cut-over-client-traffic-to-sfyarp).
 4. Once cut over is complete and stable, remove the built-in reverse
    proxy pool.
 
 For **all other L7 configuration** — dedicated `/proxy-health` probe
-routes, preserving the client `Host` header on the backend hop
-(Application Gateway `pickHostNameFromBackendAddress`, Front Door
-*Origin host header*), and `X-Forwarded-*` header ownership — see
+routes, preserving the client `Host` header on the backend hop (each
+L7 has its own option name for this), and `X-Forwarded-*` header
+ownership — see
 [README §L7 gateway integration](../README.md#l7-gateway-integration).
-That configuration is the same on SFRP and SFMC and is not migration-
-specific.
+That configuration is the same on SFRP and SFMC and is not
+migration-specific.
 
 ---
 
@@ -901,7 +922,8 @@ specific.
 
 The NSG shape for locking SFYarp down behind an L7 gateway is not
 migration-specific. For the full walkthrough — source-address prefix
-choice per L7 type, `AzureFrontDoor.Backend` service tag, SFMC's
+choice per L7 type (including Azure service tags such as
+`AzureFrontDoor.Backend` when Front Door is the L7), SFMC's
 `networkSecurityRules` mechanism vs. direct VMSS NSG edits, SFMC's
 1000–3000 priority window, and internal-only patterns — see
 [README §Network lockdown](../README.md#network-lockdown-nsg-and-service-tags).
@@ -909,15 +931,15 @@ choice per L7 type, `AzureFrontDoor.Backend` service tag, SFMC's
 **Migration-specific considerations:**
 
 - **Coexistence port.** Until you complete
-  [§5.4](#54-turn-off-the-built-in-reverse-proxy), SFYarp listens on
+  [§5.5](#55-turn-off-the-built-in-reverse-proxy), SFYarp listens on
   your chosen coexistence port (typically `8443`), not `443`. Your
   NSG allow rules must target the coexistence port during
-  cutover — swap `destinationPortRange` to `443` in the same edit
+  cutover. Swap `destinationPortRange` to `443` in the same edit
   where you disable the built-in reverse proxy.
 - **Existing NSG rules for the built-in reverse proxy.** If today
   you allow the L7 to reach the reverse proxy on `19081`, leave
-  that rule in place until [§5.4](#54-turn-off-the-built-in-reverse-proxy)
-  removes the built-in reverse proxy. Only then delete it — otherwise
+  that rule in place until [§5.5](#55-turn-off-the-built-in-reverse-proxy)
+  removes the built-in reverse proxy. Only then delete it. Otherwise
   a partial cutover leaves the built-in reverse proxy unreachable
   while some traffic is still routed at it.
 - **Don't use the `ServiceFabric` service tag.** It targets the SF
@@ -931,17 +953,17 @@ For SFYarp platform limits (Windows-only, HTTP/HTTPS only, SF 11.5+),
 see [README §Compatibility and
 limitations](../README.md#compatibility-and-limitations).
 
-**Caller-visible behavior changes** — existing clients will notice:
+**Caller-visible behavior changes.** Existing clients will notice:
 
 - **Services without labels return 404** instead of being
-  auto-exposed. See [§5.2](#52-opt-in-a-service-with-labels).
+  auto-exposed. See [§5.3](#53-opt-in-a-service-with-labels).
 - **`PartitionID=<guid>` only** ([§6](#6-client-url-translation)). No
   `PartitionKind` + `PartitionKey` translation at the proxy. Callers
   resolve the partition GUID once and cache per key.
 - **`X-ServiceFabric` response header is not emitted**
   ([§6.5](#65-response-headers)). Clients that switch on
   `NoRetry` / `ResourceNotFound` must move to HTTP status codes.
-- **No implicit retry on 404.** The built-in proxy re-resolves service
+- **No implicit retry on 404.** The built-in reverse proxy re-resolves service
   address on 404 (unless the backend sends
   `X-ServiceFabric: ResourceNotFound`). SFYarp passes 404 through.
   Services relying on this (typically http.sys / port-sharing hosts)
@@ -956,16 +978,16 @@ limitations](../README.md#compatibility-and-limitations).
   `YarpProxyEnableTelemetry=false` to avoid egressing telemetry
   across sovereign-cloud boundaries.
 
-**Not affected by the migration** — these keep working unchanged:
+**Not affected by the migration.** These keep working unchanged:
 
 - **SF Remoting** (`FabricTransport` / V2 remoting). Clients resolve
   endpoints through the SF Naming Service, not through any HTTP
   reverse proxy. Turning off the built-in reverse proxy has no
   impact on remoting traffic.
-- **Direct Naming Service resolution** used by any code path that
-  reaches the backend without going through the built-in reverse
-  proxy (for example, `ServicePartitionResolver` in the SF client
-  SDK).
+- **Direct Naming Service resolution.** Any code path that reaches
+  backends without going through the built-in reverse proxy (for
+  example, `ServicePartitionResolver` in the SF client SDK) keeps
+  working unchanged.
 
 ---
 
@@ -976,7 +998,7 @@ Rollback depends on how far you've progressed:
 - **After Step 1 (SFRP + SFYarp coexisting).** Flip DNS or the LB back
   to the built-in reverse proxy port. You can delete
   `fabric:/YarpProxyApp` at leisure. Service-manifest labels added in
-  [§5.2](#52-opt-in-a-service-with-labels) are inert without SFYarp
+  [§5.3](#53-opt-in-a-service-with-labels) are inert without SFYarp
   routing — no need to revert them.
 - **After Step 2 (built-in disabled on SFRP).** Re-enable the built-in
   reverse proxy through a cluster-manifest upgrade: set
@@ -984,7 +1006,7 @@ Rollback depends on how far you've progressed:
   endpoint to each node type. A cluster-manifest upgrade rolls out over
   roughly one UD cycle.
 - **After Step 3 (moved to SFMC).** You cannot roll back to the
-  built-in reverse proxy on SFMC — it does not exist there. The
+  built-in reverse proxy on SFMC (it does not exist there). The
   rollback target is the previous SFRP cluster, which should remain in
   place (or be re-createable from ARM template) until you're confident
   in the SFMC cutover.
@@ -997,7 +1019,7 @@ cutover.
 SFYarp application upgrade without touching the ingress topology,
 flip the `applications` resource's `version` property in ARM back to
 the previous `applicationTypes/versions` resource ID — see
-[§5.1a](#51a-deploy-sfyarp-via-arm-recommended) step 4. This is why
+[§5.2](#52-deploy-sfyarp-via-arm-recommended) step 4. This is why
 keeping the previous `applicationTypes/versions` resource and its
 SFPKG blob for at least one rollback window matters.
 
@@ -1018,13 +1040,12 @@ extension — see [README §Collecting SFYarp
 logs](../README.md#collecting-sfyarp-logs).
 
 **Migration-specific tip.** During
-[§5.3](#53-cut-over-client-traffic-to-sfyarp) coexistence, both the
+[§5.4](#54-cut-over-client-traffic-to-sfyarp) coexistence, both the
 built-in reverse proxy and SFYarp are handling traffic. Correlate
 which one served a given request by the port (`19081` for built-in
-vs your chosen coexistence HTTPS port for SFYarp) — and, when a
-request was proxied by SFYarp, correlate the client-visible
-request-id header against `YarpProxyLogs` events on the node that
-answered.
+vs your chosen coexistence HTTPS port for SFYarp). When a request
+was proxied by SFYarp, correlate the client-visible request-id
+header against `YarpProxyLogs` events on the node that answered.
 
 If `YarpProxyLogs` has nothing yet on a given node (SFYarp failed
 before its own logging came up), check the SF Hosting log
@@ -1034,24 +1055,21 @@ events. During Step 1 that's the fastest signal that the
 
 ### 13.2 Common migration symptoms and fixes
 
-Migration-specific issues — the "used to work through the built-in
-reverse proxy, now broken" family:
+Migration-specific issues (the "used to work through the built-in
+reverse proxy, now broken" family):
 
 | Symptom | Likely cause | Where to look |
 |---|---|---|
-| 404 from SFYarp for a service that used to work through the built-in reverse proxy | Service was not opted in with SFYarp labels | Target service's `ServiceManifest.xml` `<Extensions>` block; [§5.2](#52-opt-in-a-service-with-labels) |
-| SFYarp returns 404 for every path against a known-good backend | Client URL is missing the `/{AppName}/{ServiceName}/` prefix, or uses the built-in reverse proxy's `?PartitionKey=&PartitionKind=` query params which SFYarp doesn't honor | Rewrite the URL per [§6](#6-client-url-translation); for stateful backends use `?PartitionID=<guid>` per [§6.2](#62-stateful-int64-or-named) |
-| `YarpProxy.Service` won't start; port bind fails | Port already in use (built-in reverse proxy still on the same port during coexistence) | Move SFYarp to a coexistence port during [§5.1](#51-deploy-sfyarp-on-your-sfrp-cluster) step 2 |
-| `YarpProxy.Service` crash-loops with `RemoteConfigWorker … abort timeout` in `YarpProxyLogs`, or a `.NET Runtime` crash referencing `RemoteConfigWorker` in the Application event log | Application URI doesn't match `fabric:/YarpProxyApp`, which SFYarp uses to discover `FabricDiscovery.Service` | Redeploy the application as `fabric:/YarpProxyApp` (see [§5.1a](#51a-deploy-sfyarp-via-arm-recommended)) |
-| Client relied on the `X-ServiceFabric` response header (`NoRetry`, `ResourceNotFound`) | SFYarp doesn't emit that header | Update client to switch on HTTP status code / body; see [§6.5](#65-response-headers) and [§11](#11-limitations-and-behavior-changes) |
+| 404 from SFYarp for a service that used to work through the built-in reverse proxy | Service was not opted in with SFYarp labels | Target service's `ServiceManifest.xml` `<Extensions>` block. See [§5.3](#53-opt-in-a-service-with-labels) |
+| SFYarp returns 404 for every path against a known-good backend | Client URL is missing the `/{AppName}/{ServiceName}/` prefix, or uses the built-in reverse proxy's `?PartitionKey=&PartitionKind=` query params which SFYarp doesn't honor | Rewrite the URL per [§6](#6-client-url-translation). For stateful backends use `?PartitionID=<guid>` per [§6.2](#62-stateful-int64-or-named) |
+| `YarpProxy.Service` won't start (port bind fails) | Port already in use (built-in reverse proxy still on the same port during coexistence) | Move SFYarp to a coexistence port during [§5.1](#51-deploy-sfyarp-on-your-sfrp-cluster) step 2 |
+| `YarpProxy.Service` crash-loops with `RemoteConfigWorker … abort timeout` in `YarpProxyLogs`, or a `.NET Runtime` crash referencing `RemoteConfigWorker` in the Application event log | Application URI doesn't match `fabric:/YarpProxyApp`, which SFYarp uses to discover `FabricDiscovery.Service` | Redeploy the application as `fabric:/YarpProxyApp` (see [§5.2](#52-deploy-sfyarp-via-arm-recommended)) |
+| Client relied on the `X-ServiceFabric` response header (`NoRetry`, `ResourceNotFound`) | SFYarp doesn't emit that header | Update client to switch on HTTP status code / body. See [§6.5](#65-response-headers) and [§11](#11-limitations-and-behavior-changes) |
 
-For non-migration-specific symptoms — TLS handshake failures on the
-HTTPS port, wrong certificate served via SNI, Key Vault rotation
-lag, `Host` header rewrite by L7, SFMC scale-out extension-ordering
-race, `LinkedAuthorizationFailed` on managed identity assignment,
-generic label typos, L7 health-probe misconfiguration, stateful
-primary/secondary selection, and `AllowInsecureHttp` 502s — see
-[README §Troubleshooting](../README.md#troubleshooting).
+For any symptom that isn't specifically about migrating off the
+built-in reverse proxy, see [README
+§Troubleshooting](../README.md#troubleshooting) for the general
+SFYarp troubleshooting reference.
 
 
 ## 14. FAQ
@@ -1104,9 +1122,9 @@ The labels you'll typically add during a migration:
 | `Yarp.Backend.ServiceFabric.StatefulReplicaSelectionMode` | Replaces `?TargetReplicaSelector=`. Values: `PrimaryOnly` / `SecondaryOnly` / `All` |
 | `Yarp.Backend.ServiceFabric.ListenerName` | Replaces `?ListenerName=`. Picks a named endpoint when the service exposes several |
 | `Yarp.Backend.HttpRequest.ActivityTimeout` | Replaces `?Timeout=`. Per-service request timeout, e.g. `00:00:30` |
-| `Yarp.Backend.HealthCheck.Active.Enabled` / `.Path` / `.Interval` / `.Timeout` | Proxy → backend active health checks (see [§5.2](#52-opt-in-a-service-with-labels)) |
+| `Yarp.Backend.HealthCheck.Active.Enabled` / `.Path` / `.Interval` / `.Timeout` | Proxy → backend active health checks (see [§5.3](#53-opt-in-a-service-with-labels)) |
 | `Yarp.Backend.HttpClient.SslProtocols` | e.g. `Tls12,Tls13` when the backend requires it |
-| `Yarp.Backend.AllowInsecureHttp` | Allow SFYarp to forward to a plain-HTTP backend. Current default is `true` — set to `false` explicitly on every production route |
+| `Yarp.Backend.AllowInsecureHttp` | Allow SFYarp to forward to a plain-HTTP backend. Current default is `true`. Set to `false` explicitly on every production route |
 | `Yarp.Routes.<name>.Transforms.[N].*` | Header add / remove / rename, path transforms |
 
 **For the complete label catalog** — route matching, backend behavior,

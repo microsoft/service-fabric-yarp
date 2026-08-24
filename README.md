@@ -3,13 +3,13 @@
 **SFYarp** is a self-contained HTTP/HTTPS reverse proxy for Service
 Fabric, built on [Microsoft YARP](https://github.com/dotnet/yarp). It
 watches your cluster for services that opt in via
-`ServiceManifest.xml` labels and forwards inbound traffic to them —
+`ServiceManifest.xml` labels and forwards inbound traffic to them,
 with SNI-based TLS, active health probes, header transforms, and the
 rest of YARP's routing surface.
 
 SFYarp runs on **Service Fabric managed clusters (SFMC)** and on
 classic **Service Fabric Resource Provider (SFRP)** clusters. On SFMC
-it is the recommended reverse-proxy option — the SF built-in reverse
+it is the recommended reverse-proxy option. The SF built-in reverse
 proxy is not available on managed clusters.
 
 > **Latest release.** SFYarp ships as a signed `.sfpkg` on the
@@ -120,19 +120,12 @@ only — no TCP proxying, no non-HTTP protocols. See
 Moving off the SF built-in reverse proxy (the HTTP reverse-proxy
 component on port 19081) onto SFYarp is a distinct workflow with its
 own coexistence-and-cutover concerns. See the dedicated playbook:
+[**Migrating from the Service Fabric Reverse Proxy to SFYarp**](docs/migrate-from-sf-reverse-proxy-to-sfyarp.md).
 
-- [**Migrating from the Service Fabric Reverse Proxy to SFYarp**](docs/migrate-from-sf-reverse-proxy-to-sfyarp.md)
-
-That guide covers the recommended coexistence-then-cutover path,
-per-service label opt-in, client URL translation (partition
-addressing, listener names), TLS/certificate deployment during
-coexistence, network lockdown updates, rollback, and
-migration-specific troubleshooting.
-
-This README is the canonical reference for **product-level topics**
-(architecture, deployment, labels, TLS setup, L7 integration,
-diagnostics). The migration guide points at this README for depth
-and only covers migration-specific concerns.
+That guide covers the recommended coexistence-then-cutover path.
+This README is the canonical reference for product-level topics. The
+migration guide points at this README for depth and only covers
+migration-specific concerns.
 
 ## Compatibility and limitations
 
@@ -146,14 +139,13 @@ and only covers migration-specific concerns.
 **Platform.**
 
 - **Windows-only.** `win-x64` runtime identifier. No Linux support.
-- **HTTP / HTTPS only.** No TCP proxying. Standard YARP HTTP/2
-  request forwarding works; SFYarp does not support bidirectional
-  gRPC streaming.
+- **HTTP / HTTPS only.** No TCP proxying, no non-HTTP protocols.
+  Standard YARP HTTP/2 request forwarding works.
 
 **Behavior notes.**
 
 - **Services are exposed only if labeled.** SFYarp does not
-  auto-expose every service in the cluster — a service without
+  auto-expose every service in the cluster. A service without
   `Yarp.Enable=true` returns 404 through SFYarp. This is intentional:
   the SF built-in reverse proxy auto-exposed every reachable
   service, which is not the safe default for a public ingress point.
@@ -163,17 +155,16 @@ and only covers migration-specific concerns.
   GUID once via SF Naming and pass it directly. See
   [§URI format for addressing services](#uri-format-for-addressing-services).
 - **One endpoint per replica.** For a service replica that publishes
-  multiple named endpoints, only one is selected — controlled by
+  multiple named endpoints, only one is selected, controlled by
   the `Yarp.Backend.ServiceFabric.ListenerName` label. See
   [§Replica endpoint selection](#replica-endpoint-selection).
 
 ## How it works
 
-SFYarp sits between an L7 edge (Azure Application Gateway or Azure
-Front Door, typically) and your Service Fabric services:
+SFYarp sits between an L7 gateway and your Service Fabric services:
 
 ```text
-Client  --HTTPS-->  Application Gateway / Front Door  --HTTPS-->  SFYarp  --HTTP or HTTPS-->  SF service
+Client  --HTTPS-->  L7 gateway  --HTTPS-->  SFYarp  --HTTP or HTTPS-->  SF service
 ```
 
 At a high level:
@@ -181,24 +172,23 @@ At a high level:
 1. `FabricDiscovery.Service` subscribes to Service Fabric Naming and
    observes every application, service, partition, and replica in
    the cluster. It reads the `Yarp` extension labels on each service
-   type and builds a YARP route/cluster configuration.
-2. `FabricDiscovery.Service` publishes that configuration to
-   `YarpProxy.Service` over a local channel. Changes propagate in
-   near real time — as services scale, move, or update labels,
+   type, builds a YARP route/cluster configuration, and publishes it
+   to `YarpProxy.Service` over a local channel. Changes propagate in
+   near real time. As services scale, move, or update labels,
    SFYarp's routing table updates without a proxy restart.
-3. `YarpProxy.Service` listens on the configured HTTP and HTTPS
+2. `YarpProxy.Service` listens on the configured HTTP and HTTPS
    ports (defaults `8080` and `443`), terminates TLS on the HTTPS
    port via Kestrel with SNI-based certificate selection, matches
    the request against the routing table, and forwards to a healthy
    replica of the selected backend service.
 
-Backend services are addressed by their SF service name — the
+Backend services are addressed by their SF service name. The
 inbound URL path starts with `/<AppName>/<ServiceName>/`. See
 [§URI format for addressing services](#uri-format-for-addressing-services).
 
 SFYarp deploys one instance of each service per node of the ingress
 node type (`InstanceCount = -1`). It is a per-cluster ingress
-component, not a per-application component — the same SFYarp
+component, not a per-application component. The same SFYarp
 application fronts every labeled service in the cluster.
 
 Below is what the deployed SFYarp application looks like in Service
@@ -237,13 +227,22 @@ Service Fabric Explorer. See
 [§Deploying SFYarp](#deploying-sfyarp) for the full ARM walkthrough
 and the per-property rationale.
 
+**Next steps.**
+
+- Label your first backend service. See
+  [§Configuring services with labels](#configuring-services-with-labels).
+- Fit SFYarp behind your L7 gateway. See
+  [§L7 gateway integration](#l7-gateway-integration).
+- Lock down the ingress port. See
+  [§Network lockdown (NSG and Service Tags)](#network-lockdown-nsg-and-service-tags).
+
 ## Deploying SFYarp
 
-SFYarp deploys as a normal Service Fabric application. On SFMC the
-supported production path is ARM. PowerShell is fine for dev/test
-iteration on an already-running cluster but should not be used for
-production rollouts because it bypasses the ARM inventory that owns
-the rest of your infrastructure.
+SFYarp deploys as a normal Service Fabric application. The supported
+production path is ARM. PowerShell is fine for dev/test iteration on
+an already-running cluster but should not be used for production
+rollouts because it bypasses the ARM inventory that owns the rest of
+your infrastructure.
 
 ### Deploying via ARM (recommended for production)
 
@@ -338,10 +337,10 @@ Notes:
   shortly after activation. See
   [§Troubleshooting](#troubleshooting).
 - `InstanceCount = -1` on both services runs one instance per
-  eligible node — the recommended configuration for ingress.
+  eligible node, the recommended configuration for ingress.
 - `YarpProxy_PlacementConstraints` restricts SFYarp to the ingress
   node type. `FabricDiscovery.Service` reuses the same constraint
-  automatically — no separate parameter is exposed. See
+  automatically. No separate parameter is exposed. See
   [§Placement, sizing, and resource governance](#placement-sizing-and-resource-governance).
 - For HTTPS, add an `<EndpointCertificate>` in
   `ApplicationManifest.xml` before staging the SFPKG (see
@@ -366,7 +365,7 @@ and
 [Application upgrade parameters](https://learn.microsoft.com/azure/service-fabric/service-fabric-application-upgrade-parameters)
 for the full parameter surface.
 
-Rollback is the same `version` flip in reverse — which is why
+Rollback is the same `version` flip in reverse, which is why
 version-in-path storage matters. Keep the previous SFPKG and its
 `applicationTypes/versions` resource around for at least one
 rollback window.
@@ -380,7 +379,7 @@ production rollouts.
 ```powershell
 # Connect to your cluster (adjust for your auth model)
 Connect-ServiceFabricCluster `
-    -ConnectionEndpoint 'sf-win-cluster.westus2.cloudapp.azure.com:19000' `
+    -ConnectionEndpoint '<cluster-fqdn>:19000' `
     -X509Credential `
     -FindType FindByThumbprint -FindValue '<client-cert-thumbprint>' `
     -StoreLocation LocalMachine -StoreName 'My'
@@ -463,6 +462,11 @@ plus a `Yarp.Routes.<name>.Path`, SFYarp exposes the service at
 `/<AppName>/<ServiceName>/<path>` on both the HTTP and HTTPS ports
 and health-probes the backend with the defaults from YARP.
 
+> **Containers.** Containerized SF services need no SFYarp-specific
+> configuration. Opt them in with the same `ServiceManifest.xml`
+> labels as any other service. SFYarp routes to whichever endpoint
+> SF publishes in the Naming Service.
+
 **Common recipes:**
 
 - **Match by hostname (multi-tenant):**
@@ -487,7 +491,7 @@ and health-probes the backend with the defaults from YARP.
   ```xml
   <Label Key="Yarp.Backend.AllowInsecureHttp">false</Label>
   ```
-  The default is currently `true` — SFYarp will forward to a
+  The default is currently `true`. SFYarp will forward to a
   plain-HTTP backend unless this label sets the route to `false`.
 - **Stateful primary-only:**
   ```xml
@@ -540,13 +544,13 @@ names contain ASCII letter, digit, `_`, or `-`. Indexing pattern
   [`RouteMatch.Methods`](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteMatch.cs#L18).
 - `.MatchHeaders.[<Index>].*` — header-based matching. Each index
   builds a
-  [`RouteHeader`](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteHeader.cs#L13);
-  the list is assigned to
+  [`RouteHeader`](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteHeader.cs#L13).
+  The list is assigned to
   [`RouteMatch.Headers`](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteMatch.cs#L39).
 - `.MatchQueries.[<Index>].*` — query-parameter matching. Each
   index builds a
-  [`RouteQueryParameter`](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteQueryParameter.cs#L13);
-  the list is assigned to
+  [`RouteQueryParameter`](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteQueryParameter.cs#L13).
+  The list is assigned to
   [`RouteMatch.QueryParameters`](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteMatch.cs#L34).
 - `.Order` — explicit precedence. Lower numbers take precedence.
   Assigned to
@@ -554,7 +558,7 @@ names contain ASCII letter, digit, `_`, or `-`. Indexing pattern
 - `.Transforms.[<Index>].*` — request/response transforms. Each
   index becomes a
   [Transform](https://microsoft.github.io/reverse-proxy/articles/transforms.html)
-  dictionary; the list is assigned to
+  dictionary. The list is assigned to
   [`RouteConfig.Transforms`](https://github.com/microsoft/reverse-proxy/blob/dce0b614ce3b3daf4a3cb23254c8d1c626a502ec/src/ReverseProxy/Configuration/RouteConfig.cs#L63).
 - `.AuthorizationPolicy` — name of an ASP.NET Core authorization
   policy. Assigned to
@@ -624,8 +628,8 @@ the SFYarp cluster (one YARP cluster per SF service).
   [YARP passive health checks](https://microsoft.github.io/reverse-proxy/articles/dests-health-checks.html#passive-health-checks).
 - `Yarp.Backend.Metadata.*` — arbitrary cluster metadata.
 - `Yarp.Backend.AllowInsecureHttp` — allow forwarding to plain-HTTP
-  backend endpoints. Default `true`; set `false` on every production
-  route.
+  backend endpoints. Default `true`. Set to `false` on every
+  production route.
 
 **Service Fabric integration hints** — `Yarp.Backend.ServiceFabric.*`
 and `Yarp.Backend.HealthCheck.Active.ServiceFabric.*`. Not part of
@@ -990,8 +994,7 @@ Use `FindBySubjectName` (or `FindByThumbprint` if you version certs
 by thumbprint) — SFYarp reads the ACL'd private key at runtime and
 serves it via SNI.
 
-> **`SecretsCertificate` vs `EndpointCertificate` — the asymmetry
-> that costs teams a night.**
+> **`SecretsCertificate` vs `EndpointCertificate`.**
 >
 > Service Fabric has two mechanisms for referencing certificates
 > from an application:
@@ -1083,7 +1086,7 @@ want its transform, routing, and health-check surface.
 
 **With the KV VM extension (Option 1).** The extension polls Key
 Vault on `pollingIntervalInS` and imports new certificate versions
-automatically. SFYarp does **not** rebind Kestrel on every poll —
+automatically. SFYarp does **not** rebind Kestrel on every poll.
 `YarpProxy.Service` rescans `LocalMachine\My` on a periodic timer
 and picks up the new certificate for subsequent connections.
 Existing TLS connections continue with the previous certificate
@@ -1102,7 +1105,7 @@ Rotation checklist:
 5. Monitor `YarpProxyLogs` for the certificate-load event
    confirming the new thumbprint is in use.
 
-**With `vmSecrets` (Option 2).** Rotate via ARM: update the
+**With `vmSecrets` (Option 2).** Rotate via ARM. Update the
 `certificateUrl` to the new versioned URL and redeploy the node-type
 resource. The node type performs a monitored rolling replacement.
 
@@ -1119,7 +1122,7 @@ labels:
 
 The label `DangerousAcceptAnyServerCertificate=true` disables chain
 and hostname validation on backend calls. **Do not ship this to
-production** — it silently accepts any certificate the backend
+production.** It silently accepts any certificate the backend
 presents.
 
 **Backend mTLS.** SFYarp does not currently support attaching a
@@ -1134,11 +1137,11 @@ public IP, terminates TLS at the edge, and forwards to SFYarp's
 ingress backend pool:
 
 ```
-Client → Azure Application Gateway (or Azure Front Door) → SFYarp → SF service
+Client → L7 gateway (Azure Application Gateway, Azure Front Door, NGINX, etc.) → SFYarp → SF service
 ```
 
-Two things in the L7 configuration are worth getting right up front
-— everything else follows the L7's normal setup.
+Two things in the L7 configuration are worth getting right up front.
+Everything else follows the L7's normal setup.
 
 **Health probes.** Point the L7 probe at a dedicated
 `/proxy-health` route on the SFYarp backend pool. Any lightweight
@@ -1271,8 +1274,8 @@ trusted network segment.
 ## Replica endpoint selection
 
 A Service Fabric replica or instance can publish several endpoints
-(each with a **listener name**), but SFYarp currently forwards to
-only one per replica. Selection is controlled by the
+(each with a **listener name**), but SFYarp forwards to only one per
+replica. Selection is controlled by the
 `Yarp.Backend.ServiceFabric.ListenerName` label:
 
 - If `ListenerName` is set, SFYarp picks the endpoint whose listener
@@ -1314,7 +1317,9 @@ routing config. The following parameters live in the
   endpoints (in addition to HTTPS). Default `true`. Set to `false`
   in production to require HTTPS-only backends.
 
-Wire the overrides in `ApplicationManifest.xml`:
+Expose the values as application parameters and apply them via a
+`<ConfigOverride>` on `FabricDiscoveryServicePkg` in
+`ApplicationManifest.xml`:
 
 ```xml
 <Parameters>
@@ -1392,6 +1397,14 @@ http://<Cluster FQDN | internal IP>:8080/pinger0/PingerService/id
 You should get a `200 OK` with a body like
 `{ "Pinger: I'm alive on ..." }`.
 
+Quick validation from any shell:
+
+```powershell
+# PowerShell
+Invoke-WebRequest -Uri 'http://<Cluster FQDN | internal IP>:8080/pinger0/PingerService/id' |
+  Select-Object StatusCode, Content
+```
+
 ## Internal telemetry
 
 Internal telemetry data is transmitted to Microsoft and contains
@@ -1441,7 +1454,7 @@ Field meanings:
   `YarpProxyApp`.
 - **`ClusterId`** — uniquely identifies a telemetry event and
   correlates data coming from the same cluster.
-- **`ClusterType`** — `SFRP` or `Standalone`.
+- **`ClusterType`** — `SFRP`, `SFMC`, or `Standalone`.
 - **`NodeNameHash`** — SHA-256 of the SF node name. Correlates data
   from specific nodes within a cluster.
 - **`Timestamp`** — UTC time the telemetry was sent.
@@ -1455,9 +1468,7 @@ For non-SFRP clusters, a `TenantId` (GUID) is sent instead of
 standard ASP.NET Core
 [logging providers](https://learn.microsoft.com/aspnet/core/fundamentals/logging/).
 By default the Console, Debug, EventSource, and EventLog providers
-are enabled. The Application Insights provider is also wired in —
-supply the AI connection string in `ApplicationManifest.xml` to
-forward logs off-node.
+are enabled.
 
 ### Collecting SFYarp logs
 
@@ -1508,8 +1519,7 @@ failover.
 **3. Centralized logging.** For fleet-wide correlation, forward the
 `YarpProxyLogs` event source (and the SF Hosting log) through the
 Service Fabric diagnostic extension to Azure Monitor / Log
-Analytics, or wire in the Application Insights provider via the
-`ApplicationManifest.xml` connection-string parameter.
+Analytics.
 
 ## Troubleshooting
 
