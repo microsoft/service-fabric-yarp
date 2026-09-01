@@ -3,11 +3,14 @@
     "contentVersion": "1.0.0.0",
     "metadata": {
         "_generator": {
-            "purpose": "Starter template for deploying SFYarp 2.0.0 onto a fresh Service Fabric managed cluster (SFMC).",
+            "purpose": "Starter template for deploying SFYarp 2.1.0 onto a fresh Service Fabric managed cluster (SFMC).",
             "notes": [
-                "SFYarp 2.0.0 is self-contained on .NET 10 - no runtime install or CustomScriptExtension is required.",
-                "KVVMExtension is ordered with setupOrder=BeforeSFRuntime and requireInitialSync=true so the endpoint TLS cert is installed on every node before SFYarp starts.",
-                "The application name is fixed to 'YarpProxyApp' (fabric:/YarpProxyApp) because YarpProxy.Service uses that name to discover FabricDiscovery.Service."
+                "SFYarp 2.1.0 is self-contained on .NET 10 - no runtime install or CustomScriptExtension is required.",
+                "KVVMExtension is ordered with provisionAfterExtensions=[SfmcSetupVmExt] and setupOrder=[BeforeSFRuntime], plus requireInitialSync=true, so the endpoint TLS cert is installed on every node before SFYarp starts.",
+                "The application name is fixed to 'YarpProxyApp' (fabric:/YarpProxyApp) because YarpProxy.Service uses that name to discover FabricDiscovery.Service.",
+                "Patch ApplicationManifest.xml inside YarpProxyApp.sfpkg before uploading it to yarpSfpkgUrl: add EndpointCertSubject / EndpointCertThumbprint parameters and an <EndpointCertificate> block. See README section for the snippet.",
+                "Both yarpHttpPort and yarpHttpsPort are exposed on the public load balancer as an example. SFMC auto-provisions the matching NSG allow rules; for production hardening (Application Gateway / Front Door source restriction, deny-Internet, HTTPS-only), add networkSecurityRules per README §Network lockdown and remove the HTTP loadBalancingRules entry.",
+                "Prereq: before deploy, grant the Service Fabric managed cluster resource provider the 'Managed Identity Operator' role on the UAMI passed as uamiResourceId. Missing this fails deploy with LinkedAuthorizationFailed. See README §TLS and certificates - Managed-identity prerequisites."
             ]
         }
     },
@@ -61,7 +64,7 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Subject name of the endpoint TLS cert (e.g. cn=<clusterFqdn>). SFYarp picks the cert from LocalMachine\\My by subject at SNI time. Preferred over endpointCertThumbprint because it survives certificate rotation."
+                "description": "Bare subject value of the endpoint TLS cert (e.g. <clusterFqdn>) — NO 'CN=' prefix. Preferred over endpointCertThumbprint because it survives cert rotation. See README §TLS and certificates."
             }
         },
         "endpointCertThumbprint": {
@@ -87,7 +90,7 @@
         "uamiResourceId": {
             "type": "string",
             "metadata": {
-                "description": "Resource ID of a user-assigned managed identity granted 'Key Vault Secrets User' on the Key Vault referenced by certUrlVersionless. Used by the KV VM extension to pull secrets."
+                "description": "Resource ID of a user-assigned managed identity used by the KV VM extension to pull secrets. Requires two RBAC grants BEFORE deploy: (1) 'Key Vault Secrets User' on the Key Vault referenced by certUrlVersionless, and (2) 'Managed Identity Operator' granted to the Service Fabric managed cluster resource provider on this UAMI (SFMC needs this to attach the identity to the managed VMSS). Missing (2) fails deploy with LinkedAuthorizationFailed."
             }
         },
         "vmImageOffer": {
@@ -112,7 +115,7 @@
         },
         "yarpAppTypeVersion": {
             "type": "string",
-            "defaultValue": "2.0.0",
+            "defaultValue": "2.1.0",
             "metadata": {
                 "description": "SFYarp application type version. Must match the version declared inside the sfpkg's ApplicationManifest.xml."
             }
@@ -224,7 +227,7 @@
                             ],
                             "settings": {
                                 "secretsManagementSettings": {
-                                    "pollingIntervalInS": "300",
+                                    "pollingIntervalInS": "3600",
                                     "certificateStoreName": "My",
                                     "certificateStoreLocation": "LocalMachine",
                                     "linkOnRenewal": true,

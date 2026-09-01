@@ -1,4 +1,4 @@
-# Migrating from the Service Fabric Reverse Proxy to Service Fabric Yarp (SFYarp)
+# Migrating from the Service Fabric Reverse Proxy to ServiceFabricYarp (SFYarp)
 
 ---
 
@@ -68,9 +68,8 @@ HTTP/HTTPS traffic to your Service Fabric services:
 
 Because SFYarp is packaged as an ordinary SF application, the same
 package runs on classic Service Fabric Resource Provider (SFRP)
-clusters and on SFMC. This guide targets **SFYarp 2.0.0 or later**.
-It requires Service Fabric **11.5 or later** and is **Windows-only**
-today (no TCP proxying, no Linux support).
+clusters and on SFMC. This guide targets **SFYarp 2.1.0 or later**
+on Service Fabric **11.5 or later**, Windows only.
 
 **Deployment scope.** SFYarp deploys as a single SF application per
 cluster, running one instance on each node of your ingress node type
@@ -192,7 +191,7 @@ Why this ordering matters:
 Before you deploy SFYarp anywhere:
 
 - [ ] **Platform:** Service Fabric **11.5 or later** on **Windows**.
-- [ ] **SFYarp package:** **SFYarp 2.0.0 or later**. This release is
+- [ ] **SFYarp package:** **SFYarp 2.1.0 or later**. This release is
       self-contained — the .NET 10 ASP.NET Core runtime ships inside
       the application package, so no separate runtime install is
       required.
@@ -387,7 +386,7 @@ Move-Item 'out\YarpProxyApp.zip' 'out\YarpProxyApp.sfpkg'
 
 **2. Upload the SFPKG somewhere the cluster can reach it.** Typically
 an Azure Storage blob you control, with the **version in the blob
-path** (e.g. `sfyarp-packages/2.0.0/YarpProxyApp.sfpkg`) so previous
+path** (e.g. `sfyarp-packages/2.1.0/YarpProxyApp.sfpkg`) so previous
 versions remain available for rollback.
 
 > **Application name is fixed.** Deploy the application as
@@ -398,8 +397,11 @@ versions remain available for rollback.
 > [§13.2](#132-common-migration-symptoms-and-fixes)).
 
 **3. Reference the SFPKG from ARM.** Add two resources under
-`Microsoft.ServiceFabric/managedclusters` (a complete working
-example lives at [`docs/samples/sfmc-arm/cluster.json`](samples/sfmc-arm/cluster.json)):
+`Microsoft.ServiceFabric/managedclusters`. A complete working
+template lives at
+[`docs/samples/sfmc-arm/cluster.json`](samples/sfmc-arm/cluster.json),
+with a minimum parameter file at
+[`docs/samples/sfmc-arm/cluster.parameters.example.json`](samples/sfmc-arm/cluster.parameters.example.json).
 
 ```json
 [
@@ -416,13 +418,13 @@ example lives at [`docs/samples/sfmc-arm/cluster.json`](samples/sfmc-arm/cluster
   {
     "type":       "Microsoft.ServiceFabric/managedclusters/applicationTypes/versions",
     "apiVersion": "2024-04-01",
-    "name":       "[concat(parameters('clusterName'), '/YarpProxyAppType/2.0.0')]",
+    "name":       "[concat(parameters('clusterName'), '/YarpProxyAppType/', parameters('yarpAppTypeVersion'))]",
     "location":   "[parameters('location')]",
     "dependsOn":  [
       "[resourceId('Microsoft.ServiceFabric/managedclusters/applicationTypes', parameters('clusterName'), 'YarpProxyAppType')]"
     ],
     "properties": {
-      "appPackageUrl": "[parameters('yarpProxyAppPackageUrl')]"
+      "appPackageUrl": "[parameters('yarpSfpkgUrl')]"
     }
   },
   {
@@ -431,10 +433,10 @@ example lives at [`docs/samples/sfmc-arm/cluster.json`](samples/sfmc-arm/cluster
     "name":       "[concat(parameters('clusterName'), '/YarpProxyApp')]",
     "location":   "[parameters('location')]",
     "dependsOn":  [
-      "[resourceId('Microsoft.ServiceFabric/managedclusters/applicationTypes/versions', parameters('clusterName'), 'YarpProxyAppType', '2.0.0')]"
+      "[resourceId('Microsoft.ServiceFabric/managedclusters/applicationTypes/versions', parameters('clusterName'), 'YarpProxyAppType', parameters('yarpAppTypeVersion'))]"
     ],
     "properties": {
-      "version": "[resourceId('Microsoft.ServiceFabric/managedclusters/applicationTypes/versions', parameters('clusterName'), 'YarpProxyAppType', '2.0.0')]",
+      "version": "[resourceId('Microsoft.ServiceFabric/managedclusters/applicationTypes/versions', parameters('clusterName'), 'YarpProxyAppType', parameters('yarpAppTypeVersion'))]",
       "parameters": {
         "YarpProxy_InstanceCount":        "-1",
         "YarpProxy_PlacementConstraints": "NodeType==FrontEnd",
@@ -452,8 +454,9 @@ Notes:
 
 - The application-type **name** (`YarpProxyAppType`) matches the type
   name in the shipped `ApplicationManifest.xml`. Do **not** rename it.
-- The version segment (`2.0.0`) matches the manifest version the
-  release pipeline stamped in the shipped package.
+- `yarpAppTypeVersion` must match the manifest version the release
+  pipeline stamped in the shipped package (for 2.1.0, set it to
+  `"2.1.0"`).
 - `YarpProxy_InstanceCount = "-1"` means "one instance per eligible
   node". `YarpProxy_PlacementConstraints` limits eligibility to the
   node types that should carry ingress. Replace `FrontEnd` with your
@@ -883,20 +886,19 @@ considerations** on top of it.
   The cert must be present in `LocalMachine\My` on ingress nodes
   *before* the first service you opt in via
   [§5.3](#53-opt-in-a-service-with-labels) starts receiving traffic.
-  Otherwise SFYarp activates without a cert and clients see TLS
-  handshake failures during your first cutover attempt.
-- **`SecretsCertificate` vs `EndpointCertificate`.** If any
-  cert-consuming code paths in the SFYarp app package need Service
-  Fabric-managed private-key ACLs, declare the cert as
-  `<EndpointCertificate>` in `ApplicationManifest.xml`, **not** as
-  `<SecretsCertificate>`. SF gates service activation on
-  `<EndpointCertificate>` presence, which also acts as a safety net
-  against the SFMC extension-ordering race on scale-out. On newer
-  SFMC API versions (`2023-09-01-preview` or later) the primary fix
-  is `setupOrder: ["BeforeSFRuntime"]` + `requireInitialSync: true`
-  on the KV VM extension. This gating matters most on older API
-  versions where `setupOrder` isn't available. See [README §Private
-  key ACLs (`<EndpointCertificate>` declaration)](../README.md#private-key-acls-endpointcertificate-declaration)
+  Otherwise SFYarp fails to activate and clients can't reach the
+  HTTPS port until the certificate lands.
+- **Declare the cert as `<EndpointCertificate>`.** Add an
+  `<EndpointCertificate>` entry in `ApplicationManifest.xml` for the
+  cert SFYarp will terminate TLS with. SF retries application
+  activation until that entry resolves to a certificate in
+  `LocalMachine\My`, which acts as a safety net against the SFMC
+  extension-ordering race on scale-out. On newer SFMC API versions
+  (`2023-09-01-preview` or later) the primary fix is
+  `setupOrder: ["BeforeSFRuntime"]` + `requireInitialSync: true` on
+  the KV VM extension; the `<EndpointCertificate>` gate still matters
+  on older API versions where `setupOrder` isn't available. See
+  [README §Private key ACLs (`<EndpointCertificate>` declaration)](../README.md#private-key-acls-endpointcertificate-declaration)
   and [README §Extension ordering race on SFMC scale-out](../README.md#extension-ordering-race-on-sfmc-scale-out).
 - **Coexistence period.** During
   [§5.4](#54-cut-over-client-traffic-to-sfyarp) the built-in reverse
@@ -918,7 +920,7 @@ migration-specific concern is the **backend pool swap sequence**:
    you can measure real traffic before switching.
 3. Shift traffic weight from the built-in reverse proxy pool to
    SFYarp per [§5.4](#54-cut-over-client-traffic-to-sfyarp).
-4. Once cut over is complete and stable, remove the built-in reverse
+4. Once cutover is complete and stable, remove the built-in reverse
    proxy pool.
 
 For **all other L7 configuration** — dedicated `/proxy-health` probe

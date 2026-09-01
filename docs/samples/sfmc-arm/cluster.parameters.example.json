@@ -21,7 +21,7 @@
             "value": "myyarpcluster"
         },
         "endpointCertSubject": {
-            "value": "cn=<dnsName>.<location>.cloudapp.azure.com"
+            "value": "<dnsName>.<location>.cloudapp.azure.com"
         },
         "nodeCount": {
             "value": 5
@@ -33,7 +33,7 @@
             "value": "Standard_D2s_v5"
         },
         "yarpAppTypeVersion": {
-            "value": "2.0.0"
+            "value": "2.1.0"
         },
         "yarpHttpPort": {
             "value": 8080
