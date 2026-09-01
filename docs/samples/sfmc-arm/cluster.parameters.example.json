@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminPassword": {
+            "value": ""
+        },
+        "adminUsername": {
+            "value": "sfadmin"
+        },
+        "certUrlVersionless": {
+            "value": "https://<your-keyvault>.vault.azure.net/secrets/<your-endpoint-cert-secret>"
+        },
+        "clientCertificateThumbprint": {
+            "value": "<admin-cert-thumbprint>"
+        },
+        "clusterName": {
+            "value": "myyarpcluster"
+        },
+        "dnsName": {
+            "value": "myyarpcluster"
+        },
+        "endpointCertSubject": {
+            "value": "<dnsName>.<location>.cloudapp.azure.com"
+        },
+        "nodeCount": {
+            "value": 5
+        },
+        "uamiResourceId": {
+            "value": "/subscriptions/<sub-id>/resourceGroups/<rg-name>/providers/Microsoft.ManagedIdentity/userAssignedIdentities/<uami-name>"
+        },
+        "vmSize": {
+            "value": "Standard_D2s_v5"
+        },
+        "yarpAppTypeVersion": {
+            "value": "2.1.0"
+        },
+        "yarpHttpPort": {
+            "value": 8080
+        },
+        "yarpHttpsPort": {
+            "value": 443
+        },
+        "yarpSfpkgUrl": {
+            "value": "https://<your-storage-account>.blob.core.windows.net/sfpkgs/YarpProxyApp_2.0.0.sfpkg"
+        }
+    }
+}
